@@ -23,6 +23,8 @@ assign   PavingUnsureCost 		0.5
 
 assign   PushCost			    6.0
 
+assign   IntialFerryCost		10000			# no ferries allowed
+
 # node costs
 assign	SpeedBumpCost			20
 assign	TrafficSignalCost		75
@@ -31,11 +33,17 @@ assign	TurnCostValue			150
 # the elevation parameters
 assign downhillcost   switch consider_elevation 60 0
 assign downhillcutoff 1.5
-assign uphillcost 	  60	# upphillcost 100 --> 1 percent additional elevation is 1.0km distance equivalence
+assign uphillcost 	  100	# upphillcost 100 --> 1 percent additional elevation is 1.0km distance equivalence
 assign uphillcutoff   6
 
 # set that this is a bike profile
 assign   validForBikes       	1
+
+
+# classifier constants
+assign classifier_none     = 1
+assign classifier_ferry    = 2
+
 
 ---context:way   # following code refers to way-tags
 
@@ -58,8 +66,21 @@ assign nodeaccessgranted
 assign turncost = if junction=roundabout then 0
                   else TurnCostValue
 
-# disallow ferries
-assign initialcost switch route=ferry 10000 0
+#
+# for any change in initialclassifier, initialcost is added once
+#
+assign initialclassifier =
+     if route=ferry then classifier_ferry
+     else classifier_none
+				  
+#
+# calculate the initial cost
+# this is added to the total cost each time the costfactor
+# changed
+#
+assign initialcost =
+     if ( equal initialclassifier classifier_ferry ) then IntialFerryCost
+     else 0
 
 
 #
@@ -164,7 +185,6 @@ assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/ke
 	switch highway=road						PavingUnsureCost	# unbekannter Typ
 	PavingUnsureCost
 
-
 assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good				 	0.0				# thin_rollers - roller blade, skate board
@@ -210,7 +230,7 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch highway=bridleway                switch any_cycleroute	1.0		2.0		# Reit- und Fußweg
 	switch highway=cycleway                 switch any_cycleroute	0.0		0.0		# Radweg
 	switch highway=footway  				switch any_cycleroute	0.5		0.7		# Gehweg
-	switch highway=path  					switch any_cycleroute	1.5		1.5		# Pfad 
+	switch highway=path  					switch any_cycleroute	0.1		0.3		# Pfad 
 	switch highway=track 					switch any_cycleroute	0.0		0.0		# Feldweg
 	switch highway=road						switch any_cycleroute	0.1		0.3		# unbekannter Typ
 	switch route=ferry                      switch any_cycleroute	5.67	5.67	# Fähren
@@ -240,7 +260,7 @@ assign hascycleway_track	# protected bike lanes
 #     300 tags "cycleway:right=opposite_track"
 #     350 tags "cycleway:left=opposite_track", 
 			
-assign trafficpenalty0
+assign trafficpenalty_before_cycleway
 	if highway=primary|primary_link then
 	(
 	  if      estimated_traffic_class=4   then 0.2
@@ -267,26 +287,32 @@ assign trafficpenalty0
 	else 0
 
 # Treat traffic penalty differently for cycling lanes		
-assign trafficpenalty multiply trafficpenalty0 
+assign trafficpenalty multiply trafficpenalty_before_cycleway 
 	switch hascycleway_track	0.10
 	switch hascycleway 			0.25 
 	1.0
 	
-# Compute resulting cost factor
+#
+# calculate the cost-factor, which is the factor
+# by which the distance of a way-segment is multiplied
+# to calculate the cost of that segment. The costfactor
+# must be >=1 and it's supposed to be close to 1 for
+# the type of way the routing profile is searching for
+#
 assign costfactor
 	#
 	# exceptions with sub-cost below 10000 (motorway, bad one-way, ...)  should not be deleted
 	# by the decoder, to be available in voice-hint-processing (if cost are >=10000, the decoder will delete them)
 	switch 
-		greater 
+		greater 					# if any penalty ...
 			max onewaypenalty
 			max accesspenalty 
 				highwaycost
-		9999 
-		10000
-	
-	min 9999
-	add 1
+		9999 						# ... is larger 9999 ...
+		10000						# ... then take 10000 (forbidden) ...
+									# ... else take the following:
+	min 9999								# make sure that costfactor is less or equal 9999
+	add 1									# one is the minimum cost
 	add max onewaypenalty accesspenalty		# oneway and access penalty
 	add mean_surface_smoothness_cost		# surface and smoothness cost
 	    highwaycost							# cost for different types of highway
