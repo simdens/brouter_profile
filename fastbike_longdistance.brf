@@ -21,7 +21,7 @@ assign   CobblestoneCost  		2.0
 assign   UnpavedCost    		4.0
 assign   PavingUnsureCost 		0.5
 
-assign   PushCost			    6.0
+assign   PushCost			    4.0				# for 20km/h by bike and 4km/h by foot --> (4 + 1) times the time needed
 
 assign   IntialFerryCost		10000			# no ferries allowed
 
@@ -99,7 +99,8 @@ assign bikeaccess
 	else if bicycle= then
 	(
 		if vehicle= then
-			if highway=footway|pedestrian|steps then false
+			if      highway=footway|pedestrian|steps then false
+			else if foot=designated                  then false			# there are ways without vehicle or bicycle tag which are only a designated foot way.
 			else defaultaccess
 		else not vehicle=private|no
 	)
@@ -219,20 +220,20 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch highway=motorway|motorway_link    						 	 9999		# Autobahn (BAB) und Auffahrten
 	switch motorroad=yes											  	 9999		# Kraftfahrstraße (wie BAB)
 	switch highway=trunk|trunk_link      								   10		# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link     switch any_cycleroute	0.3		1.0		# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link switch any_cycleroute	0.15	0.5		# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   switch any_cycleroute	0.0		0.0		# Kreisstraßen und Auffahrten
-	switch highway=unclassified       		switch any_cycleroute	0.0		0.1		# Dorfstraßen	  
-	switch highway=residential 				switch any_cycleroute	0.05	0.2		# Wohnstraße
-	switch highway=service                  switch any_cycleroute	0.1		0.3 	# Zugangsstraßen
-	switch highway=living_street 			switch any_cycleroute	0.2		0.5		# Spielstraße
-	switch highway=pedestrian   			switch any_cycleroute	0.3		0.7		# Fußgängerzone
-	switch highway=bridleway                switch any_cycleroute	1.0		2.0		# Reit- und Fußweg
+	switch highway=primary|primary_link     switch any_cycleroute	0.4		1.1		# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link switch any_cycleroute	0.25	0.6		# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link   switch any_cycleroute	0.1		0.1		# Kreisstraßen und Auffahrten
+	switch highway=unclassified       		switch any_cycleroute	0.1		0.2		# Dorfstraßen	  
+	switch highway=residential 				switch any_cycleroute	0.15	0.3		# Wohnstraße
+	switch highway=service                  switch any_cycleroute	0.2		0.4 	# Zugangsstraßen
+	switch highway=living_street 			switch any_cycleroute	0.3		0.6		# Spielstraße
+	switch highway=pedestrian   			switch any_cycleroute	0.4		0.8		# Fußgängerzone
+	switch highway=bridleway                switch any_cycleroute	1.1		2.1		# Reit- und Fußweg
 	switch highway=cycleway                 switch any_cycleroute	0.0		0.0		# Radweg
-	switch highway=footway  				switch any_cycleroute	0.5		0.7		# Gehweg
-	switch highway=path  					switch any_cycleroute	0.1		0.3		# Pfad 
-	switch highway=track 					switch any_cycleroute	0.0		0.0		# Feldweg
-	switch highway=road						switch any_cycleroute	0.1		0.3		# unbekannter Typ
+	switch highway=footway  				switch any_cycleroute	0.6		0.8		# Gehweg
+	switch highway=path  					switch any_cycleroute	0.2		0.4		# Pfad 
+	switch highway=track 					switch any_cycleroute	0.0		0.1		# Feldweg
+	switch highway=road						switch any_cycleroute	0.2		0.4		# unbekannter Typ
 	switch route=ferry                      switch any_cycleroute	5.67	5.67	# Fähren
 	switch highway=steps                    						       10.0		# Treppen
 																			0.3		# Default						
@@ -319,7 +320,7 @@ assign costfactor
 	
 	
 # Treat traffic penalty differently for up and downhills
-assign uphillcostfactor   add multiply 2.00 trafficpenalty costfactor
+assign uphillcostfactor   add multiply 3.00 trafficpenalty costfactor
 assign downhillcostfactor add multiply 0.25 trafficpenalty costfactor
 assign costfactor 		  add multiply 1.00 trafficpenalty costfactor
 
