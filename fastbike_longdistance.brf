@@ -15,11 +15,11 @@ assign   consider_elevation   	1   # set to 0 to ignore elevation in routing
 assign   turnInstructionMode  	1  	# 0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style								
 
 # additional cost for surface (paved = 0.0)	  
-assign	 PavingStoneCost		0.2
-assign   FineGravelCost			1.75
-assign   CobblestoneCost  		2.0	
-assign   UnpavedCost    		4.0
-assign   PavingUnsureCost 		0.5
+assign	 PavingStoneCost		 0.2
+assign   FineGravelCost			 1.75
+assign   CobblestoneCost  		 2.0	
+assign   UnpavedCost    		10.0
+assign   PavingUnsureCost 		 1.5
 
 assign   PushCost			    4.0				# for 20km/h by bike and 4km/h by foot --> (4 + 1) times the time needed
 
