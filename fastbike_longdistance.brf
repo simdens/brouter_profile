@@ -34,7 +34,7 @@ assign	TurnCostValue			150
 assign downhillcost   switch consider_elevation 60 0
 assign downhillcutoff 1.5
 assign uphillcost 	  100	# upphillcost 100 --> 1 percent additional elevation is 1.0km distance equivalence
-assign uphillcutoff   6
+assign uphillcutoff   7
 
 # set that this is a bike profile
 assign   validForBikes       	1
