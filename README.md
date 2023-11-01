@@ -2,7 +2,7 @@
 
 ( see Brouter-Web [Brouter-web](http://brouter.de/brouter-web/) as web front end)
  
-This repository currently profiles for fast bike long distance routing.
+This contains profiles for fast bike long distance routing.
 
 Profile preferences:
    * paved roads
