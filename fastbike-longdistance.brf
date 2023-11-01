@@ -37,7 +37,7 @@ assign	 AllowFerries			false		# %AllowFerries% 		| ferries might be used | boole
 				
 # elevation cost parameters
 assign  ConsiderElevation		true		# %ConsiderElevation% 	| elevation will be considered | boolean
-assign  SlopeMax				8			# %SlopeMax% 			| maximum allowed slope (soft limit) | number
+assign  SlopeMax				8.0			# %SlopeMax% 			| maximum allowed slope (soft limit) | number
 
 
 ################################################################
@@ -785,4 +785,3 @@ assign initialcost
 		switch and not way:isnarrow barrier=bollard 10					0
 	
 																					
-
