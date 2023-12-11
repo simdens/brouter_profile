@@ -105,8 +105,8 @@ assign downhillcutoff			slopecutoff
 assign uphillcutoff				slopecutoff
 assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
 assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
-assign elevationpenaltybuffer	2
-assign elevationmaxbuffer		4
+assign elevationpenaltybuffer	5
+assign elevationmaxbuffer		10
 
 
 ---context:way   # following code refers to way-tags
