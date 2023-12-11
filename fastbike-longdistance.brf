@@ -429,6 +429,14 @@ assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.
 	switch smoothness=horrible|off_road_wheels	multiply 2		UnpavedCost			# off road wheels - off road cars 
 	switch smoothness=very_horrible           	multiply 3		pushcost			# specialized off road vehicles - ATV, tractor
 	switch smoothness=impassable              	multiply 5		pushcost			# no wheeled vehicle - hiking path 
+	# If smoothness is not given, estimate smoothness on mtb:scale property
+	switch mtb:scale=0                                          UnpavedCost         # Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
+	switch mtb:scale=1                          multiply 2		UnpavedCost         # roots and small stones. --> smoothness=horrible
+	switch mtb:scale=2                          multiply 2		pushcost            # large rocks and stones. --> smoothness=mean(horrible & very_horrible)
+	switch mtb:scale=2                          multiply 3		pushcost            # large obstacles such as boulders and large roots. --> smoothness=very_horrible
+	switch mtb:scale=4                          multiply 4		pushcost            # large boulders, roots. --> smoothness=mean(very_horrible & impassable)
+	switch mtb:scale=5                          multiply 5		pushcost            # big boulder fields, debris, landslides.  --> smoothnes=impassable
+	switch mtb:scale=6                          multiply 6		pushcost            # more than impassable :-)
 																surfacecost			# not known
 												
 # use mean value of both, otherwise it is penalized twice
