@@ -50,7 +50,7 @@ assign turnInstructionRoundabouts   = true  # %turnInstructionRoundabouts% | Set
 assign considerTurnRestrictions     = true  # %considerTurnRestrictions% | Set true to take turn restrictions into account | boolean		
 
 # constants for brouter algorithm
-assign pass1coefficient		1.8
+assign pass1coefficient		1.5
 assign pass2coefficient		0
 
 # set that this is a bike profile
@@ -376,6 +376,7 @@ assign ispushing
 # 4.54	dirt
 
 # additional cost for surface (paved = 1.0)	  
+# ToDo: Adde tracktypes into consideration
 assign	 PavingStoneCost		 0.2
 assign   FineGravelCost			 0.82
 assign   SettCost				 1.28
