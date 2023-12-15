@@ -397,8 +397,23 @@ assign   SandCost                9.0
 assign   MudCost                14.0		
 assign   PavingUnsureCost       GroundCost	
 
+
 # cost factors
 assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
+    # 
+    # Use cycleway surface with highest priority, since we sue cycleways if 
+    # available
+    switch cycleway:surface=asphalt         0.0
+    switch cycleway:surface=concrete|paved  ConcreteCost
+    switch cycleway:surface=paving_stones   PavingStonesCost
+    switch cycleway:surface=compacted       CompactedCost
+    switch cycleway:surface=sett            SettCost
+    switch cycleway:surface=cobblestone     CobblestoneCost
+    switch cycleway:surface=gravel          GravelCost
+    switch cycleway:surface=fine_gravel     FineGravelCost
+    switch cycleway:surface=unpaved         DirtCost
+    #
+    # Highway surface
     switch surface=asphalt                  0.0
     switch 
         or surface=concrete|paved 
