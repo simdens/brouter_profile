@@ -70,13 +70,13 @@ assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 
 #										speed for uphills and downhills  with "SlopeMax" 
 assign SlopeMaxUphillSpeed				0										# this should be chosen as 0, since this results in the best linear approximation of the speed-over-slope curve
 assign SlopeMaxDownhillSpeed			multiply div DownhillSpeed 10 SlopeMax	# scale it to the used SlopeMax
-assign DownhillMaxSlopeAdditionalCost	10	# additional cost per vertical meter for slope larger than "slopemax"
+assign DownhillMaxSlopeAdditionalCost	 50	# additional cost per vertical meter for slope larger than "slopemax"
 assign UphillMaxSlopeAdditionalCost  	100	# additional cost per vertical meter for slope larger than "slopemax"
 
 # node cost constants
 assign	SpeedBumpCost			10
 assign	TrafficSignalCost		50
-assign	TurnCostValue		   150		
+assign	TurnCostValue		   175		
 
 # Kinematic model parameters (travel time computation)
 assign maxSpeed   = 45     			# absolute maximum speed in km/h for travel time computation
@@ -254,6 +254,7 @@ assign maxspeedforward
 
 # km/h
 assign maxspeed
+        min    70                                       # Max wanted speed on a road bike :-) 
 		switch and not reversedirection=yes lesser maxspeedforward  999		maxspeedforward
 		switch and     reversedirection=yes lesser maxspeedbackward 999		maxspeedbackward
 		switch maxspeed=10							 10
@@ -271,7 +272,7 @@ assign maxspeed
 		switch maxspeed=130							130
 		switch maxspeed=urban						 50		
 		switch maxspeed=rural						100	
-		switch bicycle=designated					 30  # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
+		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
 		switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
 		switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
 		switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
@@ -305,18 +306,6 @@ assign nodeaccessgranted
 	or any_cycleroute 
 	   lcn=yes
 	   
-	   
-################################################################
-#   Turn Costs                                                 #
-################################################################
-
-#
-# this is the cost (in Meter) for a 90-degree turn
-# The actual cost is calculated as turncost*cos(angle)
-#
-assign turncost = if junction=roundabout then 0
-                  else TurnCostValue
-
 
 ################################################################
 #   Access Costs                                               #
@@ -359,49 +348,78 @@ assign ispushing
 #   Handle different surfaces                                  #
 ################################################################
 
-# Different Rolling resistances for cars -- https://de.wikipedia.org/wiki/Rollwiderstand
-# 0.01  - 0.02	asphalt/concrete			
-# 0.013			pavingstone			- from "Kraftfahrtechnisches Taschenbuch", page 418
-# 0.02			gravel
-# 0.015 - 0.03	copplestone
-# 0.03  - 0.06	street with potholes
-# 0.05			dirt
+# Different Rolling resistances for car tires
+#
+# DE-Wikipedia: https://de.wikipedia.org/wiki/Rollwiderstand
+# Rhetos: https://www.rhetos.de/html/lex/rollwiderstandskoeffizienten.htm
+# KfT:  "Kraftfahrtechnisches Taschenbuch", page 418
+#
+# Surface      | norm | used  | DE-Wikipedia  | Rhetos       | comment
+# -------------+------+-------+---------------+--------------+------------------
+# asphalt      |  1.0 | 0.01  | 0.011 - 0.015 | 0.011 - 0.03 | good asphalt
+# concrete     |  1.1 | 0.011 | 0.01  - 0.02  | 0.01  - 0.02 | quite good concrete
+# metal        |  1.1 | 0.011 |               | 0.008 - .009 | it is slippery :-(
+# paving_stones|  1.5 | 0.015 | 0.013 (KfT)   |              | 
+# compacted    |  1.8 | 0.018 |               |              | between paving_stone and cobblestone
+# wood         |  1.8 | 0.018 |               |              | between paving_stone and cobblestone (most on bridges with small gaps)
+# sett         |  2.0 | 0.02  |               |              | between paving_stone and cobblestone
+# pebblestone  |  2.4 | 0.024 |               |              | between gravel and compacted
+# copplestone  |  2.5 | 0.025 | 0.015 - 0.03  | 0.015 - 0.03 | bike tires are small
+# grass_paver  |  2.7 | 0.027 |               |              | even worse than cobblestone but better than gravel
+# gravel       |  3.0 | 0.03  | 0.02          | 0.02         | bike tires are small
+# ground       |  3.4 | 0.034 |               |              | between compacted and dirt
+# fine_gravel  |  4.0 |       |               |              | most likely pushing the bike ==> pushcost
+# dirt         |  5.0 | 0.05  | 0.050         | 0.050        |
+# sand         | 10.0 | 0.1   | 0.04  - 0.08  | 0.1   - 0.35 | compacted sand, bike tires are thin
+# mud          | 15.0 |       |               |              | really don't want to be there
+# potholes     |      |       | 0.03  - 0.06  |              | ashpalt with potholes
+# clay         | compacted
+# earth        | dirt
+# grass        | dirt
+# paved        | concrete
+# unpaved      | dirt
 
-# Different Rolling resistances for cars normalized to asphalt resistance (0.015)
-# 1.2	pavingstone
-# 1.82	gravel
-# 2.28  sett					(sett is a bit better than copplestone)
-# 2.73	copplestone				(upper limit used since bike pneus are smaller)
-# 2.73	street with potholes	(lower limit used since bike pneus hit larger potholes as often as cars)
-# 4.54	dirt
-
-# additional cost for surface (paved = 1.0)	  
-# ToDo: Adde tracktypes into consideration
-assign	 PavingStoneCost		 0.2
-assign   FineGravelCost			 0.82
-assign   SettCost				 1.28
-assign   CobblestoneCost  		 1.73	
-assign   UnpavedCost    		 4.0			# larger than the "dirt" rolling resistance since ways do have additional stones and potholes very often
-assign   PavingUnsureCost 		 FineGravelCost	# use at least the fine gravel cost for unsure paving
-
-# flags
-assign ispaved            or surface=paved or surface=asphalt or surface=concrete ( and surface= tracktype=grade1 )
-assign ispavingstone	  surface=paving_stones
-assign issett			  surface=sett
-assign iscopplestone      surface=cobblestone
-assign isgravel			  surface=fine_gravel     
-assign ispavingunsure     and surface= not tracktype=grade1|grade2|grade3|grade4|grade5|
-assign isunpaved      not or ispaved or ispavingstone or iscopplestone or isgravel ispavingunsure 
+# Assign costs 
+assign   ConcreteCost            0.1
+assign   MetalCost               0.1
+assign   PavingStonesCost        0.5
+assign   CompactedCost           0.8
+assign   WoodCost                0.8
+assign   SettCost				 1.0
+assign   PebblestoneCost         1.4
+assign   CobblestoneCost  		 1.5
+assign   GrassPaverCost          1.7
+assign   GravelCost              2.0
+assign   GroundCost              2.4
+assign   FineGravelCost          3.0
+assign   DirtCost                4.0
+assign   SandCost                9.0	
+assign   MudCost                14.0		
+assign   PavingUnsureCost       GroundCost	
 
 # cost factors
 assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
-	switch ispaved 		  0.0
-	switch ispavingstone  PavingStoneCost
-	switch issett         SettCost
-	switch iscopplestone  CobblestoneCost
-	switch isgravel		  FineGravelCost
-	switch isunpaved      UnpavedCost
-	# best guess for unsure paving
+    switch surface=asphalt                  0.0
+    switch 
+        or surface=concrete|paved 
+           and surface= tracktype=grade1    ConcreteCost
+    switch surface=metal                    MetalCost
+    switch surface=paving_stones            PavingStonesCost
+    switch surface=compacted|clay           CompactedCost
+    switch surface=wood                     WoodCost
+    switch surface=sett                     SettCost
+    switch surface=pebblestone              PebblestoneCost
+    switch surface=cobblestone              CobblestoneCost
+    switch surface=grass_paver              GrassPaverCost
+    switch surface=gravel                   GravelCost
+    switch surface=ground                   GroundCost
+    switch surface=fine_gravel              FineGravelCost
+    switch surface=unpaved|dirt|earth|grass DirtCost
+    switch surface=sand                     SandCost
+    switch surface=mud                      MudCost
+    #
+	# best guess for unsure paving:
+	switch highway=raceway                  0.0                 # Rennstrecke
 	switch highway=motorway|motorway_link   0.0					# Autobahn und Auffahrten
 	switch highway=trunk|trunk_link      	0.0					# Schnellstraßen (wie BAB) und Auffahrten
 	switch highway=primary|primary_link    	0.0					# Bundesstraßen und Auffahrten
@@ -409,50 +427,70 @@ assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/ke
 	switch highway=tertiary|tertiary_link   0.0					# Kreisstraßen und Auffahrten
 	switch highway=unclassified       		0.0					# Dorfstraßen	  
 	switch highway=residential 				0.0					# Wohnstraße
-	switch highway=living_street 			PavingStoneCost		# Spielstraße
-	switch highway=pedestrian   			PavingStoneCost		# Fußgängerzone
-	switch highway=service                  PavingUnsureCost	# Zugangsstraßen
-	switch highway=bridleway                PavingUnsureCost	# Reit- und Fußweg
-	switch highway=cycleway                 PavingUnsureCost	# Radweg
-	switch highway=footway  				PavingUnsureCost	# Gehweg
-	switch highway=path  					pushcost			# path of unknown kind, most likely a hiking trail --> push cost
-	switch highway=track 					PavingUnsureCost	# Feldweg
+	switch highway=rest_area|services       0.0                 # Rastplatz
+	switch highway=corridor                 0.0                 # Hallway inside a building
+	switch highway=crossing                 0.0                 # Street crossing
+	switch highway=bus_stop                 0.0                 # Bus stop on the street
+	switch highway=mini_roundabout          0.0                 # Mini roundabout in the street
+	switch highway=turning_loop             0.0                 # Turning Loop
+	switch highway=platform                 PavingStonesCost    # Bushaltestelle (wo die Personen stehen)
+	switch highway=living_street 			PavingStonesCost	# Spielstraße
+	switch highway=pedestrian   			SettCost    		# Fußgängerzone
+	switch highway=service                  PavingStonesCost    # Zugangsstraßen
+	switch highway=bridleway                CompactedCost       # Reit- und Fußweg
+	switch highway=cycleway                 PavingStonesCost    # Radweg
+	switch highway=footway  				GroundCost	        # Gehweg
+	switch highway=path  					GroundCost          # path of unknown kind
+	switch highway=unsurfaced               GroundCost          # street without surface
 	switch highway=road						PavingUnsureCost	# unbekannter Typ
-	PavingUnsureCost
+	#
+	# for highway=track, check the tracktype
+	switch and highway=track tracktype=grade1               0.0             # Asphalt surface
+	switch and highway=track tracktype=grade2               CompactedCost   # mostly solid
+	switch and highway=track tracktype=grade3   multiply 2  CompactedCost   # Even mixture of hard and soft materials.
+	switch and highway=track tracktype=grade4               GroundCost      # Mostly soft
+	switch and highway=track tracktype=grade5               DirtCost        # soft
+	switch and highway=track tracktype=                     DirtCost        # unknown, but most likely soft
+	#
+	# Default if really unknown
+	                                            PavingUnsureCost
+
 
 assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good				 		0.0					# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				multiply 0.75	PavingStoneCost		# thin_wheels - racing bike
-	switch smoothness=intermediate            	multiply 0.75	FineGravelCost		# wheels - city bike, wheel chair, sport cars
+	switch smoothness=good		 				multiply 0.5	PavingStonesCost	# thin_wheels - racing bike
+	switch smoothness=intermediate            	            	PavingStonesCost	# wheels - city bike, wheel chair, sport cars
 	switch smoothness=bad|robust_wheels       			 		CobblestoneCost		# robust wheels - trekking bike, normal cars
-	switch smoothness=very_bad|high_clearance 			 		UnpavedCost			# high clearance - normal cars with slightly higher clearance
-	switch smoothness=horrible|off_road_wheels	multiply 2		UnpavedCost			# off road wheels - off road cars 
-	switch smoothness=very_horrible           	multiply 3		pushcost			# specialized off road vehicles - ATV, tractor
+	switch smoothness=very_bad|high_clearance 			 		DirtCost			# high clearance - normal cars with slightly higher clearance
+	switch smoothness=horrible|off_road_wheels	multiply 2		DirtCost			# off road wheels - off road cars 
+	switch smoothness=very_horrible           	multiply 2		MudCost			    # specialized off road vehicles - ATV, tractor
 	switch smoothness=impassable              	multiply 5		pushcost			# no wheeled vehicle - hiking path 
+	#
 	# If smoothness is not given, estimate smoothness on mtb:scale property
-	switch mtb:scale=0                                          UnpavedCost         # Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
-	switch mtb:scale=1                          multiply 2		UnpavedCost         # roots and small stones. --> smoothness=horrible
-	switch mtb:scale=2                          multiply 2		pushcost            # large rocks and stones. --> smoothness=mean(horrible & very_horrible)
-	switch mtb:scale=2                          multiply 3		pushcost            # large obstacles such as boulders and large roots. --> smoothness=very_horrible
-	switch mtb:scale=4                          multiply 4		pushcost            # large boulders, roots. --> smoothness=mean(very_horrible & impassable)
-	switch mtb:scale=5                          multiply 5		pushcost            # big boulder fields, debris, landslides.  --> smoothnes=impassable
-	switch mtb:scale=6                          multiply 6		pushcost            # more than impassable :-)
+	switch mtb:scale=0                                          DirtCost            # Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
+	switch mtb:scale=1                          multiply 2		DirtCost            # roots and small stones. --> smoothness=horrible
+	switch mtb:scale=2                          multiply 3		pushcost            # large rocks and stones. --> smoothness=mean(horrible & very_horrible)
+	switch mtb:scale=2                          multiply 4		pushcost            # large obstacles such as boulders and large roots. --> smoothness=very_horrible
+	switch mtb:scale=4                          multiply 5		pushcost            # large boulders, roots. --> smoothness=mean(very_horrible & impassable)
+	switch mtb:scale=5                          multiply 6		pushcost            # big boulder fields, debris, landslides.  --> smoothnes=impassable
+	switch mtb:scale=6                          multiply 7		pushcost            # more than impassable :-)
 																surfacecost			# not known
 												
 # use mean value of both, otherwise it is penalized twice
 assign mean_surface_smoothness_cost
 	multiply 0.5 add surfacecost smoothnesscost
 
+		
+################################################################
+#   Handle speed                                               #
+################################################################
 
 # Speed with rolling resistance included
 assign bikespeed 			div NominalSpeed  			add 1 mean_surface_smoothness_cost
 assign bikespeeduphill		div SlopeMaxUphillSpeed		add 1 mean_surface_smoothness_cost
 assign bikespeeddownhill	div SlopeMaxDownhillSpeed	add 1 mean_surface_smoothness_cost
-		
-################################################################
-#   Handle speed                                               #
-################################################################
+
 
 # routing should be done time optimal
 #
@@ -662,11 +700,50 @@ assign downhillcostfactor
 	add speedpenaltydownhill				# speed limit cost
 		trafficpenaltydownhill				# traffic cost
 	
+################################################################
+#   Initial Costs                                              #
+################################################################
+
+#
+# for any change in initialclassifier, initialcost is added once
+#
+assign initialclassifier =
+     if      route=ferry then classifier_ferry
+     else if ispushing   then classifier_pushing 
+	 else	classifier_none 				  
+#
+# calculate the initial cost
+# this is added to the total cost each time the costfactor
+# changed
+#
+assign initialcost =
+	switch ( equal initialclassifier classifier_ferry   )	IntialFerryCost
+	switch ( equal initialclassifier classifier_pushing )	IntialPushCost
+															0	   
+
+
+################################################################
+#   Turn Costs                                                 #
+################################################################
+
+# this is the cost (in Meter) for a 90-degree turn
+# The actual cost is calculated as turncost*cos(angle)
+# Turncost is scaled by the cost for speed of the bike, surface and speed limit.
+# The faster you go, the less you want to turn because thet means deceleration
+#
+assign turncost = if junction=roundabout then 0
+                  else div
+                    TurnCostValue
+                    add 1 add mean_surface_smoothness_cost speedpenalty
+
+	   
+################################################################
+#   Voice hint generation stuff                                #
+################################################################
 
 # way priorities used for voice hint generation
 
 assign priorityclassifier =
-
   if      ( highway=motorway                  ) then  30
   else if ( highway=motorway_link             ) then  29
   else if ( highway=trunk                     ) then  28
@@ -688,31 +765,6 @@ assign priorityclassifier =
   else if ( highway=pedestrian                ) then  2
   else 0
 
-################################################################
-#   Initial Costs                                              #
-################################################################
-
-#
-# for any change in initialclassifier, initialcost is added once
-#
-assign initialclassifier =
-     if      route=ferry then classifier_ferry
-     else if ispushing   then classifier_pushing 
-	 else	classifier_none 				  
-#
-# calculate the initial cost
-# this is added to the total cost each time the costfactor
-# changed
-#
-assign initialcost =
-	switch ( equal initialclassifier classifier_ferry   )	IntialFerryCost
-	switch ( equal initialclassifier classifier_pushing )	IntialPushCost
-															0	   
-	   
-	   
-################################################################
-#   Voice hint generation stuff                                #
-################################################################
 
 # some more classifying bits used for voice hint generation...
 
