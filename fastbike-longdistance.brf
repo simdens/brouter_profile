@@ -21,29 +21,28 @@
 
 # user parameters
 # those parameters are used to compute elevation costs
-assign   SystemWeight			100			# %SystemWeight% 		| weight of system (bike+cyclist+luggage) in kg | number
-assign   NominalPower			165			# %NominalPower% 		| continuous available power of cyclist in Watts | number
-assign	 NominalSpeed			26.3		# %NominalSpeed% 		| nominal speed in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
-assign   DownhillSpeed  		62.5		# %DownhillSpeed% 		| speed for downhills with 10% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
+assign   SystemWeight			100			# %SystemWeight% 			| weight of system (bike+cyclist+luggage) in kg | number
+assign   NominalPower			165			# %NominalPower% 			| continuous available power of cyclist in Watts | number
+assign	 NominalSpeed			26.3		# %NominalSpeed% 			| nominal speed in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
+assign   DownhillSpeed  		62.5		# %DownhillSpeed% 			| speed for downhills with 10% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
 
 # additional cost for different kind of transportation
-assign 	 StickToCycleRoute		true		# %StickToCycleRoute% 	| cycle routes will be preferred | boolean
-assign	 AllowFerries			false		# %AllowFerries% 		| ferries might be used | boolean
+assign 	 StickToCycleRoute		true		# %StickToCycleRoute% 		| cycle routes will be preferred | boolean
+assign	 AllowFerries			false		# %AllowFerries% 			| ferries might be used | boolean
 				
 # elevation cost parameters
-assign  ConsiderElevation		true		# %ConsiderElevation% 	| elevation will be considered | boolean
-assign  SlopeMax				8.0			# %SlopeMax% 			| maximum allowed slope (soft limit) | number
+assign  ConsiderElevation		true		# %ConsiderElevation% 		| elevation will be considered | boolean
+assign  SlopeMax				8.0			# %SlopeMax% 				| maximum allowed slope (up & downhill, soft limit) | number
 
 # time optimallity parameter
-assign  TimeOptimallityFacotor  0.75        # %TimeOptimallityFacotor%  | Factor to include time optimality into route. 0 -- only energy optimized, 1 -- as time optimized as possible | number
+assign  TimeOptimallityFacotor  0.75        # %TimeOptimallityFacotor%	| Factor to include time optimality into route. 0 -- energy optimized, 1 -- time optimized | number
 
+# for debug
+assign processUnusedTags            = false # %processUnusedTags%		| Set true to output unused tags in data tab | boolean
 
 ################################################################
 #   Constants                                                  #
 ################################################################
-
-# for debug
-assign processUnusedTags            = false # %processUnusedTags% | Set true to output unused tags in data tab | boolean
 
 # Turn instruction settings
 assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
@@ -69,16 +68,13 @@ assign pushcost			sub div NominalSpeed 4 1			# additional cost for 4km/h walking
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
 
 # elevation parameter constants
-#										speed for uphills and downhills  with "SlopeMax" 
-assign SlopeMaxUphillSpeed				0										# this should be chosen as 0, since this results in the best linear approximation of the speed-over-slope curve
-assign SlopeMaxDownhillSpeed			multiply div DownhillSpeed 10 SlopeMax	# scale it to the used SlopeMax
 assign DownhillMaxSlopeAdditionalCost	 50	# additional cost per vertical meter for slope larger than "slopemax"
 assign UphillMaxSlopeAdditionalCost  	100	# additional cost per vertical meter for slope larger than "slopemax"
 
 # node cost constants
 assign	SpeedBumpCost			10
 assign	TrafficSignalCost		50
-assign	TurnCostValue		   175		
+assign	TurnCostValue		   175
 
 # Kinematic model parameters (travel time computation)
 assign maxSpeed   = 45     			# absolute maximum speed in km/h for travel time computation
@@ -99,7 +95,7 @@ assign totalMass  = SystemWeight
 assign Height2Length		multiply div multiply SystemWeight 9.81 NominalPower div NominalSpeed 3.6
 
 # the parameters are renamed in this profile to ease the use of the profile
-assign slopecutoff				0.5		# slope is ignored if smaller than this threshold
+assign slopecutoff				0.5												# slope is ignored if smaller than this threshold
 assign uphillcost				switch ConsiderElevation	Height2Length	0	# cost per vertical meter
 assign downhillcost				switch ConsiderElevation	0				0	# cost per vertical meter
 assign elevationbufferreduce	sub SlopeMax slopecutoff
@@ -107,8 +103,8 @@ assign downhillcutoff			slopecutoff
 assign uphillcutoff				slopecutoff
 assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
 assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
-assign elevationpenaltybuffer	5
-assign elevationmaxbuffer		10
+assign elevationpenaltybuffer	4
+assign elevationmaxbuffer		8
 
 ################################################################
 #   Speed Calculation Formulas                                 #
@@ -537,12 +533,12 @@ assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.
 																surfacecost			# not known
 												
 # use mean value of both, otherwise it is penalized twice
-assign mean_surface_smoothness_cost
+assign surfacesmoothnesscost
 	multiply 0.5 add surfacecost smoothnesscost
 
 
 ################################################################
-#   Max allowed speed                                          #
+#   Speed                                                      #
 ################################################################
 
 # The maximum allowed speed is used for traffic cost calculation and for routing 
@@ -586,9 +582,9 @@ assign maxspeedforward
 		switch maxspeed:forward=rural	100
 										999	
 
+# Max speed allowed by regulations
 # km/h
-assign maxspeed
-        min    70                                       # Max wanted speed on a road bike :-) 
+assign maxallowedspeed
 		switch and not reversedirection=yes lesser maxspeedforward  999		maxspeedforward
 		switch and     reversedirection=yes lesser maxspeedbackward 999		maxspeedbackward
 		switch maxspeed=10							 10
@@ -606,7 +602,6 @@ assign maxspeed
 		switch maxspeed=130							130
 		switch maxspeed=urban						 50		
 		switch maxspeed=rural						100	
-		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
 		switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
 		switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
 		switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
@@ -621,31 +616,78 @@ assign maxspeed
 		switch highway=bridleway                	  5 # Reit- und Fußweg
 		switch highway=cycleway                 	 30 # Radweg
 		switch highway=footway  					  5 # Gehweg
-		switch highway=path  					    999 # Pfad
-		switch highway=track 						999 # Feldweg
-		switch highway=road							999 # unbekannter Typ
+		switch highway=path  					    100 # Pfad
+		switch highway=track 						100 # Feldweg
+		switch highway=road							100 # unbekannter Typ
 		switch route=ferry                      	 10 # Fähren
-		switch highway=steps                    	  2 # Treppen
-													999 # Default (unknown max speed)
+		switch highway=steps                    	  2.5 # Treppen
+													100 # Default (unknown max speed)
+
+# Max desired speed by the biker
+# km/h
+assign maxdesiredspeed	
+        min    										 60 # Max desired speed on a road bike :-) 
+		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
+		switch highway=cycleway                 	 30 # Radweg
+		switch highway=unclassified       			 30 # Dorfstraßen
+		switch highway=residential 					 25 # Wohnstraße
+		switch highway=service                  	 20 # Zugangsstraßen
+		switch highway=footway  					  5 # Gehweg
+		switch highway=path  					     20 # Pfad
+		switch highway=track 						 40 # Feldweg
+													999 # Default
+
+# Use minimum of all speed limits
+assign maxspeed	min maxallowedspeed maxdesiredspeed
 
 
-################################################################
-#   Handle speed                                               #
-################################################################
-
-# Speed with rolling resistance included
-assign bikespeed 			div NominalSpeed  			add 1 mean_surface_smoothness_cost
-assign bikespeeduphill		div SlopeMaxUphillSpeed		add 1 mean_surface_smoothness_cost
-assign bikespeeddownhill	div SlopeMaxDownhillSpeed	add 1 mean_surface_smoothness_cost
+# speed for uphills and downhills  with "SlopeMax"
+# Here the additional current rolling resistance is included into the speed
+# calculation
+assign normCr				0.0029									# Rolling Resistance of good asphalt -- http://www.kreuzotter.de/deutsch/speed.htm
+assign equivSlopeCr			sub										# Equivalent additional slope (virtual) due to current rolling resistance
+								multiply 
+									normCr 
+									surfacesmoothnesscost 
+assign DownhilldVdSlope		div
+								sub 
+									NominalSpeed
+									DownhillSpeed
+								10
+assign UphilldVdSlope		div
+								sub
+									0
+									NominalSpeed
+								10
+assign bikespeed			add
+								NominalSpeed 
+								multiply
+									DownhilldVdSlope
+									equivSlopeCr
+assign bikespeeddownhill	add
+								DownhillSpeed 
+								multiply
+									DownhilldVdSlope
+									sub
+										10
+										SlopeMax
+assign bikespeeduphill		max
+								0
+								add	
+									0 	# speed is chosen to be 0km/h at +10% slope. This results in the good linear approximation of the speed-over-slope curve
+									multiply
+										UphilldVdSlope
+										sub
+											SlopeMax
+											10
 
 
 # routing should be at least partially done time optimal
 #
-# I know, that this way of computing is not completely correct, but I do not know any better solution in brouter
-#
 assign speedpenaltyfactor			add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeed         maxspeed 1
 assign speedpenaltyuphillfactor		add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeduphill   maxspeed 1
 assign speedpenaltydownhillfactor	add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeddownhill maxspeed 1
+
 
 ################################################################
 #   Handle traffic                                             #
@@ -829,13 +871,11 @@ assign commoncostfactor
 assign costfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
-	add										# surface and smoothness cost times speed limit cost
-		sub
+	add										# surface and smoothness cost times speed limit cost.
+		sub									#  If not in a speed limit, this results in surface cost
 			multiply
 				speedpenaltyfactor 
-				add 
-					1
-					mean_surface_smoothness_cost
+				add 1 surfacesmoothnesscost
 		1
 		trafficpenalty						# traffic cost
 	
@@ -844,12 +884,10 @@ assign uphillcostfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
 	add 									# surface and smoothness cost times speed limit cost
-		sub 
+		sub 								#  If not in a speed limit, this results in surface cost
 			multiply 
 				speedpenaltyuphillfactor 
-				add 
-					1
-					mean_surface_smoothness_cost
+				add 1 surfacesmoothnesscost
 		1
 		trafficpenaltyuphill				# traffic cost
 		
@@ -858,12 +896,10 @@ assign downhillcostfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
 	add 									# surface and smoothness cost times speed limit cost
-		sub 
+		sub 								#  If not in a speed limit, this results in surface cost
 			multiply 
 				speedpenaltydownhillfactor 
-				add 
-					1
-					mean_surface_smoothness_cost	
+				add 1 surfacesmoothnesscost
 		1
 		trafficpenaltydownhill				# traffic cost
 	
