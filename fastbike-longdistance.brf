@@ -34,6 +34,8 @@ assign	 AllowFerries			false		# %AllowFerries% 		| ferries might be used | boole
 assign  ConsiderElevation		true		# %ConsiderElevation% 	| elevation will be considered | boolean
 assign  SlopeMax				8.0			# %SlopeMax% 			| maximum allowed slope (soft limit) | number
 
+# time optimallity parameter
+assign  TimeOptimallityFacotor  0.75        # %TimeOptimallityFacotor%  | Factor to include time optimality into route. 0 -- only energy optimized, 1 -- as time optimized as possible | number
 
 
 ################################################################
@@ -107,6 +109,134 @@ assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
 assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
 assign elevationpenaltybuffer	5
 assign elevationmaxbuffer		10
+
+################################################################
+#   Speed Calculation Formulas                                 #
+################################################################
+# Source: http://www.kreuzotter.de/deutsch/speed.htm
+#
+# Surface Angle:
+#---------------------------------------------------------------
+# 	beta = atan(slope/100)
+# with:
+# 	slope - Slope of surface in % 
+#
+# Can be linearized for |slope| <= 17% as
+# 	beta = slope/100
+# with an linearization error of less than 1% 
+# 
+#
+# Rolling Resistance:
+#---------------------------------------------------------------
+# 	Fr = g * m * Cr * cos(beta)
+# with:
+# 	g    - Gravity
+# 	m    - mass of bike & rider
+# 	Cr   - rolling resistance coefficiont
+# 	beta - surface angle
+# 
+# Can be linearized for |beta| <= 8° or |slope| <= 14%
+# 	Fr = g * m * Cr 
+# with an linearization error of less than 1%. 
+#
+#
+# Gravity Force:
+#---------------------------------------------------------------
+# 	Fg = g * m * sin(beta)
+# with:
+# 	g    - Gravity
+# 	m    - mass of bike & rider
+# 	beta - surface angle
+# 
+# Can be linearized for |slope| <= 14%
+# 	Fg = g * m * slope/100
+# with an linearization error of less than 1%. 
+#
+#
+# Air Resistance
+#---------------------------------------------------------------
+# 	Fa = 0.5 * rho * A * cw * v^2
+# with:
+# 	rho - air density (kg/m^3)
+# 	A   - cross sectional area
+# 	cw  - drag coefficient
+# 	v   - speed
+#
+# Can be simplified as 
+# 	Fa = 0.5 * rho * Ae * v^2
+# with:
+# 	rho - air density (kg/m^3)
+# 	Ae  - effective cross sectional area (A*cw)
+# 	v   - speed
+# 
+#
+# All together
+#---------------------------------------------------------------
+# 	P * n = v * ( Fr + Fg + Fa(v^2) ) 
+# with:
+# 	n - efficiency of the mechanical power transmission
+#
+#
+# Further Notes
+#---------------------------------------------------------------
+# - there might be an additional viscous damping (proportianal to the speed)
+#
+#
+# Typical Diagram for Speed over Slope
+#---------------------------------------------------------------
+# Ae = 0,6005m^2
+# P  = 165W
+# Cr = 0,0029
+# m  = 100kg
+#
+#                                         ^                                     
+# *.                                   62 | km/h                                
+#---`*_-----------------------------------|-------------------------------------
+#      `.                              58 | km/h                                
+#        `*.                              |                                     
+#           `*_                        54 | km/h                                
+#              `.                         |                                     
+#                `*.                   50 | km/h                                
+#                   `.                    |                                     
+#                     *.               46 | km/h                                
+#                       `*_               |                                     
+#                          `.          42 | km/h                                
+#----------------------------`_-----------|-------------------------------------
+#                              `.      38 | km/h                                
+#                                `_       |                                     
+#                                  `.  34 | km/h                                
+#                                    `_   |                                     
+#                                      `. | km/h                                
+#                                        .|                                     
+#                                      26 *.                                    
+#                                         | *                                   
+#                                      22 |  `*                                 
+#-----------------------------------------|----`.-------------------------------
+#                                      18 | km/h `*.                            
+#                                         |         `*_                         
+#                                      14 | km/h       `.                       
+#                                         |              `*.                    
+#                                      10 | km/h            ``*..._             
+#                                         |                        ```*..._     
+#                                       6 | km/h                           ```- 
+#                                         |                                     
+#                                       2 | km/h                                
+#-+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+>
+#-10%-9% -8% -7% -6% -5% -4% -3% -2% -1%  0%  1%  2%  3%  4%  5%  6%  7%  8%  9%
+#                                       Slope                                   
+# 
+# 
+# Strategy
+#---------------------------------------------------------------
+# Strategy is to see an increased rolling resistance as an increased slope. This
+# is possible since (linearized)
+# 			Fr	=	Fg
+# 	g * m * Cr	=	g * m * slope/100
+# with
+# 	slope = Cr*100
+#
+# For linear slope dependency, the interpolation points will be computed with
+# the linearized downhill function
 
 
 ---context:way   # following code refers to way-tags
@@ -207,94 +337,7 @@ assign badoneway =
 		if 		( oneway=-1												) then true
 		else false	
 
-################################################################
-#   Max allowed speed                                          #
-################################################################
 
-# The maximum allowed speed is used for traffic cost calculation and for routing 
-# in case of lower allowed speed than reachable speed on the bike
-
-# km/h
-assign maxspeedbackward
-		switch maxspeed:backward=10		 10
-		switch maxspeed:backward=20		 20
-		switch maxspeed:backward=30		 30
-		switch maxspeed:backward=40		 40
-		switch maxspeed:backward=50		 50
-		switch maxspeed:backward=60		 60	
-		switch maxspeed:backward=70		 70
-		switch maxspeed:backward=80		 80
-		switch maxspeed:backward=90		 90
-		switch maxspeed:backward=100	100
-		switch maxspeed:backward=110	110
-		switch maxspeed:backward=120	120
-		switch maxspeed:backward=130	130
-		switch maxspeed:backward=urban	 50		
-		switch maxspeed:backward=rural	100
-										999		
-
-# km/h	
-assign maxspeedforward
-		switch maxspeed:forward=10		 10
-		switch maxspeed:forward=20		 20
-		switch maxspeed:forward=30		 30
-		switch maxspeed:forward=40		 40
-		switch maxspeed:forward=50		 50
-		switch maxspeed:forward=60		 60	
-		switch maxspeed:forward=70		 70
-		switch maxspeed:forward=80		 80
-		switch maxspeed:forward=90		 90
-		switch maxspeed:forward=100		100
-		switch maxspeed:forward=110		110
-		switch maxspeed:forward=120		120
-		switch maxspeed:forward=130		130
-		switch maxspeed:forward=urban	 50		
-		switch maxspeed:forward=rural	100
-										999	
-
-# km/h
-assign maxspeed
-        min    70                                       # Max wanted speed on a road bike :-) 
-		switch and not reversedirection=yes lesser maxspeedforward  999		maxspeedforward
-		switch and     reversedirection=yes lesser maxspeedbackward 999		maxspeedbackward
-		switch maxspeed=10							 10
-		switch maxspeed=20							 20
-		switch maxspeed=30							 30
-		switch maxspeed=40							 40
-		switch maxspeed=50							 50
-		switch maxspeed=60							 60	
-		switch maxspeed=70							 70
-		switch maxspeed=80							 80
-		switch maxspeed=90							 90
-		switch maxspeed=100							100
-		switch maxspeed=110							110
-		switch maxspeed=120							120
-		switch maxspeed=130							130
-		switch maxspeed=urban						 50		
-		switch maxspeed=rural						100	
-		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
-		switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
-		switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
-		switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
-		switch highway=primary|primary_link     	100 # Bundesstraßen und Auffahrten
-		switch highway=secondary|secondary_link 	100 # Landstraßen und Auffahrten
-		switch highway=tertiary|tertiary_link   	100 # Kreisstraßen und Auffahrten
-		switch highway=unclassified       			 50 # Dorfstraßen
-		switch highway=residential 					 30 # Wohnstraße
-		switch highway=service                  	 30 # Zugangsstraßen
-		switch highway=living_street 				 15 # Spielstraße
-		switch highway=pedestrian   				  4 # Fußgängerzone
-		switch highway=bridleway                	  5 # Reit- und Fußweg
-		switch highway=cycleway                 	 30 # Radweg
-		switch highway=footway  					  5 # Gehweg
-		switch highway=path  					    999 # Pfad
-		switch highway=track 						999 # Feldweg
-		switch highway=road							999 # unbekannter Typ
-		switch route=ferry                      	 10 # Fähren
-		switch highway=steps                    	  2 # Treppen
-													999 # Default (unknown max speed)
-													
-													
 ################################################################
 #   Store if node access is granted independently of node type #
 ################################################################
@@ -304,8 +347,8 @@ assign maxspeed
 # the "node" context
 assign nodeaccessgranted 
 	or any_cycleroute 
-	   lcn=yes
-	   
+		lcn=yes
+
 
 ################################################################
 #   Access Costs                                               #
@@ -343,6 +386,7 @@ assign ispushing
 	switch and footaccess not bikeaccess	true
 	switch highway=steps 					true
 											false
+
 
 ################################################################
 #   Handle different surfaces                                  #
@@ -401,7 +445,7 @@ assign   PavingUnsureCost       GroundCost
 # cost factors
 assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
     # 
-    # Use cycleway surface with highest priority, since we sue cycleways if 
+    # Use cycleway surface with highest priority, since we use cycleways if 
     # available
     switch cycleway:surface=asphalt         0.0
     switch cycleway:surface=concrete|paved  ConcreteCost
@@ -496,7 +540,95 @@ assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.
 assign mean_surface_smoothness_cost
 	multiply 0.5 add surfacecost smoothnesscost
 
-		
+
+################################################################
+#   Max allowed speed                                          #
+################################################################
+
+# The maximum allowed speed is used for traffic cost calculation and for routing 
+# in case of lower allowed speed than reachable speed on the bike
+
+# km/h
+assign maxspeedbackward
+		switch maxspeed:backward=10		 10
+		switch maxspeed:backward=20		 20
+		switch maxspeed:backward=30		 30
+		switch maxspeed:backward=40		 40
+		switch maxspeed:backward=50		 50
+		switch maxspeed:backward=60		 60	
+		switch maxspeed:backward=70		 70
+		switch maxspeed:backward=80		 80
+		switch maxspeed:backward=90		 90
+		switch maxspeed:backward=100	100
+		switch maxspeed:backward=110	110
+		switch maxspeed:backward=120	120
+		switch maxspeed:backward=130	130
+		switch maxspeed:backward=urban	 50		
+		switch maxspeed:backward=rural	100
+										999		
+
+# km/h	
+assign maxspeedforward
+		switch maxspeed:forward=10		 10
+		switch maxspeed:forward=20		 20
+		switch maxspeed:forward=30		 30
+		switch maxspeed:forward=40		 40
+		switch maxspeed:forward=50		 50
+		switch maxspeed:forward=60		 60	
+		switch maxspeed:forward=70		 70
+		switch maxspeed:forward=80		 80
+		switch maxspeed:forward=90		 90
+		switch maxspeed:forward=100		100
+		switch maxspeed:forward=110		110
+		switch maxspeed:forward=120		120
+		switch maxspeed:forward=130		130
+		switch maxspeed:forward=urban	 50		
+		switch maxspeed:forward=rural	100
+										999	
+
+# km/h
+assign maxspeed
+        min    70                                       # Max wanted speed on a road bike :-) 
+		switch and not reversedirection=yes lesser maxspeedforward  999		maxspeedforward
+		switch and     reversedirection=yes lesser maxspeedbackward 999		maxspeedbackward
+		switch maxspeed=10							 10
+		switch maxspeed=20							 20
+		switch maxspeed=30							 30
+		switch maxspeed=40							 40
+		switch maxspeed=50							 50
+		switch maxspeed=60							 60	
+		switch maxspeed=70							 70
+		switch maxspeed=80							 80
+		switch maxspeed=90							 90
+		switch maxspeed=100							100
+		switch maxspeed=110							110
+		switch maxspeed=120							120
+		switch maxspeed=130							130
+		switch maxspeed=urban						 50		
+		switch maxspeed=rural						100	
+		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
+		switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
+		switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
+		switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
+		switch highway=primary|primary_link     	100 # Bundesstraßen und Auffahrten
+		switch highway=secondary|secondary_link 	100 # Landstraßen und Auffahrten
+		switch highway=tertiary|tertiary_link   	100 # Kreisstraßen und Auffahrten
+		switch highway=unclassified       			 50 # Dorfstraßen
+		switch highway=residential 					 30 # Wohnstraße
+		switch highway=service                  	 30 # Zugangsstraßen
+		switch highway=living_street 				 15 # Spielstraße
+		switch highway=pedestrian   				  4 # Fußgängerzone
+		switch highway=bridleway                	  5 # Reit- und Fußweg
+		switch highway=cycleway                 	 30 # Radweg
+		switch highway=footway  					  5 # Gehweg
+		switch highway=path  					    999 # Pfad
+		switch highway=track 						999 # Feldweg
+		switch highway=road							999 # unbekannter Typ
+		switch route=ferry                      	 10 # Fähren
+		switch highway=steps                    	  2 # Treppen
+													999 # Default (unknown max speed)
+
+
 ################################################################
 #   Handle speed                                               #
 ################################################################
@@ -507,13 +639,13 @@ assign bikespeeduphill		div SlopeMaxUphillSpeed		add 1 mean_surface_smoothness_c
 assign bikespeeddownhill	div SlopeMaxDownhillSpeed	add 1 mean_surface_smoothness_cost
 
 
-# routing should be done time optimal
+# routing should be at least partially done time optimal
 #
 # I know, that this way of computing is not completely correct, but I do not know any better solution in brouter
 #
-assign speedpenalty			sub max 1 div bikespeed 		maxspeed 1
-assign speedpenaltyuphill	sub max 1 div bikespeeduphill	maxspeed 1
-assign speedpenaltydownhill	sub max 1 div bikespeeddownhill	maxspeed 1
+assign speedpenaltyfactor			add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeed         maxspeed 1
+assign speedpenaltyuphillfactor		add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeduphill   maxspeed 1
+assign speedpenaltydownhillfactor	add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeddownhill maxspeed 1
 
 ################################################################
 #   Handle traffic                                             #
@@ -688,7 +820,6 @@ assign commoncostfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add 1									# one is the minimum cost
 	add max onewaypenalty accesspenalty		# oneway and access penalty
-	add mean_surface_smoothness_cost		# surface and smoothness cost
 	add highwaycost							# cost for different types of highway
 	add	onewaycost							# cost for cycling against oneways for cars only
 		cycleroutefavor						# (negative) cost for cycleroutes
@@ -698,21 +829,42 @@ assign commoncostfactor
 assign costfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
-	add speedpenalty						# speed limit cost
+	add										# surface and smoothness cost times speed limit cost
+		sub
+			multiply
+				speedpenaltyfactor 
+				add 
+					1
+					mean_surface_smoothness_cost
+		1
 		trafficpenalty						# traffic cost
 	
 # for uphill terrain
 assign uphillcostfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
-	add speedpenaltyuphill					# speed limit cost
+	add 									# surface and smoothness cost times speed limit cost
+		sub 
+			multiply 
+				speedpenaltyuphillfactor 
+				add 
+					1
+					mean_surface_smoothness_cost
+		1
 		trafficpenaltyuphill				# traffic cost
 		
 # for downhill terrain		
 assign downhillcostfactor
 	min 9999								# make sure that costfactor is less or equal 9999
 	add commoncostfactor					# common cost independently of slope
-	add speedpenaltydownhill				# speed limit cost
+	add 									# surface and smoothness cost times speed limit cost
+		sub 
+			multiply 
+				speedpenaltydownhillfactor 
+				add 
+					1
+					mean_surface_smoothness_cost	
+		1
 		trafficpenaltydownhill				# traffic cost
 	
 ################################################################
@@ -747,9 +899,7 @@ assign initialcost =
 # The faster you go, the less you want to turn because thet means deceleration
 #
 assign turncost = if junction=roundabout then 0
-                  else div
-                    TurnCostValue
-                    add 1 add mean_surface_smoothness_cost speedpenalty
+                  else TurnCostValue
 
 	   
 ################################################################
