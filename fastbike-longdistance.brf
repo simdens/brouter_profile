@@ -31,8 +31,11 @@ assign 	 StickToCycleRoute		true		# %StickToCycleRoute% 		| cycle routes will be
 assign	 AllowFerries			false		# %AllowFerries% 			| ferries might be used | boolean
 				
 # elevation cost parameters
-assign  ConsiderElevation		true		# %ConsiderElevation% 		| elevation will be considered | boolean
-assign  SlopeMax				8.0			# %SlopeMax% 				| maximum allowed slope (up & downhill, soft limit) | number
+assign	ConsiderElevation		true		# %ConsiderElevation% 		| elevation will be considered | boolean
+assign	SlopeMax				8.0			# %SlopeMax% 				| maximum allowed slope (up & downhill, soft limit) | number
+
+# traffic cost
+assign	TrafficVehicleCost		25			# %TrafficVehicleCost%		| Cost (in meter) per overtaking vehicle
 
 # time optimallity parameter
 assign  TimeOptimallityFacotor  0.75        # %TimeOptimallityFacotor%	| Factor to include time optimality into route. 0 -- energy optimized, 1 -- time optimized | number
@@ -674,7 +677,7 @@ assign bikespeeddownhill	add
 assign bikespeeduphill		max
 								0
 								add	
-									0 	# speed is chosen to be 0km/h at +10% slope. This results in the good linear approximation of the speed-over-slope curve
+									0 	# speed is chosen to be 0km/h at +10% slope. This results in the better linear approximation of the speed-over-slope curve
 									multiply
 										UphilldVdSlope
 										sub
@@ -693,50 +696,33 @@ assign speedpenaltydownhillfactor	add 1 multiply TimeOptimallityFacotor sub max 
 #   Handle traffic                                             #
 ################################################################
 
-# actual speed of vehicles will be estimated by the minimum of the taged max speed and some estimations (for Germany)
-assign vehiclespeed
-	min maxspeed	
-	switch highway=motorway|motorway_link   130	# Autobahn (BAB) und Auffahrten
-	switch motorroad=yes					130	# Kraftfahrstraße (wie BAB)
-	switch highway=trunk|trunk_link      	120	# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link     100	# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link  90	# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link    80	# Kreisstraßen und Auffahrten
-	switch highway=unclassified       		 40	# Dorfstraßen	  
-	switch highway=residential 				 30	# Wohnstraße
-	switch highway=service                   20	# Zugangsstraßen
-	switch highway=living_street 			 10	# Spielstraße
-											  0 # Default (no street for vehicle)
-	
-
 # Remark: current DTV in Baden-Württemberg (Germany)
-# Bundestraße:	14263 vehicle/day	-- https://www.bast.de/BASt_2017/DE/Statistik/Verkehrsdaten/2015/Fahrleistungen-2015.pdf?__blob=publicationFile&v=6
-# Landstraße:	 4718 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-l-str.pdf
-# Kreisstraße:	 2309 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-k-str.pdf
+# Schnellstraße:
+# Bundestraße:		14263 vehicle/day	-- https://www.bast.de/BASt_2017/DE/Statistik/Verkehrsdaten/2015/Fahrleistungen-2015.pdf?__blob=publicationFile&v=6
+# Landstraße:		 4718 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-l-str.pdf
+# Kreisstraße:		 2309 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-k-str.pdf
 # Dorfstraße:
 # Wohnstraße:
 
-# traffic estimation due to different kind of ways
-# cost are normalized costs for one specific case: speed difference between vehicles and bike is seen as 30km/h (50km/h vehicles and 20km/h bike).
-# Other speed differences are scaled accordingly later on
-assign trafficcost_way	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values	
-	switch highway=trunk|trunk_link      	    1.2		# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link     	0.6		# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link 	0.2		# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   	0.1		# Kreisstraßen und Auffahrten
-	switch highway=unclassified       			0.0		# Dorfstraßen	  
-	switch highway=residential 					0.0		# Wohnstraße
-	switch highway=service                  	0.0 	# Zugangsstraßen
-	switch highway=living_street 				0.0		# Spielstraße
-	switch highway=pedestrian   				0.0		# Fußgängerzone
-	switch highway=bridleway                	0.0		# Reit- und Fußweg
-	switch highway=cycleway                 	0.0		# Radweg
-	switch highway=footway  					0.0		# Gehweg
-	switch highway=path  						0.0		# Pfad 
-	switch highway=track 						0.0		# Feldweg
-	switch highway=road							0.0		# unbekannter Typ
-												0.0		# Default	
-
+# get vehicles per hour for different kind of ways
+assign traffic_per_highway
+	switch highway=trunk|trunk_link				1189	# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link			 594	# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link		 197	# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link		  96	# Kreisstraßen und Auffahrten
+	switch highway=unclassified					   0	# Dorfstraßen	  
+	switch highway=residential					   0	# Wohnstraße
+	switch highway=service						   0	# Zugangsstraßen
+	switch highway=living_street				   0	# Spielstraße
+	switch highway=pedestrian					   0	# Fußgängerzone
+	switch highway=bridleway					   0	# Reit- und Fußweg
+	switch highway=cycleway						   0	# Radweg
+	switch highway=footway						   0	# Gehweg
+	switch highway=path							   0	# Pfad 
+	switch highway=track 						   0	# Feldweg
+	switch highway=road							   0	# unbekannter Typ
+												   0	# Default	
+												   
 # Different traffic classes
 # Source -- https://forum.openstreetmap.org/viewtopic.php?id=31044
 # Quote:
@@ -750,40 +736,65 @@ assign trafficcost_way	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetma
 # summe > 160000   estimated_traffic_class=6
 # summe > 320000   estimated_traffic_class=7
 #
+# Traffic per hour dependency with traffic class is only a feeling without any
+# data proving this values
+assign traffic_per_class
+	switch estimated_traffic_class=7	4224
+	switch estimated_traffic_class=6	2112
+	switch estimated_traffic_class=5	1056
+	switch estimated_traffic_class=4	 528
+	switch estimated_traffic_class=3	 264
+	switch estimated_traffic_class=2	 132
+	switch estimated_traffic_class=1	  66
+										   0
 
-# cost are normalized costs: speed difference between vehicles and bike is seen as 30km/h (50km/h vehicles and 20km/h bike).
-# Smaller speed differences are scaled accordingly
-assign trafficcost_classes
-	if      estimated_traffic_class=1   then 0.1
-	else if estimated_traffic_class=2   then 0.2
-	else if estimated_traffic_class=3   then 0.4
-	else if estimated_traffic_class=4   then 0.8
-	else if estimated_traffic_class=5	then 1.6
-	else if estimated_traffic_class=6	then 3.2
-	else if estimated_traffic_class=7	then 6.4
-	else                                     0
+assign traffic div add traffic_per_class traffic_per_highway 2
 
-# Mean cost for both traffic indicators. 
-# Traffic indicator by way class is weighted double
-assign trafficostmean div add trafficcost_classes multiply 2 trafficcost_way 3
+
+# actual speed of vehicles will be estimated by the minimum of the taged max allowed speed and some estimations (for Germany)
+assign vehiclespeed
+	min maxallowedspeedspeed	
+	switch highway=motorway|motorway_link   130	# Autobahn (BAB) und Auffahrten
+	switch motorroad=yes					130	# Kraftfahrstraße (wie BAB)
+	switch highway=trunk|trunk_link      	120	# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link     100	# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link  90	# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link    80	# Kreisstraßen und Auffahrten
+	switch highway=unclassified       		 40	# Dorfstraßen	  
+	switch highway=residential 				 30	# Wohnstraße
+	switch highway=service                   20	# Zugangsstraßen
+	switch highway=living_street 			 10	# Spielstraße
+											  0 # Default (no street for vehicle)
+
+
+# Compute overtaking vehicles per meter depending on bike speed
+assign bikespeedfortraffic         = max bikespeed         4	# use at least walking speed (4km/h pushing). Otherwise it might result in a div by zero error.
+assign bikespeedfortrafficuphill   = max bikespeeduphill   4
+assign bikespeedfortrafficdownhill = max bikespeeddownhill 4
+assign overtakingsperhour          = div max 0 sub vehiclespeed bikespeedfortraffic         vehiclespeed
+assign overtakingsperhouruphill    = div max 0 sub vehiclespeed bikespeedfortrafficuphill   vehiclespeed
+assign overtakingsperhourdownhill  = div max 0 sub vehiclespeed bikespeedfortrafficdownhill vehiclespeed
+assign overtakingspermeter         = div overtakingsperhour         multiply 1000 bikespeedfortraffic
+assign overtakingspermeteruphill   = div overtakingsperhouruphill   multiply 1000 bikespeedfortrafficuphill
+assign overtakingspermeterdownhill = div overtakingsperhourdownhill multiply 1000 bikespeedfortrafficdownhill
+
 
 # Treat traffic penalty differently for cycling lanes		
-assign trafficostraw 
-	multiply trafficostmean 
+assign trafficvehiclecostscaled 
+	multiply 0.925 multiply TrafficVehicleCost 			# Multiplication with 0.925 to get a better linear approximation of the trafficcost-over-slope curve
 		switch hascycleway_track	0.00
 		switch hascycleway 			0.5 
 									1.0
 
-# Scale traffic cost to speed differences 
-assign trafficpenalty 			multiply trafficostraw max 0 div sub vehiclespeed bikespeed			30	
-assign trafficpenaltyuphill 	multiply trafficostraw max 0 div sub vehiclespeed bikespeeduphill	30
-assign trafficpenaltydownhill 	multiply trafficostraw max 0 div sub vehiclespeed bikespeeddownhill	30
+# Compute traffic cost
+assign trafficcost 			multiply overtakingspermeter         trafficvehiclecostscaled
+assign trafficcostuphill 	multiply overtakingspermeteruphill   trafficvehiclecostscaled
+assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclecostscaled
 
 
 ################################################################
 #   Handle different kinds of ways                             #
 ################################################################
-
 
 # here only costs not handled by the other parts are applied
 assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
@@ -877,7 +888,7 @@ assign costfactor
 				speedpenaltyfactor 
 				add 1 surfacesmoothnesscost
 		1
-		trafficpenalty						# traffic cost
+		trafficcost							# traffic cost
 	
 # for uphill terrain
 assign uphillcostfactor
@@ -889,7 +900,7 @@ assign uphillcostfactor
 				speedpenaltyuphillfactor 
 				add 1 surfacesmoothnesscost
 		1
-		trafficpenaltyuphill				# traffic cost
+		trafficcostuphill					# traffic cost
 		
 # for downhill terrain		
 assign downhillcostfactor
@@ -901,7 +912,7 @@ assign downhillcostfactor
 				speedpenaltydownhillfactor 
 				add 1 surfacesmoothnesscost
 		1
-		trafficpenaltydownhill				# traffic cost
+		trafficcostdownhill					# traffic cost
 	
 ################################################################
 #   Initial Costs                                              #
