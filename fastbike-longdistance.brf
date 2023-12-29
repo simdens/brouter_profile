@@ -24,7 +24,8 @@
 assign   SystemWeight			100			# %SystemWeight% 			| weight of system (bike+cyclist+luggage) in kg | number
 assign   NominalPower			165			# %NominalPower% 			| continuous available power of cyclist in Watts | number
 assign	 NominalSpeed			26.3		# %NominalSpeed% 			| nominal speed in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
-assign   DownhillSpeed  		62.5		# %DownhillSpeed% 			| speed for downhills with 10% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
+assign   DownhillSpeed			56.1		# %DownhillSpeed% 			| speed for downhills with -8% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
+assign   UphillSpeed			 7.0		# %UphillSpeed% 			| speed for uphills with +8% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
 
 # additional cost for different kind of transportation
 assign 	 StickToCycleRoute		true		# %StickToCycleRoute% 		| cycle routes will be preferred | boolean
@@ -47,23 +48,8 @@ assign processUnusedTags            = false # %processUnusedTags%		| Set true to
 #   Constants                                                  #
 ################################################################
 
-# Turn instruction settings
-assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
-assign turnInstructionCatchingRange = 40    # %turnInstructionCatchingRange% | Within this distance (in m) several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
-assign turnInstructionRoundabouts   = true  # %turnInstructionRoundabouts% | Set "false" to avoid generating special turning instructions for roundabouts | boolean
-assign considerTurnRestrictions     = true  # %considerTurnRestrictions% | Set true to take turn restrictions into account | boolean		
-
-# constants for brouter algorithm
-assign pass1coefficient		1.5
-assign pass2coefficient		0
-
 # set that this is a bike profile
 assign validForBikes       	1
-
-# classifier constants
-assign classifier_none     	1
-assign classifier_pushing  	2
-assign classifier_ferry    	3
 
 # way cost constants
 assign IntialPushCost	50									# cost to dismount from bike
@@ -85,6 +71,21 @@ assign S_C_x      = 0.576  			# drag coefficient times the reference area in m^2
 assign C_r        = 0.0046 			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance http://www.kreuzotter.de/deutsch/speed.htm
 assign bikerPower = NominalPower
 assign totalMass  = SystemWeight 
+
+# Turn instruction settings
+assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
+assign turnInstructionCatchingRange = 40    # %turnInstructionCatchingRange% | Within this distance (in m) several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
+assign turnInstructionRoundabouts   = true  # %turnInstructionRoundabouts% | Set "false" to avoid generating special turning instructions for roundabouts | boolean
+assign considerTurnRestrictions     = true  # %considerTurnRestrictions% | Set true to take turn restrictions into account | boolean		
+
+# constants for brouter algorithm
+assign pass1coefficient		1.5
+assign pass2coefficient		0
+
+# classifier constants
+assign classifier_none     	1
+assign classifier_pushing  	2
+assign classifier_ferry    	3
 
 
 ################################################################
@@ -656,12 +657,12 @@ assign DownhilldVdSlope		div
 								sub 
 									NominalSpeed
 									DownhillSpeed
-								10
+								8
 assign UphilldVdSlope		div
 								sub
-									0
+									UphillSpeed
 									NominalSpeed
-								10
+								8
 assign bikespeed			add
 								NominalSpeed 
 								multiply
@@ -672,17 +673,17 @@ assign bikespeeddownhill	add
 								multiply
 									DownhilldVdSlope
 									sub
-										10
+										8
 										SlopeMax
 assign bikespeeduphill		max
 								0
 								add	
-									0 	# speed is chosen to be 0km/h at +10% slope. This results in the better linear approximation of the speed-over-slope curve
+									UphillSpeed
 									multiply
 										UphilldVdSlope
 										sub
 											SlopeMax
-											10
+											8
 
 
 # routing should be at least partially done time optimal
