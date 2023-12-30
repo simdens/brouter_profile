@@ -1,9 +1,7 @@
-################################################################
-#          A BRouter profile suited for a road bike            #
-#          for long distance travels                           #
-#                                                              #
-#          Avoids bad surfaces, hills and high traffic         #
-################################################################
+################################################################################
+# A BRouter profile suited for a road bike long distance travels               #
+# Avoids bad surfaces, hills and high traffic                                  #
+################################################################################
 
 # Some of the profile is inspired by:
 # - default profiles of brouter  
@@ -11,42 +9,46 @@
 # - trekking profile by poutnikl
 #   https://github.com/poutnikl/Brouter-profiles
 
-################################################################
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# !! the forked version of brouter by simdens is needed     !! #
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-################################################################
+################################################################################
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+# !!           the forked version of brouter by simdens is needed           !! #
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+################################################################################
 
 ---context:global   # following code refers to global config
 
 # user parameters
 # those parameters are used to compute elevation costs
-assign   SystemWeight			100			# %SystemWeight% 			| weight of system (bike+cyclist+luggage) in kg | number
-assign   NominalPower			165			# %NominalPower% 			| continuous available power of cyclist in Watts | number
-assign	 NominalSpeed			26.3		# %NominalSpeed% 			| nominal speed in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
-assign   DownhillSpeed			56.1		# %DownhillSpeed% 			| speed for downhills with -8% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
-assign   UphillSpeed			 7.0		# %UphillSpeed% 			| speed for uphills with +8% slope in km/h -- http://www.kreuzotter.de/deutsch/speed.htm | number
+assign	m							100		# %System Weight%					| weight of system (bike+cyclist+luggage) in kg | number
+assign	P							165		# %Nominal Power%					| continuous available power of cyclist in Watts | number
 
 # additional cost for different kind of transportation
-assign 	 StickToCycleRoute		true		# %StickToCycleRoute% 		| cycle routes will be preferred | boolean
-assign	 AllowFerries			false		# %AllowFerries% 			| ferries might be used | boolean
-				
+assign 	StickToCycleRoute			true	# %Stick To CycleRoute%				| cycle routes will be preferred | boolean
+assign	AllowFerries				false	# %Allow Ferries%					| ferries might be used | boolean
+
 # elevation cost parameters
-assign	ConsiderElevation		true		# %ConsiderElevation% 		| elevation will be considered | boolean
-assign	SlopeMax				8.0			# %SlopeMax% 				| maximum allowed slope (up & downhill, soft limit) | number
+assign	ConsiderElevation			true	# %Consider Elevation% 				| elevation will be considered | boolean
+assign	SlopeMax					8.0		# %Slope Max% 						| maximum allowed slope (up & downhill, soft limit) | number
 
 # traffic cost
-assign	TrafficVehicleCost		25			# %TrafficVehicleCost%		| Cost (in meter) per overtaking vehicle
+assign	TrafficVehicleCost			25		# %Traffic Vehicle Cost%			| Cost (in meter) per overtaking vehicle
 
 # time optimallity parameter
-assign  TimeOptimallityFacotor  0.75        # %TimeOptimallityFacotor%	| Factor to include time optimality into route. 0 -- energy optimized, 1 -- time optimized | number
+assign	TimeOptimalityFactor		0.75	# %Time Optimality Factor%			| Factor to consider travel time. 0 -- energy optimized, 1 -- time optimized | number
 
 # for debug
-assign processUnusedTags            = false # %processUnusedTags%		| Set true to output unused tags in data tab | boolean
+assign	processUnusedTags			false	# %Process Unused Tags%				| Set true to output unused tags in data tab | boolean
 
-################################################################
-#   Constants                                                  #
-################################################################
+# Turn instruction settings
+assign turnInstructionMode			1		# %turnInstructionMode%				| Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
+assign turnInstructionCatchingRange	40		# %turnInstructionCatchingRange%	| Within this distance (in m) several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
+assign turnInstructionRoundabouts	true	# %turnInstructionRoundabouts%		| Set "false" to avoid generating special turning instructions for roundabouts | boolean
+assign considerTurnRestrictions		true	# %considerTurnRestrictions%		| Set true to take turn restrictions into account | boolean		
+
+
+################################################################################
+#   Constants                                                                  #
+################################################################################
 
 # set that this is a bike profile
 assign validForBikes       	1
@@ -56,27 +58,33 @@ assign IntialPushCost	50									# cost to dismount from bike
 assign pushcost			sub div NominalSpeed 4 1			# additional cost for 4km/h walking/pushing pace
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
 
-# elevation parameter constants
-assign DownhillMaxSlopeAdditionalCost	 50	# additional cost per vertical meter for slope larger than "slopemax"
-assign UphillMaxSlopeAdditionalCost  	100	# additional cost per vertical meter for slope larger than "slopemax"
-
 # node cost constants
 assign	SpeedBumpCost			10
 assign	TrafficSignalCost		50
 assign	TurnCostValue		   175
 
-# Kinematic model parameters (travel time computation)
-assign maxSpeed   = 45     			# absolute maximum speed in km/h for travel time computation
-assign S_C_x      = 0.576  			# drag coefficient times the reference area in m^2 for travel time computation -- http://www.kreuzotter.de/deutsch/speed.htm
-assign C_r        = 0.0046 			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance http://www.kreuzotter.de/deutsch/speed.htm
-assign bikerPower = NominalPower
-assign totalMass  = SystemWeight 
+# elevation parameter constants
+assign DownhillMaxSlopeAdditionalCost	 50		# additional cost per vertical meter for slope larger than "slopemax"
+assign UphillMaxSlopeAdditionalCost		100		# additional cost per vertical meter for slope larger than "slopemax"
+assign slopecutoff						  0.5	# slope is ignored if smaller than this threshold
+assign elevationpenaltybuffer			  4
+assign elevationmaxbuffer				  8
 
-# Turn instruction settings
-assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
-assign turnInstructionCatchingRange = 40    # %turnInstructionCatchingRange% | Within this distance (in m) several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
-assign turnInstructionRoundabouts   = true  # %turnInstructionRoundabouts% | Set "false" to avoid generating special turning instructions for roundabouts | boolean
-assign considerTurnRestrictions     = true  # %considerTurnRestrictions% | Set true to take turn restrictions into account | boolean		
+# Kinematic model parameters for Speed calculation
+assign MaxDesiredSpeed	= 70
+assign CwA				=  0.6005	# drag coefficient times the reference area in m^2 for speed calculation -- http://www.kreuzotter.de/deutsch/speed.htm
+assign Cr				=  0.0029	# rolling resistance coefficient (dimensionless) for speed calculation -- http://www.kreuzotter.de/deutsch/speed.htm
+assign Cv				=  0.1		# viscouse damping coefficient (dimensionless) for speed calculation -- http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign rho				=  1.16038	# Air density in kg/m³ for speed calculation @ 20°C & 300m above sea level  -- http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign n				=  0.98		# Efficiency factor of the power transmission of the bike 
+assign g				=  9.81		# Gravity coefficient in N/kg
+
+# Kinematic model parameters for Brouter travel time calculation
+assign maxSpeed   = min MaxDesiredSpeed 45	# absolute maximum speed in km/h for travel time computation
+#assign S_C_x     = CdA  					# drag coefficient times the reference area in m^2 for travel time computation
+assign C_r        = multiply 1.5 Cr			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance 
+assign bikerPower = P
+assign totalMass  = m 
 
 # constants for brouter algorithm
 assign pass1coefficient		1.5
@@ -88,18 +96,17 @@ assign classifier_pushing  	2
 assign classifier_ferry    	3
 
 
-################################################################
-#   Elevation Cost Parameter Calculation                       #
-################################################################
+################################################################################
+#   Elevation Parameter Calculation                                       #
+################################################################################
 
 # compute equivalent length for one meter height
 							#	mass * gravity / power * speed 
 							#   <-------------------->
 							#      height meters / s 
-assign Height2Length		multiply div multiply SystemWeight 9.81 NominalPower div NominalSpeed 3.6
+assign Height2Length		multiply div multiply m g P div NominalSpeed 3.6
 
 # the parameters are renamed in this profile to ease the use of the profile
-assign slopecutoff				0.5												# slope is ignored if smaller than this threshold
 assign uphillcost				switch ConsiderElevation	Height2Length	0	# cost per vertical meter
 assign downhillcost				switch ConsiderElevation	0				0	# cost per vertical meter
 assign elevationbufferreduce	sub SlopeMax slopecutoff
@@ -107,13 +114,13 @@ assign downhillcutoff			slopecutoff
 assign uphillcutoff				slopecutoff
 assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
 assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
-assign elevationpenaltybuffer	4
-assign elevationmaxbuffer		8
 
-################################################################
-#   Speed Calculation Formulas                                 #
-################################################################
-# Source: http://www.kreuzotter.de/deutsch/speed.htm
+
+################################################################################
+#   Speed Parameter Calculation                                                #
+################################################################################
+# compute biker speed for different slopes
+# Source for equations: http://www.kreuzotter.de/deutsch/speed.htm
 #
 # Surface Angle:
 #---------------------------------------------------------------
@@ -170,16 +177,19 @@ assign elevationmaxbuffer		8
 # 	v   - speed
 # 
 #
+# Viscos Damping
+#---------------------------------------------------------------
+# There might be an additional viscos damping (proportianal to the speed) which
+# is estimated with an coefficient of Cv = 0.1
+# 	Fv = Cv * v
+#
 # All together
 #---------------------------------------------------------------
-# 	P * n = v * ( Fr + Fg + Fa(v^2) ) 
+# 	P * n = v * ( Fr + Fg + Fv(v) + Fa(v^2) ) 
 # with:
 # 	n - efficiency of the mechanical power transmission
-#
-#
-# Further Notes
-#---------------------------------------------------------------
-# - there might be an additional viscous damping (proportianal to the speed)
+# Computing the speed v can be done by using Newtons method for root finding:
+# 	0 = v * ( Fr + Fg + Fv(v) + Fa(v^2) ) - P * n
 #
 #
 # Typical Diagram for Speed over Slope
@@ -226,7 +236,7 @@ assign elevationmaxbuffer		8
 #                                       Slope                                   
 # 
 # 
-# Strategy
+# Strategy for changing rolling resistances
 #---------------------------------------------------------------
 # Strategy is to see an increased rolling resistance as an increased slope. This
 # is possible since (linearized)
@@ -239,10 +249,126 @@ assign elevationmaxbuffer		8
 # the linearized downhill function
 
 
+# Computing the biker speed at -8%, 0% and +8% slope with newtons method
+# 	0 !=      - P * n
+#	    + v   * g * m * ( Cr + slope/100)
+#	    + v^2 * Cv
+#	    + v^3 * 0.5 * rho * CwA
+
+assign slope		-8		# DownhillSpeed
+assign v			20		# start value in m/s for root finding 
+# Iteration 1
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 2
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 3
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 4
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 5
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Result
+assign DownhillSpeed v
+
+assign slope		 0				# NominalSpeed
+assign v			DownhillSpeed	# start value in m/s for root finding 
+# Iteration 1
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 2
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 3
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 4
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 5
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Result
+assign NominalSpeed v
+
+assign slope		 8				# UphillSpeed
+# Iteration 1
+# Iteration 1
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 2
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 3
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 4
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Iteration 5
+assign value		add multiply -1 multiply P n	add multiply  v multiply g multiply m add Cr div slope 100
+					add multiply  v multiply v Cv	    multiply  v multiply v multiply v multiply 0.5 multiply rho CwA
+assign derivative	add 0							add multiply  g multiply m add Cr div slope 100
+					add multiply  2 multiply v Cv	    multiply  3 multiply v multiply v multiply 0.5 multiply rho CwA
+assign v			sub v div value derivative
+# Result
+assign UphillSpeed v
+
+
+################################################################################
+# Context Switch ###############################################################
+################################################################################
 ---context:way   # following code refers to way-tags
-################################################################
-#   Determine some logic values for later use                  #
-################################################################
+
+################################################################################
+#   Determine some logic values for later use                                  #
+################################################################################
 
 # Cycleroute
 #---------------------------------------------------------------
@@ -338,9 +464,9 @@ assign badoneway =
 		else false	
 
 
-################################################################
-#   Store if node access is granted independently of node type #
-################################################################
+################################################################################
+#   Store if node access is granted independently of node type                 #
+################################################################################
 
 # if way is part of cycleroute, all nodes can be accessed
 # "nodeaccessgranted" is the only "way" context variable which is available in 
@@ -350,9 +476,9 @@ assign nodeaccessgranted
 		lcn=yes
 
 
-################################################################
-#   Access Costs                                               #
-################################################################
+################################################################################
+#   Access Costs                                                               #
+################################################################################
 
 #
 # if not bike-, but foot-acess, just a moderate penalty,
@@ -388,9 +514,9 @@ assign ispushing
 											false
 
 
-################################################################
-#   Handle different surfaces                                  #
-################################################################
+################################################################################
+#   Handle different surfaces                                                  #
+################################################################################
 
 # Different Rolling resistances for car tires
 #
@@ -541,9 +667,9 @@ assign surfacesmoothnesscost
 	multiply 0.5 add surfacecost smoothnesscost
 
 
-################################################################
-#   Speed                                                      #
-################################################################
+################################################################################
+#   Speed                                                                      #
+################################################################################
 
 # The maximum allowed speed is used for traffic cost calculation and for routing 
 # in case of lower allowed speed than reachable speed on the bike
@@ -688,14 +814,14 @@ assign bikespeeduphill		max
 
 # routing should be at least partially done time optimal
 #
-assign speedpenaltyfactor			add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeed         maxspeed 1
-assign speedpenaltyuphillfactor		add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeduphill   maxspeed 1
-assign speedpenaltydownhillfactor	add 1 multiply TimeOptimallityFacotor sub max 1 div bikespeeddownhill maxspeed 1
+assign speedpenaltyfactor			add 1 multiply TimeOptimalityFactor sub max 1 div bikespeed         maxspeed 1
+assign speedpenaltyuphillfactor		add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeduphill   maxspeed 1
+assign speedpenaltydownhillfactor	add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeddownhill maxspeed 1
 
 
-################################################################
-#   Handle traffic                                             #
-################################################################
+################################################################################
+#   Handle traffic                                                             #
+################################################################################
 
 # Remark: current DTV in Baden-Württemberg (Germany)
 # Schnellstraße:
@@ -793,9 +919,9 @@ assign trafficcostuphill 	multiply overtakingspermeteruphill   trafficvehiclecos
 assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclecostscaled
 
 
-################################################################
-#   Handle different kinds of ways                             #
-################################################################
+################################################################################
+#   Handle different kinds of ways                                             #
+################################################################################
 
 # here only costs not handled by the other parts are applied
 assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
@@ -833,9 +959,9 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 												0.0		# Default
 												
 
-################################################################
-#   Handle miscellaneous costs                                 #
-################################################################
+################################################################################
+#   Handle miscellaneous costs                                                 #
+################################################################################
 
 # for one-ways which are allowed to be accessed in "wrong"
 # direction by bike, add a small penalty to reduce usage of them
@@ -846,9 +972,9 @@ assign onewaycost
 assign cycleroutefavor 
 	switch and StickToCycleRoute any_cycleroute		-0.15	0
 	
-################################################################
-#   Final calculation of cost factor                           #
-################################################################
+################################################################################
+#   Final calculation of cost factor                                           #
+################################################################################
 	
 #
 # calculate the cost-factor, which is the factor
@@ -915,9 +1041,9 @@ assign downhillcostfactor
 		1
 		trafficcostdownhill					# traffic cost
 	
-################################################################
-#   Initial Costs                                              #
-################################################################
+################################################################################
+#   Initial Costs                                                              #
+################################################################################
 
 #
 # for any change in initialclassifier, initialcost is added once
@@ -937,9 +1063,9 @@ assign initialcost =
 															0	   
 
 
-################################################################
-#   Turn Costs                                                 #
-################################################################
+################################################################################
+#   Turn Costs                                                                 #
+################################################################################
 
 # this is the cost (in Meter) for a 90-degree turn
 # The actual cost is calculated as turncost*cos(angle)
@@ -950,9 +1076,9 @@ assign turncost = if junction=roundabout then 0
                   else TurnCostValue
 
 	   
-################################################################
-#   Voice hint generation stuff                                #
-################################################################
+################################################################################
+#   Voice hint generation stuff                                                #
+################################################################################
 
 # way priorities used for voice hint generation
 
@@ -992,9 +1118,9 @@ assign isgoodforcars = if greater priorityclassifier 6 then true
                   else false
 				  
 				  
-################################################################
-#   Save some information for node context                     #
-################################################################
+################################################################################
+#   Save some information for node context                                     #
+################################################################################
 assign isnarrow if highway=path then true else false
 
 ################################################################################
@@ -1004,9 +1130,9 @@ assign isnarrow if highway=path then true else false
 
 
 
-################################################################
-#   Determine some logic values for later use                  #
-################################################################
+################################################################################
+#   Determine some logic values for later use                                  #
+################################################################################
 
 # Access
 #---------------------------------------------------------------
@@ -1039,9 +1165,9 @@ assign footaccess
                         1
 						
 						
-################################################################
+################################################################################
 #   Assign Node Cost                                           #
-################################################################
+################################################################################
 # Assign Cost to node:
 assign initialcost
   switch bikeaccess
