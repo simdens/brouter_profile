@@ -19,32 +19,30 @@
 
 # user parameters
 # those parameters are used to compute elevation costs
-assign	m							100		# %System Weight%					| weight of system (bike+cyclist+luggage) in kg | number
-assign	P							165		# %Nominal Power%					| continuous available power of cyclist in Watts | number
-
-# additional cost for different kind of transportation
-assign 	StickToCycleRoute			true	# %Stick To CycleRoute%				| cycle routes will be preferred | boolean
-assign	AllowFerries				false	# %Allow Ferries%					| ferries might be used | boolean
+assign	SystemWeight				100		# %SystemWeight%					| kg - weight of system (bike+cyclist+luggage) | number
+assign	NominalPower				165		# %NominalPower%					| W - continuous available power of cyclist | number
 
 # elevation cost parameters
-assign	ConsiderElevation			true	# %Consider Elevation% 				| elevation will be considered | boolean
-assign	SlopeMax					8.0		# %Slope Max% 						| maximum allowed slope (up & downhill, soft limit) | number
+assign	SlopeMax					8.0		# %SlopeMax% 						| % - maximum allowed slope (up & downhill, soft limit) | number
+
+# additional cost for different kind of transportation
+assign 	StickToCycleRoute			true	# %StickToCycleRoute%				| cycle routes will be preferred | boolean
+assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
 
 # traffic cost
-assign	TrafficVehicleCost			25		# %Traffic Vehicle Cost%			| Cost (in meter) per overtaking vehicle
+assign	TrafficVehicleCost			25		# %TrafficVehicleCost%				| m - Cost per overtaking vehicle | number
 
 # time optimallity parameter
-assign	TimeOptimalityFactor		0.75	# %Time Optimality Factor%			| Factor to consider travel time. 0 -- energy optimized, 1 -- time optimized | number
-
-# for debug
-assign	processUnusedTags			false	# %Process Unused Tags%				| Set true to output unused tags in data tab | boolean
+assign	TimeOptimalityFactor		0.75	# %TimeOptimalityFactor%			| Factor to consider travel time. 0 -- energy optimized, 1 -- time optimized | number
 
 # Turn instruction settings
 assign turnInstructionMode			1		# %turnInstructionMode%				| Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
-assign turnInstructionCatchingRange	40		# %turnInstructionCatchingRange%	| Within this distance (in m) several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
-assign turnInstructionRoundabouts	true	# %turnInstructionRoundabouts%		| Set "false" to avoid generating special turning instructions for roundabouts | boolean
+assign turnInstructionCatchingRange	40		# %turnInstructionCatchingRange%	| m - Within this distance several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
+assign turnInstructionRoundabouts	true	# %turnInstructionRoundabouts%		| Set false to avoid generating special turning instructions for roundabouts | boolean
 assign considerTurnRestrictions		true	# %considerTurnRestrictions%		| Set true to take turn restrictions into account | boolean		
 
+# for debug
+assign	processUnusedTags			false	# %ProcessUnusedTags%				| Set true to output unused tags in data tab | boolean
 
 ################################################################################
 #   Constants                                                                  #
@@ -55,7 +53,6 @@ assign validForBikes       	1
 
 # way cost constants
 assign IntialPushCost	50									# cost to dismount from bike
-assign pushcost			sub div NominalSpeed 4 1			# additional cost for 4km/h walking/pushing pace
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
 
 # node cost constants
@@ -64,6 +61,7 @@ assign	TrafficSignalCost		50
 assign	TurnCostValue		   175
 
 # elevation parameter constants
+assign ConsiderElevation				true	# elevation will be considered
 assign DownhillMaxSlopeAdditionalCost	 50		# additional cost per vertical meter for slope larger than "slopemax"
 assign UphillMaxSlopeAdditionalCost		100		# additional cost per vertical meter for slope larger than "slopemax"
 assign slopecutoff						  0.5	# slope is ignored if smaller than this threshold
@@ -71,17 +69,19 @@ assign elevationpenaltybuffer			  4
 assign elevationmaxbuffer				  8
 
 # Kinematic model parameters for Speed calculation
-assign MaxDesiredSpeed	= 70
-assign CwA				=  0.6005	# drag coefficient times the reference area in m^2 for speed calculation -- http://www.kreuzotter.de/deutsch/speed.htm
-assign Cr				=  0.0029	# rolling resistance coefficient (dimensionless) for speed calculation -- http://www.kreuzotter.de/deutsch/speed.htm
-assign Cv				=  0.1		# viscouse damping coefficient (dimensionless) for speed calculation -- http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign rho				=  1.16038	# Air density in kg/m³ for speed calculation @ 20°C & 300m above sea level  -- http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign n				=  0.98		# Efficiency factor of the power transmission of the bike 
-assign g				=  9.81		# Gravity coefficient in N/kg
+assign MaxDesiredSpeed	70
+assign CwA				 0.6005			# drag coefficient times the reference area in m^2 -- http://www.kreuzotter.de/deutsch/speed.htm
+assign Cr				 0.0029			# rolling resistance coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speed.htm
+assign Cv				 0.1			# viscouse damping coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign rho				 1.16038		# Air density in kg/m³ @ 20°C & 300m above sea level  -- http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign n				 0.98			# Efficiency factor of the power transmission of the bike 
+assign g				 9.81			# Gravity coefficient in N/kg
+assign m				SystemWeight	# shorter Name
+assign P				NominalPower	# shorter Name
 
 # Kinematic model parameters for Brouter travel time calculation
 assign maxSpeed   = min MaxDesiredSpeed 45	# absolute maximum speed in km/h for travel time computation
-#assign S_C_x     = CdA  					# drag coefficient times the reference area in m^2 for travel time computation
+assign S_C_x      = CwA  					# drag coefficient times the reference area in m^2 for travel time computation
 assign C_r        = multiply 1.5 Cr			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance 
 assign bikerPower = P
 assign totalMass  = m 
@@ -94,26 +94,6 @@ assign pass2coefficient		0
 assign classifier_none     	1
 assign classifier_pushing  	2
 assign classifier_ferry    	3
-
-
-################################################################################
-#   Elevation Parameter Calculation                                       #
-################################################################################
-
-# compute equivalent length for one meter height
-							#	mass * gravity / power * speed 
-							#   <-------------------->
-							#      height meters / s 
-assign Height2Length		multiply div multiply m g P div NominalSpeed 3.6
-
-# the parameters are renamed in this profile to ease the use of the profile
-assign uphillcost				switch ConsiderElevation	Height2Length	0	# cost per vertical meter
-assign downhillcost				switch ConsiderElevation	0				0	# cost per vertical meter
-assign elevationbufferreduce	sub SlopeMax slopecutoff
-assign downhillcutoff			slopecutoff
-assign uphillcutoff				slopecutoff
-assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
-assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
 
 
 ################################################################################
@@ -282,10 +262,10 @@ assign value		add mPn	add multiply v gmCrSl	add multiply v multiply v Cv	multipl
 assign derivative	       	add            gmCrSl	add multiply 2 multiply v Cv	multiply 3 multiply v multiply v hrhoCwA
 assign v			sub v div value derivative
 # Result
-assign Speedm8 v
+assign Speedm8 multiply v 3.6
 
 assign slope		 0			# Speed0
-assign v			Speedm8		# start value in m/s for root finding 
+# start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
 assign gmCrSl		multiply  g   multiply m add Cr div slope 100
@@ -311,10 +291,10 @@ assign value		add mPn	add multiply v gmCrSl	add multiply v multiply v Cv	multipl
 assign derivative	       	add            gmCrSl	add multiply 2 multiply v Cv	multiply 3 multiply v multiply v hrhoCwA
 assign v			sub v div value derivative
 # Result
-assign Speed0 v
+assign Speed0 multiply v 3.6
 
 assign slope		 2			# Speedp2
-assign v			Speed0		# start value in m/s for root finding 
+# start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
 assign gmCrSl		multiply  g   multiply m add Cr div slope 100
@@ -340,10 +320,10 @@ assign value		add mPn	add multiply v gmCrSl	add multiply v multiply v Cv	multipl
 assign derivative	       	add            gmCrSl	add multiply 2 multiply v Cv	multiply 3 multiply v multiply v hrhoCwA
 assign v			sub v div value derivative
 # Result
-assign Speedp2 v
+assign Speedp2 multiply v 3.6
 
 assign slope		 8			# Speedp8
-assign v			Speedp2		# start value in m/s for root finding 
+# start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
 assign gmCrSl		multiply  g   multiply m add Cr div slope 100
@@ -369,7 +349,34 @@ assign value		add mPn	add multiply v gmCrSl	add multiply v multiply v Cv	multipl
 assign derivative	       	add            gmCrSl	add multiply 2 multiply v Cv	multiply 3 multiply v multiply v hrhoCwA
 assign v			sub v div value derivative
 # Result
-assign Speedp8 v
+assign Speedp8 multiply v 3.6
+
+
+################################################################################
+#   Elevation Parameter Calculation                                            #
+################################################################################
+
+# compute equivalent length for one meter height
+							#	mass * gravity / power * speed 
+							#   <-------------------->
+							#      height meters / s 
+assign Height2Length		multiply div multiply m g P div Speed0 3.6
+
+# the parameters are renamed in this profile to ease the use of the profile
+assign uphillcost				switch ConsiderElevation	Height2Length	0	# cost per vertical meter
+assign downhillcost				switch ConsiderElevation	0				0	# cost per vertical meter
+assign elevationbufferreduce	sub SlopeMax slopecutoff
+assign downhillcutoff			slopecutoff
+assign uphillcutoff				slopecutoff
+assign downhillmaxbuffercost	add DownhillMaxSlopeAdditionalCost downhillcost
+assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
+
+
+################################################################################
+#   Constants depending on speed or elevation constants                        #
+################################################################################
+assign pushcost	sub div Speed0 4 1	# additional cost for 4km/h walking/pushing pace
+
 
 ################################################################################
 # Context Switch ###############################################################
@@ -507,7 +514,7 @@ assign onewaypenalty =
        if ( badoneway ) then
        (
          if      ( junction=roundabout|circular     ) then 60
-         elseif  ( highway=primary|primary_link     ) then 50
+         else if ( highway=primary|primary_link     ) then 50
          else if ( highway=secondary|secondary_link ) then 30
          else if ( highway=tertiary|tertiary_link   ) then 20
          else 											   pushcost
@@ -765,8 +772,9 @@ assign maxallowedspeed
 # Max desired speed by the biker
 # km/h
 assign maxdesiredspeed	
-        min    										 60 # Max desired speed on a road bike :-) 
-		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradstreifen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
+		min											 60 # Max desired speed on a road bike :-) 
+		max switch or hascycleway any_cycleroute 30 0	# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 30km/h
+		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradwegen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
 		switch highway=cycleway                 	 30 # Radweg
 		switch highway=unclassified       			 30 # Dorfstraßen
 		switch highway=residential 					 25 # Wohnstraße
@@ -785,11 +793,11 @@ assign maxspeed	min maxallowedspeed maxdesiredspeed
 # calculation
 assign equivSlopeCr			multiply Cr surfacesmoothnesscost			# Equivalent additional slope (virtual) due to current rolling resistance
 assign speeddvds			div sub Speedp2 Speed0 2					# Better approx. if speed for 0% and 2% is used for virtual slope due to rolling resistance
-assign bikespeed			add Speed0 muiltiply speeddvds equivSlopeCr
+assign bikespeed			add Speed0 multiply speeddvds equivSlopeCr
 assign speeddvds			div sub bikespeed Speedm8 add 8 equivSlopeCr
-assign bikespeeddownhill	add Speedm8 muiltiply speeddvds equivSlopeCr
+assign bikespeeddownhill	add Speedm8 multiply speeddvds equivSlopeCr
 assign speeddvds			div sub Speedp8 bikespeed sub 8 equivSlopeCr
-assign bikespeeduphill		max 0 add Speedp8 muiltiply speeddvds equivSlopeCr
+assign bikespeeduphill		max 0 add Speedp8 multiply speeddvds equivSlopeCr
 
 
 # routing should be at least partially done time optimal
@@ -815,7 +823,7 @@ assign speedpenaltydownhillfactor	add 1 multiply TimeOptimalityFactor sub max 1 
 assign traffic_per_highway
 	switch highway=trunk|trunk_link				1189	# Schnellstraßen (wie BAB) und Auffahrten
 	switch highway=primary|primary_link			 594	# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link		 197	# Landstraßen und Auffahrten
+	switch highway=secondary|secondary_link		 197	# Landstraßen und Auffahrtenc
 	switch highway=tertiary|tertiary_link		  96	# Kreisstraßen und Auffahrten
 	switch highway=unclassified					   0	# Dorfstraßen	  
 	switch highway=residential					   0	# Wohnstraße
@@ -846,41 +854,41 @@ assign traffic_per_highway
 # Traffic per hour dependency with traffic class is only a feeling without any
 # data proving this values
 assign traffic_per_class
-	switch estimated_traffic_class=7	4224
-	switch estimated_traffic_class=6	2112
-	switch estimated_traffic_class=5	1056
-	switch estimated_traffic_class=4	 528
-	switch estimated_traffic_class=3	 264
-	switch estimated_traffic_class=2	 132
-	switch estimated_traffic_class=1	  66
+	switch estimated_traffic_class=7	6336
+	switch estimated_traffic_class=6	3168
+	switch estimated_traffic_class=5	1584
+	switch estimated_traffic_class=4	 792
+	switch estimated_traffic_class=3	 396
+	switch estimated_traffic_class=2	 198
+	switch estimated_traffic_class=1	  99
 										   0
 
-assign traffic div add traffic_per_class traffic_per_highway 2
+assign traffic div add multiply 2 traffic_per_class traffic_per_highway 3
 
 
 # actual speed of vehicles will be estimated by the minimum of the taged max allowed speed and some estimations (for Germany)
 assign vehiclespeed
-	min maxallowedspeedspeed	
+	min maxallowedspeed	
 	switch highway=motorway|motorway_link   130	# Autobahn (BAB) und Auffahrten
 	switch motorroad=yes					130	# Kraftfahrstraße (wie BAB)
-	switch highway=trunk|trunk_link      	120	# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link     100	# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link  90	# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link    80	# Kreisstraßen und Auffahrten
-	switch highway=unclassified       		 40	# Dorfstraßen	  
-	switch highway=residential 				 30	# Wohnstraße
-	switch highway=service                   20	# Zugangsstraßen
+	switch highway=trunk|trunk_link			120	# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link		100	# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link	 90	# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link	 80	# Kreisstraßen und Auffahrten
+	switch highway=unclassified				 40	# Dorfstraßen	  
+	switch highway=residential				 30	# Wohnstraße
+	switch highway=service					 20	# Zugangsstraßen
 	switch highway=living_street 			 10	# Spielstraße
-											  0 # Default (no street for vehicle)
+											 90 # Default
 
 
 # Compute overtaking vehicles per meter depending on bike speed
 assign bikespeedfortraffic         = max bikespeed         4	# use at least walking speed (4km/h pushing). Otherwise it might result in a div by zero error.
 assign bikespeedfortrafficuphill   = max bikespeeduphill   4
 assign bikespeedfortrafficdownhill = max bikespeeddownhill 4
-assign overtakingsperhour          = div max 0 sub vehiclespeed bikespeedfortraffic         vehiclespeed
-assign overtakingsperhouruphill    = div max 0 sub vehiclespeed bikespeedfortrafficuphill   vehiclespeed
-assign overtakingsperhourdownhill  = div max 0 sub vehiclespeed bikespeedfortrafficdownhill vehiclespeed
+assign overtakingsperhour          = multiply traffic div max 0 sub vehiclespeed bikespeedfortraffic         vehiclespeed
+assign overtakingsperhouruphill    = multiply traffic div max 0 sub vehiclespeed bikespeedfortrafficuphill   vehiclespeed
+assign overtakingsperhourdownhill  = multiply traffic div max 0 sub vehiclespeed bikespeedfortrafficdownhill vehiclespeed
 assign overtakingspermeter         = div overtakingsperhour         multiply 1000 bikespeedfortraffic
 assign overtakingspermeteruphill   = div overtakingsperhouruphill   multiply 1000 bikespeedfortrafficuphill
 assign overtakingspermeterdownhill = div overtakingsperhourdownhill multiply 1000 bikespeedfortrafficdownhill
@@ -888,7 +896,7 @@ assign overtakingspermeterdownhill = div overtakingsperhourdownhill multiply 100
 
 # Treat traffic penalty differently for cycling lanes		
 assign trafficvehiclecostscaled 
-	multiply 0.925 multiply TrafficVehicleCost 			# Multiplication with 0.925 to get a better linear approximation of the trafficcost-over-slope curve
+	multiply 0.925 multiply TrafficVehicleCost 	# Multiplication with 0.925 to get a better linear approximation of the trafficcost-over-slope curve
 		switch hascycleway_track	0.00
 		switch hascycleway 			0.5 
 									1.0
@@ -914,12 +922,16 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	# all other exclusions below (access, steps, ferries,..)
 	# should not be deleted by the decoder, to be available
 	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	
+	# Exceptions which shal not be penalized
+	switch any_cycleroute						0
+	switch hascycleway							0
+	switch bicycle_road=yes						0		# Fahrradrstraßen
 
 	# highway cost
-	switch highway=motorway|motorway_link    9999		# Autobahn (BAB) und Auffahrten
+	switch highway=motorway|motorway_link	 9999		# Autobahn (BAB) und Auffahrten
 	switch motorroad=yes					 9999		# Kraftfahrstraße (wie BAB)
 	switch highway=trunk|trunk_link      	   10		# Schnellstraßen (wie BAB) und Auffahrten
-	switch bicycle_road=yes						0.0		# Fahrradrstraßen
 	switch highway=primary|primary_link     	0.0		# Bundesstraßen und Auffahrten
 	switch highway=secondary|secondary_link 	0.0		# Landstraßen und Auffahrten
 	switch highway=tertiary|tertiary_link   	0.0 	# Kreisstraßen und Auffahrten
@@ -934,10 +946,10 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch highway=path  						0.3 	# Pfad 
 	switch highway=track 						0.0		# Feldweg
 	switch highway=road							0.0		# unbekannter Typ
-	switch route=ferry                      	0.0 	# Fähren
 	switch highway=steps                        0.0		# Treppen
+	switch route=ferry                      	0.0 	# Fähren
 												0.0		# Default
-												
+
 
 ################################################################################
 #   Handle miscellaneous costs                                                 #
@@ -951,7 +963,7 @@ assign onewaycost
 # prefer cycleroutes
 assign cycleroutefavor 
 	switch and StickToCycleRoute any_cycleroute		-0.15	0
-	
+
 ################################################################################
 #   Final calculation of cost factor                                           #
 ################################################################################
@@ -1020,7 +1032,7 @@ assign downhillcostfactor
 				add 1 surfacesmoothnesscost
 		1
 		trafficcostdownhill					# traffic cost
-	
+
 ################################################################################
 #   Initial Costs                                                              #
 ################################################################################
