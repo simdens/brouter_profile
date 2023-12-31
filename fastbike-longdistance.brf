@@ -395,7 +395,12 @@ assign any_cycleroute
 	or route_bicycle_icn=yes 
 	or route_bicycle_ncn=yes 
 	or route_bicycle_rcn=yes 
-	   route_bicycle_lcn=yes
+	or route_bicycle_lcn=yes
+	or route_bicycle_=yes
+	or icn=yes
+	or ncn=yes
+	or rcn=yes
+	   lcn=yes
 
 
 # Cycleway
@@ -731,8 +736,10 @@ assign maxspeedforward
 # Max speed allowed by regulations
 # km/h
 assign maxallowedspeed
+		# Direction wise
 		switch and not reversedirection=yes lesser maxspeedforward  999		maxspeedforward
 		switch and     reversedirection=yes lesser maxspeedbackward 999		maxspeedbackward
+		# Maxspeed Tag
 		switch maxspeed=10							 10
 		switch maxspeed=20							 20
 		switch maxspeed=30							 30
@@ -746,8 +753,12 @@ assign maxallowedspeed
 		switch maxspeed=110							110
 		switch maxspeed=120							120
 		switch maxspeed=130							130
-		switch maxspeed=urban						 50		
-		switch maxspeed=rural						100	
+		switch maxspeed=urban						 50
+		switch maxspeed=rural						100
+		# Zone Tag
+		switch zone:maxspeed=20						 20
+		switch zone:maxspeed=30						 30
+		# Way type
 		switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
 		switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
 		switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
