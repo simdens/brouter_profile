@@ -31,7 +31,7 @@ assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| cycle routes will avoi
 assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
 
 # traffic cost
-assign	TrafficVehicleCost			25		# %TrafficVehicleCost%				| m - Cost per overtaking vehicle | number
+assign	TrafficVehicleCost			35		# %TrafficVehicleCost%				| m - Cost per overtaking vehicle | number
 
 # time optimallity parameter
 assign	TimeOptimalityFactor		0.75	# %TimeOptimalityFactor%			| Factor to consider travel time. 0 -- energy optimized, 1 -- time optimized | number
@@ -55,12 +55,12 @@ assign validForBikes       	1
 # way cost constants
 assign IntialPushCost	50									# cost to dismount from bike
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
-assign NoiseCost		1									# Cost factor for noisy roads. Equivalent to have a cycleroad immediately next to a motorway
+assign NoiseCost		0.2									# Cost factor for noisy roads. Equivalent to have a cycleroad immediately next to a motorway
 
 # node cost constants
 assign	SpeedBumpCost			10
 assign	TrafficSignalCost		50
-assign	TurnCostValue		   175
+assign	TurnCostValue			50
 
 # elevation parameter constants
 assign ConsiderElevation				true	# elevation will be considered
@@ -666,7 +666,7 @@ assign surfacecost	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/ke
 assign smoothnesscost	# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good				 		0.0					# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				multiply 0.5	PavingStonesCost	# thin_wheels - racing bike
+	switch smoothness=good		 				multiply 0.33	PavingStonesCost	# thin_wheels - racing bike
 	switch smoothness=intermediate            	            	PavingStonesCost	# wheels - city bike, wheel chair, sport cars
 	switch smoothness=bad|robust_wheels       			 		CobblestoneCost		# robust wheels - trekking bike, normal cars
 	switch smoothness=very_bad|high_clearance 			 		DirtCost			# high clearance - normal cars with slightly higher clearance
@@ -988,7 +988,6 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
 	
 	# Exceptions which shal not be penalized
-	switch any_cycleroute						0
 	switch hascycleway							0
 	switch bicycle_road=yes						0		# Fahrradrstraßen
 
@@ -999,7 +998,7 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch highway=primary|primary_link     	0.0		# Bundesstraßen und Auffahrten
 	switch highway=secondary|secondary_link 	0.0		# Landstraßen und Auffahrten
 	switch highway=tertiary|tertiary_link   	0.0 	# Kreisstraßen und Auffahrten
-	switch highway=unclassified       			0.1		# Dorfstraßen		(mehr Kreuzungen)
+	switch highway=unclassified       			0.0		# Kommunalstraßen
 	switch highway=residential 					0.15	# Wohnstraße		(mehr Kreuzungen)
 	switch highway=service                  	0.2 	# Zugangsstraßen	(mehr Kreuzungen)
 	switch highway=living_street 				0.15	# Spielstraße		(mehr Kreuzungen)
@@ -1007,6 +1006,7 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch highway=bridleway                	0.0		# Reit- und Fußweg
 	switch highway=cycleway                 	0.0		# Radweg
 	switch highway=footway  					0.0		# Gehweg
+	switch and any_cycleroute highway=path		0.15	# Pfad
 	switch highway=path  						0.3 	# Pfad 
 	switch highway=track 						0.0		# Feldweg
 	switch highway=road							0.0		# unbekannter Typ
