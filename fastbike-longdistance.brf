@@ -55,7 +55,7 @@ assign	processUnusedTags			false	# %ProcessUnusedTags%				| Set true to output u
 assign validForBikes       	1
 
 # way cost constants
-assign IntialPushCost	50									# cost to dismount from bike
+assign IntialPushCost	75									# cost to dismount from bike
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
 assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
 assign GreenCost		-0.15								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
