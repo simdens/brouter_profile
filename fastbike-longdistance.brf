@@ -27,7 +27,8 @@ assign	SlopeMax					8.0		# %SlopeMax% 						| % - maximum allowed slope (up & do
 
 # additional cost for different kind of transportation
 assign 	StickToCycleRoute			true	# %StickToCycleRoute%				| cycle routes will be preferred | boolean
-assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| cycle routes will avoid noisy roads | boolean
+assign	PreferGreen					true	# %PreferGreen%						| routes will prefer green environments | boolean
+assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| routes will avoid noisy roads | boolean
 assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
 
 # traffic cost
@@ -55,7 +56,8 @@ assign validForBikes       	1
 # way cost constants
 assign IntialPushCost	50									# cost to dismount from bike
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
-assign NoiseCost		0.2									# Cost factor for noisy roads. Equivalent to have a cycleroad immediately next to a motorway
+assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
+assign GreenCost		-0.15								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
 
 # node cost constants
 assign	SpeedBumpCost			10
@@ -922,7 +924,6 @@ assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclec
 ################################################################################
 #   Handle Noise                                                               #
 ################################################################################
-# Different traffic classes
 # Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
 # Quote:
 # For proximity of noisy roads (secondary and higher). The noise factor 
@@ -959,16 +960,59 @@ assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclec
 # | secondary      | 105      | 3                 |
 # | secondary      | 75       | 2                 |
 assign noiseFactor
-	switch estimated_noise_class=6	1.00
-	switch estimated_noise_class=5	0.80
-	switch estimated_noise_class=4	0.55
-	switch estimated_noise_class=3	0.40
-	switch estimated_noise_class=2	0.25
-	switch estimated_noise_class=1	0.10
+	switch estimated_noise_class=6	0.80
+	switch estimated_noise_class=5	0.55
+	switch estimated_noise_class=4	0.40
+	switch estimated_noise_class=3	0.25
+	switch estimated_noise_class=2	0.10
+	switch estimated_noise_class=1	0.00
 									0
+
+assign noiseFactor div noiseFactor 0.8		# normalize
+
 assign weightedNoiseCost
 	switch AvoidNoisyRoads
 		multiply NoiseCost noiseFactor
+		0
+
+
+################################################################################
+#   Handle Green                                                               #
+################################################################################
+# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
+# Quote:
+# OSM data recognized as forest:
+# - landuse: forest, allotments, flowerbed, orchard, vineyard, recreation_ground, village_green
+# - leisure: garden, park, nature_reserve
+# 
+# No forest buffers are used.
+# 
+# Imagine you trace the way with a pencil drawing lines 62 meters wide. Then
+# estimated_forest_class=6 corresponds to the case that at least 98% of the line
+# is in the woodland. This number is called a green factor.
+#
+# | `green_factor` | `forest_class` |
+# | -------------- | -------------- |
+# | < 0.1          | NULL           |
+# | < 0.2          | 1              |
+# | < 0.4          | 2              |
+# | < 0.6          | 3              |
+# | < 0.8          | 4              |
+# | < 0.98         | 5              |
+# | ELSE           | 6              |
+
+assign greenFactor
+	switch estimated_forest_class=6	1.00
+	switch estimated_forest_class=5	0.80
+	switch estimated_forest_class=4	0.60
+	switch estimated_forest_class=3	0.40
+	switch estimated_forest_class=2	0.20
+	switch estimated_forest_class=1	0.10
+									0
+
+assign weightedGreenCost
+	switch PreferGreen
+		multiply GreenCost greenFactor
 		0
 
 ################################################################################
@@ -1059,7 +1103,8 @@ assign commoncostfactor
 	add highwaycost							# cost for different types of highway
 	add	onewaycost							# cost for cycling against oneways for cars only
 	add cycleroutefavor						# (negative) cost for cycleroutes
-		weightedNoiseCost					# Cost for noisy roads
+	add weightedNoiseCost					# Cost for noisy roads
+		weightedGreenCost					# Cost (or better inventice) for green ways
 	
 
 # for flat terrain
