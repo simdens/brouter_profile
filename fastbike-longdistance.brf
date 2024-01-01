@@ -27,6 +27,7 @@ assign	SlopeMax					8.0		# %SlopeMax% 						| % - maximum allowed slope (up & do
 
 # additional cost for different kind of transportation
 assign 	StickToCycleRoute			true	# %StickToCycleRoute%				| cycle routes will be preferred | boolean
+assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| cycle routes will avoid noisy roads | boolean
 assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
 
 # traffic cost
@@ -54,6 +55,7 @@ assign validForBikes       	1
 # way cost constants
 assign IntialPushCost	50									# cost to dismount from bike
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
+assign NoiseCost		1									# Cost factor for noisy roads. Equivalent to have a cycleroad immediately next to a motorway
 
 # node cost constants
 assign	SpeedBumpCost			10
@@ -397,7 +399,6 @@ assign any_cycleroute
 	or route_bicycle_rcn=yes 
 	or route_bicycle_lcn=yes
 	or route_bicycle_=yes
-	or icn=yes
 	or ncn=yes
 	or rcn=yes
 	   lcn=yes
@@ -874,7 +875,7 @@ assign traffic_per_class
 	switch estimated_traffic_class=1	  99
 										   0
 
-assign traffic div add multiply 2 traffic_per_class traffic_per_highway 3
+assign traffic div add traffic_per_class multiply 2 traffic_per_highway 3
 
 
 # actual speed of vehicles will be estimated by the minimum of the taged max allowed speed and some estimations (for Germany)
@@ -917,6 +918,58 @@ assign trafficcost 			multiply overtakingspermeter         trafficvehiclecostsca
 assign trafficcostuphill 	multiply overtakingspermeteruphill   trafficvehiclecostscaled
 assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclecostscaled
 
+
+################################################################################
+#   Handle Noise                                                               #
+################################################################################
+# Different traffic classes
+# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
+# Quote:
+# For proximity of noisy roads (secondary and higher). The noise factor 
+# represents the proportion of a road's buffer area that lies within the 
+# 64-meter buffer of noisy roads. This proportion is reduced:
+# - for motorways and trunk roads with max speed < 105 by 1.5
+# - for primary roads 2 times
+# - 3 times if maxspeed is 75 - 105 for primary and secondary
+# - other secondary roads 5 times
+#
+# `noise_class` is roughly proportional to the noise factor:
+# | `noise_factor` | `noise_class` |
+# | -------------- | ------------- |
+# | < 0.1          | 1             |
+# | < 0.25         | 2             |
+# | < 0.4          | 3             |
+# | < 0.55         | 4             |
+# | < 0.8          | 5             |
+# | ELSE           | 6             |
+#
+# To be classified as noise class 6, a way must be less than 13 m on average
+# from the middle of the carriageway of a motorway with a maximum speed 
+# exceeding 105. For a class 5, the distance must be up to 35 meters.
+# (1 - noise_factor) \* 64 m for a given class determines the distance
+# | highway        | maxspeed | max `noise_class` |
+# | -------------- | -------- | ----------------- |
+# | motorway,trunk | > 105    | 6                 |
+# | motorway,trunk | 105      | 5                 |
+# | motorway,trunk | 75       | 5                 |
+# | primary        | > 105    | 4                 |
+# | primary        | 105      | 4                 |
+# | primary        | 75       | 3                 |
+# | secondary      | > 105    | 3                 |
+# | secondary      | 105      | 3                 |
+# | secondary      | 75       | 2                 |
+assign noiseFactor
+	switch estimated_noise_class=6	1.00
+	switch estimated_noise_class=5	0.80
+	switch estimated_noise_class=4	0.55
+	switch estimated_noise_class=3	0.40
+	switch estimated_noise_class=2	0.25
+	switch estimated_noise_class=1	0.10
+									0
+assign weightedNoiseCost
+	switch AvoidNoisyRoads
+		multiply NoiseCost noiseFactor
+		0
 
 ################################################################################
 #   Handle different kinds of ways                                             #
@@ -1005,7 +1058,8 @@ assign commoncostfactor
 	add max onewaypenalty accesspenalty		# oneway and access penalty
 	add highwaycost							# cost for different types of highway
 	add	onewaycost							# cost for cycling against oneways for cars only
-		cycleroutefavor						# (negative) cost for cycleroutes
+	add cycleroutefavor						# (negative) cost for cycleroutes
+		weightedNoiseCost					# Cost for noisy roads
 	
 
 # for flat terrain
