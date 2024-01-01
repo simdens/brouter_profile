@@ -28,6 +28,7 @@ assign	SlopeMax					8.0		# %SlopeMax% 						| % - maximum allowed slope (up & do
 # additional cost for different kind of transportation
 assign 	StickToCycleRoute			true	# %StickToCycleRoute%				| cycle routes will be preferred | boolean
 assign	PreferGreen					true	# %PreferGreen%						| routes will prefer green environments | boolean
+assign	PreferWater					true	# %PreferWater%						| routes next to water or waterways are prefered | boolean
 assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| routes will avoid noisy roads | boolean
 assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
 
@@ -58,6 +59,7 @@ assign IntialPushCost	50									# cost to dismount from bike
 assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
 assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
 assign GreenCost		-0.15								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
+assign WaterCost		-0.15								# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
 
 # node cost constants
 assign	SpeedBumpCost			10
@@ -960,15 +962,15 @@ assign trafficcostdownhill 	multiply overtakingspermeterdownhill trafficvehiclec
 # | secondary      | 105      | 3                 |
 # | secondary      | 75       | 2                 |
 assign noiseFactor
-	switch estimated_noise_class=6	0.80
-	switch estimated_noise_class=5	0.55
-	switch estimated_noise_class=4	0.40
-	switch estimated_noise_class=3	0.25
-	switch estimated_noise_class=2	0.10
-	switch estimated_noise_class=1	0.00
+	switch estimated_noise_class=6	0.90
+	switch estimated_noise_class=5	0.675
+	switch estimated_noise_class=4	0.475
+	switch estimated_noise_class=3	0.3625
+	switch estimated_noise_class=2	0.175
+	switch estimated_noise_class=1	0.05
 									0
 
-assign noiseFactor div noiseFactor 0.8		# normalize
+assign noiseFactor div noiseFactor 0.9		# normalize
 
 assign weightedNoiseCost
 	switch AvoidNoisyRoads
@@ -1002,18 +1004,58 @@ assign weightedNoiseCost
 # | ELSE           | 6              |
 
 assign greenFactor
-	switch estimated_forest_class=6	1.00
-	switch estimated_forest_class=5	0.80
-	switch estimated_forest_class=4	0.60
-	switch estimated_forest_class=3	0.40
-	switch estimated_forest_class=2	0.20
-	switch estimated_forest_class=1	0.10
+	switch estimated_forest_class=6	0.99
+	switch estimated_forest_class=5	0.89
+	switch estimated_forest_class=4	0.70
+	switch estimated_forest_class=3	0.50
+	switch estimated_forest_class=2	0.30
+	switch estimated_forest_class=1	0.15
 									0
+
+assign greenFactor div greenFactor 0.99		# normalize
 
 assign weightedGreenCost
 	switch PreferGreen
 		multiply GreenCost greenFactor
 		0
+
+
+################################################################################
+#   Handle Water                                                               #
+################################################################################
+# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
+# Quote:
+# OSM data recognized as river:
+# - waterway: river, canal
+# - natural: water (except wastewater)
+# 
+# Waterways have 32 m wide buffers. Water areas have 77 m wide buffers.
+# 
+# | `river_see` | `river_class` |
+# | ----------- | ------------- |
+# | < 0.1       | 1             |
+# | < 0.3       | 2             |
+# | < 0.5       | 3             |
+# | < 0.8       | 4             |
+# | < 0.9       | 5             |
+# | ELSE        | 6             |
+
+assign waterFactor
+	switch estimated_river_class=6	0.95
+	switch estimated_river_class=5	0.85
+	switch estimated_river_class=4	0.65
+	switch estimated_river_class=3	0.40
+	switch estimated_river_class=2	0.20
+	switch estimated_river_class=1	0.05
+									0
+
+assign waterFactor div waterFactor 0.95		# normalize
+
+assign weightedWaterCost
+	switch PreferWater
+		multiply WaterCost waterFactor
+		0
+
 
 ################################################################################
 #   Handle different kinds of ways                                             #
@@ -1104,7 +1146,8 @@ assign commoncostfactor
 	add	onewaycost							# cost for cycling against oneways for cars only
 	add cycleroutefavor						# (negative) cost for cycleroutes
 	add weightedNoiseCost					# Cost for noisy roads
-		weightedGreenCost					# Cost (or better inventice) for green ways
+	add weightedGreenCost					# Cost (or better incentive) for green ways
+		weightedWaterCost					# Cost (or better incentive) for ways next to rivers
 	
 
 # for flat terrain
