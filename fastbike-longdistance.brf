@@ -55,16 +55,21 @@ assign	processUnusedTags			false	# %ProcessUnusedTags%				| Set true to output u
 assign validForBikes       	1
 
 # way cost constants
-assign IntialPushCost	75									# cost to dismount from bike
-assign IntialFerryCost	switch AllowFerries	5000	99999	# average waiting time of 15min and an average cycle speed of 20km/h
+assign IntialPushCost	95									# cost to dismount from bike --> Cost for standing still and accelerating (TurnCostValue) + some additional penalty for dismounting process (2s for dismount + 2s for mount @ 7.4m/s --> 30m)
+assign IntialFerryCost	switch AllowFerries	10000	99999	# average waiting time of 30min and an average cycle speed of 20km/h
 assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
 assign GreenCost		-0.15								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
 assign WaterCost		-0.15								# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
 
 # node cost constants
-assign	SpeedBumpCost			10
-assign	TrafficSignalCost		50
-assign	TurnCostValue			50
+assign	SpeedBumpCost			50
+# Way difference for deceleration to 10km/h and accelerating afterwards compared
+# to continuous speed @ 26.3km/h, 165W, 100kg, 0% slope. This is quite constant
+# even for different biker powers, but not for different slopes :-/ 
+assign	TurnCostValue			65
+# Way difference for deceleration to 0km/h and accelerating afterwards compared
+# to continuous speed @ 26.3km/h, 165W, 100kg, 0% slope. This is quite constant
+# even for different biker powers, but not for different slopes :-/ 
 
 # elevation parameter constants
 assign ConsiderElevation				true	# elevation will be considered
@@ -75,7 +80,7 @@ assign elevationpenaltybuffer			  4
 assign elevationmaxbuffer				  8
 
 # Kinematic model parameters for Speed calculation
-assign MaxDesiredSpeed	70
+assign MaxBikerSpeed	70
 assign CwA				 0.6005			# drag coefficient times the reference area in m^2 -- http://www.kreuzotter.de/deutsch/speed.htm
 assign Cr				 0.0029			# rolling resistance coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speed.htm
 assign Cv				 0.1			# viscouse damping coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speedfaq.htm
@@ -86,8 +91,8 @@ assign m				SystemWeight	# shorter Name
 assign P				NominalPower	# shorter Name
 
 # Kinematic model parameters for Brouter travel time calculation
-assign maxSpeed   = min MaxDesiredSpeed 45	# absolute maximum speed in km/h for travel time computation
-assign S_C_x      = CwA  					# drag coefficient times the reference area in m^2 for travel time computation
+assign maxSpeed   = min MaxBikerSpeed 45	# absolute maximum speed in km/h for travel time computation
+assign S_C_x      = multiply CwA rho		# drag coefficient times the reference area times the air density for travel time computation
 assign C_r        = multiply 1.5 Cr			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance 
 assign bikerPower = P
 assign totalMass  = m 
@@ -381,8 +386,21 @@ assign uphillmaxbuffercost		add UphillMaxSlopeAdditionalCost   uphillcost
 ################################################################################
 #   Constants depending on speed or elevation constants                        #
 ################################################################################
-assign pushcost	sub div Speed0 4 1	# additional cost for 4km/h walking/pushing pace
+assign pushcost				# additional cost for 4km/h walking/pushing pace
+	sub 
+		div Speed0 4
+		1
 
+assign	TrafficSignalCost
+	add multiply 3.125 Speed0 65
+# In open street maps normally to traffic signal nodes are passed for each 
+# intersection. The cost are estimated by:
+# - Traffic light cycle:						90s
+# - Chance to hit green light:					50%
+# - Average waiting time during red light:		45/2s = 22.5s
+# - Cost for accelerating back to travel speed:	65m (TurnCostValue)
+# Cost = 0.5*22.5s*v + 65m = 5.625*v + 65m = 3.125*v(in km/h) + 65m
+# for v = 26.3kmh --> Cost  = 147.2m
 
 ################################################################################
 # Context Switch ###############################################################
@@ -773,31 +791,34 @@ assign maxallowedspeed
 		switch highway=unclassified       			 50 # Dorfstraßen
 		switch highway=residential 					 30 # Wohnstraße
 		switch highway=service                  	 30 # Zugangsstraßen
-		switch highway=living_street 				 15 # Spielstraße
-		switch highway=pedestrian   				  4 # Fußgängerzone
-		switch highway=bridleway                	  5 # Reit- und Fußweg
 		switch highway=cycleway                 	 30 # Radweg
+		switch highway=living_street 				 15 # Spielstraße
+		switch highway=pedestrian   				  5 # Fußgängerzone
+		switch and bicycle=designated
+			   highway=bridleway|footway			 30 # Designated bike lanes/ways on footways
+		switch highway=bridleway                	  5 # Reit- und Fußweg
 		switch highway=footway  					  5 # Gehweg
 		switch highway=path  					    100 # Pfad
 		switch highway=track 						100 # Feldweg
 		switch highway=road							100 # unbekannter Typ
-		switch route=ferry                      	 10 # Fähren
 		switch highway=steps                    	  2.5 # Treppen
+		switch route=ferry                      	 10 # Fähren
 													100 # Default (unknown max speed)
 
 # Max desired speed by the biker
 # km/h
 assign maxdesiredspeed	
-		min											 60 # Max desired speed on a road bike :-) 
+		min											MaxBikerSpeed
 		max switch or hascycleway any_cycleroute 30 0	# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 30km/h
 		switch bicycle=designated					 30 # Max. Geschw. bei Fahrradwegen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
 		switch highway=cycleway                 	 30 # Radweg
 		switch highway=unclassified       			 30 # Dorfstraßen
 		switch highway=residential 					 25 # Wohnstraße
-		switch highway=service                  	 20 # Zugangsstraßen
+		switch highway=service                  	 25 # Zugangsstraßen
 		switch highway=footway  					  5 # Gehweg
 		switch highway=path  					     20 # Pfad
 		switch highway=track 						 40 # Feldweg
+		switch highway=steps                    	  2.5 # Treppen
 													999 # Default
 
 # Use minimum of all speed limits
@@ -1199,8 +1220,7 @@ assign initialclassifier =
 	 else	classifier_none 				  
 #
 # calculate the initial cost
-# this is added to the total cost each time the costfactor
-# changed
+# this is added to the total cost each time the initialclassifier changes
 #
 assign initialcost =
 	switch ( equal initialclassifier classifier_ferry   )	IntialFerryCost
@@ -1309,21 +1329,21 @@ assign footaccess
                  switch or foot=private foot=no
                         0
                         1
-						
-						
+
+
 ################################################################################
 #   Assign Node Cost                                                           #
 ################################################################################
-# Assign Cost to node:
+# Check if node is legal to use
 assign initialcost
   switch bikeaccess
-    0 
+    0 				# legal --> no cost
     switch footaccess
-      300
-      1000000
+      0				# legal, mount and dismount cost is done in way context
+      1000000		# illegal to use
 
 #
-# Cost for traffic lights and traffic calming
+# Cost for nodes
 #
 assign istrafficsignal	
 	or highway=traffic_signals crossing=traffic_signals 
