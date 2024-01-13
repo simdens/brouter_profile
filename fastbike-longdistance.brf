@@ -55,21 +55,21 @@ assign	processUnusedTags			false	# %ProcessUnusedTags%				| Set true to output u
 assign validForBikes       	1
 
 # way cost constants
-assign IntialPushCost	95									# cost to dismount from bike --> Cost for standing still and accelerating (TurnCostValue) + some additional penalty for dismounting process (2s for dismount + 2s for mount @ 7.4m/s --> 30m)
+assign IntialPushCost	95									# cost to dismount from bike --> Cost for standing still and accelerating (Speed0Cost) + some additional penalty for dismounting process (2s for dismount + 2s for mount @ 7.4m/s --> 30m)
 assign IntialFerryCost	switch AllowFerries	10000	99999	# average waiting time of 30min and an average cycle speed of 20km/h
 assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
 assign GreenCost		-0.15								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
 assign WaterCost		-0.15								# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
 
 # node cost constants
-assign	SpeedBumpCost			50
-# Way difference for deceleration to 10km/h and accelerating afterwards compared
-# to continuous speed @ 26.3km/h, 165W, 100kg, 0% slope. This is quite constant
-# even for different biker powers, but not for different slopes :-/ 
-assign	TurnCostValue			65
 # Way difference for deceleration to 0km/h and accelerating afterwards compared
 # to continuous speed @ 26.3km/h, 165W, 100kg, 0% slope. This is quite constant
 # even for different biker powers, but not for different slopes :-/ 
+assign	Speed0Cost			65
+assign	Speed5Cost			59
+assign	Speed10Cost			47
+assign	Speed15Cost			33
+assign	Speed20Cost			17
 
 # elevation parameter constants
 assign ConsiderElevation				true	# elevation will be considered
@@ -397,8 +397,8 @@ assign	TrafficSignalCost
 # intersection. The cost are estimated by:
 # - Traffic light cycle:						90s
 # - Chance to hit green light:					50%
-# - Average waiting time during red light:		45/2s = 22.5s
-# - Cost for accelerating back to travel speed:	65m (TurnCostValue)
+# - Average waiting time during red light:		45s/2 = 22.5s
+# - Cost for accelerating back to travel speed:	65m (Speed0Cost)
 # Cost = 0.5*22.5s*v + 65m = 5.625*v + 65m = 3.125*v(in km/h) + 65m
 # for v = 26.3kmh --> Cost  = 147.2m
 
@@ -1238,7 +1238,7 @@ assign initialcost =
 # The faster you go, the less you want to turn because thet means deceleration
 #
 assign turncost = if junction=roundabout then 0
-                  else TurnCostValue
+                  else Speed0Cost
 
 	   
 ################################################################################
@@ -1286,8 +1286,8 @@ assign isgoodforcars = if greater priorityclassifier 6 then true
 ################################################################################
 #   Save some information for node context                                     #
 ################################################################################
-assign isnarrow if highway=path then true else false
-
+#assign isnarrow 	highway=path
+assign iswayreverse	reversedirection=yes
 
 ################################################################################
 # Context Switch ###############################################################
@@ -1342,17 +1342,54 @@ assign initialcost
       0				# legal, mount and dismount cost is done in way context
       1000000		# illegal to use
 
-#
-# Cost for nodes
-#
-assign istrafficsignal	
-	or highway=traffic_signals crossing=traffic_signals 
+# Traffic Lights
+#-------------------------------------------------------------------------------
+assign trafficlightcost
+	switch highway=traffic_signals
+		switch traffic_signals:direction=both			TrafficSignalCost
+		switch traffic_signals:direction=forward
+			switch not way:iswayreverse					TrafficSignalCost 0
+		switch traffic_signals:direction=backward
+			switch way:iswayreverse						TrafficSignalCost 0
+		div TrafficSignalCost 2
+	0
 
+# Traffic Calming
+#-------------------------------------------------------------------------------
+assign trafficcalmingcost
+	switch traffic_calming=bump				Speed10Cost
+	switch traffic_calming=dip				Speed10Cost
+	switch traffic_calming=hump				Speed20Cost
+	switch traffic_calming=table			Speed20Cost
+	switch traffic_calming=rumble_strip		Speed20Cost
+											0
+
+# Barrier
+#-------------------------------------------------------------------------------
+assign barriercost
+	switch barrier=gate						Speed0Cost
+	switch barrier=bollard					0
+	switch barrier=lift_gate				Speed0Cost
+	switch barrier=stile					multiply 2 Speed0Cost
+	switch barrier=cycle_barrier			Speed5Cost
+	switch barrier=entrance					0
+	switch barrier=block					0
+	switch barrier=cattle_grid				Speed5Cost
+	switch barrier=kissing_gate				multiply 2 Speed0Cost
+	switch barrier=turnstile				multiply 2 Speed0Cost
+	switch barrier=sally_port				0
+	switch barrier=chain					Speed5Cost
+	switch barrier=door						multiply 2 Speed0Cost
+	switch barrier=swing_gate				Speed5Cost
+	switch barrier=bump_gate				multiply 2 Speed0Cost
+	switch barrier=hampshire_gate			multiply 3 Speed0Cost
+											0
+
+# Cost for nodes
+#-------------------------------------------------------------------------------
 assign initialcost 
 	add initialcost
-	add	switch istrafficsignal						TrafficSignalCost	0
-	add switch traffic_calming=bump|hump|dip		SpeedBumpCost		0
-	add	switch and way:isnarrow barrier=bollard		TrafficSignalCost	0
-		switch and not way:isnarrow barrier=bollard 10					0
-	
-																					
+	add	trafficlightcost
+	add trafficcalmingcost
+		barriercost
+
