@@ -15,6 +15,10 @@
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 ################################################################################
 
+# ToDo
+# - Rethink ferry handling
+# - make Nodes variable with respect to TimeOptimalityFactor
+
 ---context:global   # following code refers to global config
 
 # user parameters
@@ -698,7 +702,7 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 assign smoothnessfactor		# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				multiply 0.5 add ConcreteRes PavingStonesRes	# thin_wheels - racing bike
+	switch smoothness=good		 				multiply 0.5 add 1.0 PavingStonesRes			# thin_wheels - racing bike
 	switch smoothness=intermediate				PavingStonesRes									# wheels - city bike, wheel chair, sport cars
 	switch smoothness=bad|robust_wheels			CobblestoneRes									# robust wheels - trekking bike, normal cars
 	switch smoothness=very_bad|high_clearance	DirtRes											# high clearance - normal cars with slightly higher clearance
@@ -1143,6 +1147,7 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch     highway=track 						0.0		# Feldweg
 	switch and highway=path tracktype=grade1|grade2	0.0		# Path which is a track but is wrongly annotaded
 	switch and highway=path any_cycleroute			0.1		# Path which as part of an official cycle route
+	switch and highway=path bicycle=designated		0.15	# Path which is a designated bicycle track
 	switch     highway=path  						0.3 	# Pfad 
 	switch     highway=road							0.0		# unbekannter Typ
 	switch     highway=steps                        0.0		# Treppen
