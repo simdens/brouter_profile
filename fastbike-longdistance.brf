@@ -29,8 +29,9 @@ assign	SlopeMax					8.0		# %SlopeMax% 						| % - maximum allowed slope (up & do
 assign 	StickToCycleRoute			true	# %StickToCycleRoute%				| cycle routes will be preferred | boolean
 assign	PreferGreen					true	# %PreferGreen%						| routes will prefer green environments | boolean
 assign	PreferWater					true	# %PreferWater%						| routes next to water or waterways are prefered | boolean
-assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| routes will avoid noisy roads | boolean
-assign	AllowFerries				false	# %AllowFerries%					| ferries might be used | boolean
+assign 	AvoidNoisyRoads				true	# %AvoidNoisyRoads%					| | boolean
+assign	AllowSteps					true	# %AllowSteps%						| | boolean
+assign	AllowFerries				false	# %AllowFerries%					| | boolean
 
 # traffic cost
 assign	TrafficVehicleCost			35		# %TrafficVehicleCost%				| m - Cost per overtaking vehicle | number
@@ -55,12 +56,12 @@ assign	processUnusedTags			true	# %ProcessUnusedTags%				| Set true to output un
 assign validForBikes       	1
 
 # way cost constants
-assign IntialPushCost	95									# cost to dismount from bike --> Cost for standing still and accelerating (Speed0Cost) + some additional penalty for dismounting process (2s for dismount + 2s for mount @ 7.4m/s --> 30m)
-assign IntialFerryCost	switch AllowFerries	10000	99999	# average waiting time of 30min and an average cycle speed of 20km/h
-assign NoiseCost		 0.2								# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
-assign GreenCost		-0.10								# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
-assign WaterCost		-0.10								# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
-assign CycleRouteCost	-0.10								# Cost or incentive for cycle routs
+assign IntialPushCost	95		# cost to dismount from bike --> Cost for standing still and accelerating (Speed0Cost) + some additional penalty for dismounting process (2s for dismount + 2s for mount @ 7.4m/s --> 30m)
+assign IntialFerryCost	10000	# average waiting time of 30min and an average cycle speed of 20km/h
+assign NoiseCost		 0.2	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
+assign GreenCost		-0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
+assign WaterCost		-0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
+assign CycleRouteCost	-0.10	# Cost or incentive for cycle routs
 
 # node cost constants
 # Way difference for deceleration to 0km/h and accelerating afterwards compared
@@ -611,7 +612,7 @@ assign   FineGravelRes			 4.0
 assign   DirtRes				 5.0
 assign   SandRes				10.0
 assign   MudRes					15.0
-assign   PavingUnsureCost       GroundRes
+assign   PavingUnsureRes		GroundRes
 
 
 # cost factors
@@ -619,7 +620,7 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
     # 
     # Use cycleway surface with highest priority, since we use cycleways if 
     # available
-    switch cycleway:surface=asphalt         0.0
+    switch cycleway:surface=asphalt         1.0
     switch cycleway:surface=concrete|paved  ConcreteRes
     switch cycleway:surface=paving_stones   PavingStonesRes
     switch cycleway:surface=compacted       CompactedRes
@@ -630,7 +631,7 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
     switch cycleway:surface=unpaved         DirtRes
     #
     # Highway surface
-    switch     surface=asphalt					0.0
+    switch     surface=asphalt					1.0
     switch and surface=concrete concrete=lanes	CompactedRes
     switch and surface=concrete concrete=plates	PavingStonesRes
     switch     surface=concrete|paved 			ConcreteRes
@@ -650,71 +651,71 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
     switch     surface=mud                      MudRes
     #
 	# best guess for unsure paving:
-	switch highway=raceway                  0.0                 # Rennstrecke
-	switch highway=motorway|motorway_link   0.0					# Autobahn und Auffahrten
-	switch highway=trunk|trunk_link      	0.0					# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link    	0.0					# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link	0.0					# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   0.0					# Kreisstraßen und Auffahrten
-	switch highway=unclassified       		0.0					# Dorfstraßen	  
-	switch highway=residential 				0.0					# Wohnstraße
-	switch highway=rest_area|services       0.0                 # Rastplatz
-	switch highway=corridor                 0.0                 # Hallway inside a building
-	switch highway=crossing                 0.0                 # Street crossing
-	switch highway=bus_stop                 0.0                 # Bus stop on the street
-	switch highway=mini_roundabout          0.0                 # Mini roundabout in the street
-	switch highway=turning_loop             0.0                 # Turning Loop
-	switch highway=platform                 PavingStonesRes    # Bushaltestelle (wo die Personen stehen)
-	switch highway=living_street 			PavingStonesRes	# Spielstraße
-	switch highway=pedestrian   			SettRes    		# Fußgängerzone
-	switch highway=service                  PavingStonesRes    # Zugangsstraßen
-	switch highway=bridleway                CompactedRes       # Reit- und Fußweg
-	switch highway=cycleway                 PavingStonesRes    # Radweg
-	switch highway=footway  				GroundRes	        # Gehweg
-	switch highway=unsurfaced               DirtRes			# street without surface
-	switch highway=road						PavingUnsureCost	# unbekannter Typ
+	switch highway=raceway                  1.0                 # Rennstrecke
+	switch highway=motorway|motorway_link   1.0					# Autobahn und Auffahrten
+	switch highway=trunk|trunk_link      	1.0					# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link    	1.0					# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link	1.0					# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link   1.0					# Kreisstraßen und Auffahrten
+	switch highway=unclassified       		1.0					# Dorfstraßen	  
+	switch highway=residential 				1.0					# Wohnstraße
+	switch highway=rest_area|services       1.0                 # Rastplatz
+	switch highway=corridor                 1.0                 # Hallway inside a building
+	switch highway=crossing                 1.0                 # Street crossing
+	switch highway=bus_stop                 1.0                 # Bus stop on the street
+	switch highway=mini_roundabout          1.0                 # Mini roundabout in the street
+	switch highway=turning_loop             1.0                 # Turning Loop
+	switch highway=platform                 PavingStonesRes		# Bushaltestelle (wo die Personen stehen)
+	switch highway=living_street 			PavingStonesRes		# Spielstraße
+	switch highway=pedestrian   			SettRes				# Fußgängerzone
+	switch highway=service                  PavingStonesRes		# Zugangsstraßen
+	switch highway=bridleway                CompactedRes		# Reit- und Fußweg
+	switch highway=cycleway                 PavingStonesRes		# Radweg
+	switch highway=footway  				GroundRes			# Gehweg
+	switch highway=unsurfaced               DirtRes				# street without surface
+	switch highway=road						PavingUnsureRes	# unbekannter Typ
 	#
 	# for highway=track, check the tracktype
-	switch and highway=track tracktype=grade1               0.0             # Asphalt surface
-	switch and highway=track tracktype=grade2               CompactedRes   # mostly solid
-	switch and highway=track tracktype=grade3   multiply 2  CompactedRes   # Even mixture of hard and soft materials.
-	switch and highway=track tracktype=grade4               GroundRes      # Mostly soft
-	switch and highway=track tracktype=grade5               DirtRes        # soft
-	switch and highway=track tracktype=                     DirtRes        # unknown, but most likely soft
+	switch and highway=track tracktype=grade1	1.0										# Asphalt surface
+	switch and highway=track tracktype=grade2	CompactedRes							# mostly solid
+	switch and highway=track tracktype=grade3	multiply 0.5 add CompactedRes GroundRes	# Even mixture of hard and soft materials.
+	switch and highway=track tracktype=grade4	GroundRes								# Mostly soft
+	switch and highway=track tracktype=grade5	DirtRes									# soft
+	switch and highway=track tracktype=			DirtRes									# unknown, but most likely soft
 	#
 	# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
-	switch and highway=path tracktype=grade1				0.0             # Asphalt surface
-	switch and highway=path tracktype=grade2				CompactedRes   # mostly solid
-	switch and highway=path tracktype=grade3	multiply  2 CompactedRes   # Even mixture of hard and soft materials.
-	switch and highway=path tracktype=grade4				GroundRes      # Mostly soft
-	switch and highway=path tracktype=grade5				DirtRes        # soft
-	switch and highway=path tracktype=						DirtRes        # unknown, but most likely soft
+	switch and highway=path tracktype=grade1	1.0										# Asphalt surface
+	switch and highway=path tracktype=grade2	CompactedRes							# mostly solid
+	switch and highway=path tracktype=grade3	multiply 0.5 add CompactedRes GroundRes	# Even mixture of hard and soft materials.
+	switch and highway=path tracktype=grade4	GroundRes								# Mostly soft
+	switch and highway=path tracktype=grade5	DirtRes									# soft
+	switch and highway=path tracktype=			DirtRes									# unknown, but most likely soft
 	#
 	# Default if really unknown
-											PavingUnsureCost
+											PavingUnsureRes
 
 
 assign smoothnessfactor		# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
-	switch smoothness=excellent|very_good				 		0.0					# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				multiply 0.33	PavingStonesRes	# thin_wheels - racing bike
-	switch smoothness=intermediate            	            	PavingStonesRes	# wheels - city bike, wheel chair, sport cars
-	switch smoothness=bad|robust_wheels       			 		CobblestoneRes		# robust wheels - trekking bike, normal cars
-	switch smoothness=very_bad|high_clearance 			 		DirtRes			# high clearance - normal cars with slightly higher clearance
-	switch smoothness=horrible|off_road_wheels	multiply 2		DirtRes			# off road wheels - off road cars 
-	switch smoothness=very_horrible           					MudRes			    # specialized off road vehicles - ATV, tractor
-	switch smoothness=impassable              	multiply 2		MudRes				# no wheeled vehicle - hiking path 
+	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
+	switch smoothness=good		 				multiply 0.5 add ConcreteRes PavingStonesRes	# thin_wheels - racing bike
+	switch smoothness=intermediate				PavingStonesRes									# wheels - city bike, wheel chair, sport cars
+	switch smoothness=bad|robust_wheels			CobblestoneRes									# robust wheels - trekking bike, normal cars
+	switch smoothness=very_bad|high_clearance	DirtRes											# high clearance - normal cars with slightly higher clearance
+	switch smoothness=horrible|off_road_wheels	multiply 2 DirtRes								# off road wheels - off road cars 
+	switch smoothness=very_horrible				MudRes											# specialized off road vehicles - ATV, tractor
+	switch smoothness=impassable              	multiply 2 MudRes								# no wheeled vehicle - hiking path 
 	#
 	# If smoothness is not given, estimate smoothness on mtb:scale property
-	switch mtb:scale=0                                          DirtRes            # Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
-	switch mtb:scale=1                          multiply 2		DirtRes            # roots and small stones. --> smoothness=horrible
-	switch mtb:scale=2                          multiply 3		DirtRes            # large rocks and stones. --> smoothness=mean(horrible & very_horrible)
-	switch mtb:scale=3                          				MudRes             # large obstacles such as boulders and large roots. --> smoothness=very_horrible
-	switch mtb:scale=4                          multiply 1.5	MudRes             # large boulders, roots. --> smoothness=mean(very_horrible & impassable)
-	switch mtb:scale=5                          multiply 2		MudRes             # big boulder fields, debris, landslides.  --> smoothnes=impassable
-	switch mtb:scale=6                          multiply 2.5	MudRes             # more than impassable :-)
-																surfacefactor			# not known
-												
+	switch mtb:scale=0	DirtRes										# Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
+	switch mtb:scale=1	multiply 2.0 DirtRes						# roots and small stones. --> smoothness=horrible
+	switch mtb:scale=2	multiply 0.5 add MudRes multiply 2 DirtRes	# large rocks and stones. --> smoothness=mean(horrible & very_horrible)
+	switch mtb:scale=3	MudRes										# large obstacles such as boulders and large roots. --> smoothness=very_horrible
+	switch mtb:scale=4	multiply 1.5 MudRes							# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
+	switch mtb:scale=5	multiply 2.0 MudRes							# big boulder fields, debris, landslides.  --> smoothnes=impassable
+	switch mtb:scale=6	multiply 2.5 MudRes							# more than impassable :-)
+						surfacefactor								# not known
+
 # use mean value of both, otherwise it is penalized twice
 # Scale with carrycostfactor or walkingcostfactor if carrying or walking
 assign rollingresistancefactor
@@ -1117,6 +1118,8 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	# all other exclusions below (access, steps, ferries,..)
 	# should not be deleted by the decoder, to be available
 	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	switch and not AllowFerries route=ferry				 9999
+	switch and not AllowSteps   highway=steps			 9999
 	
 	# Exceptions which shal not be penalized
 	switch hascycleway							0
@@ -1191,12 +1194,7 @@ assign commoncostfactor
 	#
 	# exceptions with sub-cost below 10000 (motorway, bad one-way, ...)  should not be deleted
 	# by the decoder, to be available in voice-hint-processing (if cost are >=10000, the decoder will delete them)
-	switch 
-		greater 					# if any penalty ...
-			max accesspenalty highwaycost
-			9999					# ... is larger 9999 ...
-		10000						# ... then take 10000 (forbidden) ...
-									# ... else take the following:
+	switch greater max accesspenalty highwaycost 9999	10000
 	min 9999								# make sure that costfactor is less or equal 9999
 	add accesspenalty						# access penalty
 	add highwaycost							# cost for different types of highway
