@@ -1128,6 +1128,7 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	# Exceptions which shal not be penalized
 	switch hascycleway							0
 	switch bicycle_road=yes						0		# Fahrradrstraßen
+	switch railway=abandoned					0		# Abandoned railways are quite a good bicycle route :-) 
 
 	# highway cost
 	switch     highway=motorway|motorway_link	 9999		# Autobahn (BAB) und Auffahrten
@@ -1146,8 +1147,8 @@ assign highwaycost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch     highway=footway  					0.0		# Gehweg
 	switch     highway=track 						0.0		# Feldweg
 	switch and highway=path tracktype=grade1|grade2	0.0		# Path which is a track but is wrongly annotaded
+	switch and highway=path bicycle=designated		0.0		# Path which is a designated bicycle track
 	switch and highway=path any_cycleroute			0.1		# Path which as part of an official cycle route
-	switch and highway=path bicycle=designated		0.15	# Path which is a designated bicycle track
 	switch     highway=path  						0.3 	# Pfad 
 	switch     highway=road							0.0		# unbekannter Typ
 	switch     highway=steps                        0.0		# Treppen
