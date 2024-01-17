@@ -811,12 +811,12 @@ assign maxallowedspeed
 		switch highway=residential 					 30 # Wohnstraße
 		switch highway=service                  	 30 # Zugangsstraßen
 		switch highway=cycleway                 	 30 # Radweg
-		switch highway=living_street 				 15 # Spielstraße
-		switch highway=pedestrian   				  5 # Fußgängerzone
+		switch highway=living_street 				 10 # Spielstraße
+		switch highway=pedestrian   				 10 # Fußgängerzone
 		switch and bicycle=designated
 			   highway=bridleway|footway			 30 # Designated bike lanes/ways on footways
-		switch highway=bridleway                	  5 # Reit- und Fußweg
-		switch highway=footway  					  5 # Gehweg
+		switch highway=bridleway                	 10 # Reit- und Fußweg
+		switch highway=footway  					 10 # Gehweg
 		switch highway=path  					    100 # Pfad
 		switch highway=track 						100 # Feldweg
 		switch highway=road							100 # unbekannter Typ
@@ -824,27 +824,36 @@ assign maxallowedspeed
 		switch route=ferry                      	 10 # Fähren
 													100 # Default (unknown max speed)
 
-# Max desired speed by the biker
-# km/h
-assign maxdesiredspeed	
+# Max desired speed by the biker in km/h
+# This speed might be lower than the maximum allowed speed (and thus the traffic
+# speed)
+assign maxdesiredspeed
 		min												MaxBikerSpeed
-		max switch or hascycleway any_cycleroute	25	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
 		min switch iscarrying						2.5	999		# Speed while carrying the bike
 		min switch iswalking						5	999		# Speed while pushing the bike
+		# Now from fast to slow :-) 
+		switch highway=track 							 40		# Feldweg
+		switch and highway=path tracktype=grade1|grade2	 40		# Feldweg (Track which is not annotaded according to OSM standards)
 		switch bicycle=designated						 30		# Max. Geschw. bei Fahrradwegen wird unabhaengig von der Art der Strasse zu 30km/h angenommen
 		switch highway=cycleway							 30		# Radweg
 		switch highway=unclassified						 30		# Dorfstraßen
 		switch highway=residential 						 25		# Wohnstraße
 		switch highway=service							 25		# Zugangsstraßen
-		switch highway=footway  						  5		# Gehweg
-		switch highway=track 							 40		# Feldweg
-		switch and highway=path tracktype=grade1|grade2	 40		# Feldweg (which is not annotaded according to OSM standards)
+		switch or hascycleway any_cycleroute			 25		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
 		switch highway=path  							 20		# Pfad
+		switch highway=footway  						 15		# Gehweg
 		switch highway=steps							  2.5	# Treppen
 														999		# Default
 
-# Use minimum of all speed limits
-assign maxspeed	min maxallowedspeed maxdesiredspeed
+# Compute maximum biker speed:
+# - the biker does never exceed the maximum desired speed for the given highway
+# - the biker might exceed the maximum allowed speed by 10% or 5km/h
+assign maxbikerspeed
+	min 
+		maxdesiredspeed 
+		max
+			multiply 1.1 maxallowedspeed
+			add      5.0 maxallowedspeed
 
 
 # speed for uphills and downhills  with "SlopeMax"
@@ -861,9 +870,9 @@ assign bikespeeduphill		max 0 add Speedp8 multiply speeddvds equivSlopeCr
 
 # routing should be at least partially done time optimal
 #
-assign speedpenaltyfactor			add 1 multiply TimeOptimalityFactor sub max 1 div bikespeed         maxspeed 1
-assign speedpenaltyuphillfactor		add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeduphill   maxspeed 1
-assign speedpenaltydownhillfactor	add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeddownhill maxspeed 1
+assign speedpenaltyfactor			add 1 multiply TimeOptimalityFactor sub max 1 div bikespeed         maxbikerspeed 1
+assign speedpenaltyuphillfactor		add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeduphill   maxbikerspeed 1
+assign speedpenaltydownhillfactor	add 1 multiply TimeOptimalityFactor sub max 1 div bikespeeddownhill maxbikerspeed 1
 
 
 ################################################################################
@@ -949,9 +958,9 @@ assign vehiclespeed
 
 
 # Compute overtaking vehicles per meter depending on bike speed
-assign bikespeedfortraffic         = min maxspeed max bikespeed         1	# use at least 1km/h --> div by zero
-assign bikespeedfortrafficuphill   = min maxspeed max bikespeeduphill   1
-assign bikespeedfortrafficdownhill = min maxspeed max bikespeeddownhill 1
+assign bikespeedfortraffic         = min maxbikerspeed max bikespeed         1	# use at least 1km/h --> div by zero
+assign bikespeedfortrafficuphill   = min maxbikerspeed max bikespeeduphill   1
+assign bikespeedfortrafficdownhill = min maxbikerspeed max bikespeeddownhill 1
 assign overtakingsperhour          = multiply traffic div max 0 sub vehiclespeed bikespeedfortraffic         vehiclespeed
 assign overtakingsperhouruphill    = multiply traffic div max 0 sub vehiclespeed bikespeedfortrafficuphill   vehiclespeed
 assign overtakingsperhourdownhill  = multiply traffic div max 0 sub vehiclespeed bikespeedfortrafficdownhill vehiclespeed
