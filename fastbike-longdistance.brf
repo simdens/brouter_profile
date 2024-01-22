@@ -908,7 +908,7 @@ assign maxDesiredSpeed
 # Compute maximum biker speed:
 # - the biker does never exceed the maximum desired speed for the given highway
 # - the biker might exceed the maximum allowed speed by 10% or 5km/h
-assign maxBikerSpeed
+assign maxCurrentBikeSpeed
 	min 
 		maxDesiredSpeed 
 		max
@@ -928,9 +928,9 @@ assign bikeSpeedUphill		max 0 add Speedp8 multiply speeddvds equivSlopeCr
 
 # routing should be at least partially done time optimal
 #
-assign speedPenaltyFactor			add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeed         maxBikerSpeed 1
-assign speedPenaltyUphillFactor		add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedUphill   maxBikerSpeed 1
-assign speedPenaltyDownhillFactor	add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedDownhill maxBikerSpeed 1
+assign speedPenaltyFactor			add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeed         maxCurrentBikeSpeed 1
+assign speedPenaltyUphillFactor		add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedUphill   maxCurrentBikeSpeed 1
+assign speedPenaltyDownhillFactor	add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedDownhill maxCurrentBikeSpeed 1
 
 
 # Traffic
@@ -1013,9 +1013,9 @@ assign vehicleSpeed
 											 90 # Default
 
 # Compute overtaking vehicles per meter depending on bike speed
-assign bikeSpeedForTraffic         min maxBikerSpeed max bikeSpeed         1	# use at least 1km/h --> div by zero
-assign bikeSpeedForTrafficUphill   min maxBikerSpeed max bikeSpeedUphill   1
-assign bikeSpeedForTrafficDownhill min maxBikerSpeed max bikeSpeedDownhill 1
+assign bikeSpeedForTraffic         min maxCurrentBikeSpeed max bikeSpeed         1	# use at least 1km/h --> div by zero
+assign bikeSpeedForTrafficUphill   min maxCurrentBikeSpeed max bikeSpeedUphill   1
+assign bikeSpeedForTrafficDownhill min maxCurrentBikeSpeed max bikeSpeedDownhill 1
 assign overtakingsPerHour          multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTraffic         vehicleSpeed
 assign overtakingsPerHourUphill    multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficUphill   vehicleSpeed
 assign overtakingsPerHourDownhill  multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficDownhill vehicleSpeed
@@ -1347,12 +1347,12 @@ assign priorityclassifier
 	switch highway=residential|living_street	6
 	switch highway=service						6
 	switch highway=cycleway						6
-	switch highway=designated					6
+	switch bicycle=designated					6
 	switch highway=track
 		switch tracktype=grade1					6
 												4
 	switch highway=bridleway|road|path|footway	4
-	switch ighway=steps							2
+	switch highway=steps							2
 	switch highway=pedestrian					2
 												0
 
