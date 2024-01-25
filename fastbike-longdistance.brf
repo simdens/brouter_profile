@@ -41,7 +41,7 @@ assign AllowSteps				true	# %AllowSteps%					| | boolean
 assign AllowFerries				false	# %AllowFerries%				| | boolean
 
 # traffic cost
-assign TrafficVehicleCost		35		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
+assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
 
 # time optimallity parameter
 assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - Percentage to consider travel time. 0% - energy optimized, 100% - time optimized | number
@@ -109,12 +109,12 @@ assign classifierFerry    	3
 # Kinematic model parameters for Brouter travel time calculation
 assign maxSpeed   min maxBikerSpeed 45	# absolute maximum speed in km/h for travel time computation
 assign S_C_x      multiply CwA rho		# drag coefficient times the reference area times the air density for travel time computation
-assign C_r        multiply 1.5 Cr			# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance 
+assign C_r        multiply 1.5 Cr		# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance 
 assign bikerPower P
 assign totalMass  m 
 
 # Time optimality factor 0 to 1
-assign timeOptimalityFactor min 1 max 0 div TimeOptimalityPercentage 100	# Compute and limit factor
+assign timeOptimalityFactor min 1 max 0 div TimeOptimalityPercentage 100
 
 # Speed Parameter Calculation:
 #-------------------------------------------------------------------------------
@@ -410,7 +410,7 @@ assign speed15CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy15 
 assign speed20CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy20 P
 
 # Linear interpolation between energy optimal cost and time optimal cost.
-#     cost = timeOptimalityFactor*SpeedCostTime + (1-timeOptimalityFactor)*SpeedCostEnergy
+#     cost = timeOptimalityFactor*      SpeedCostTime + (1-timeOptimalityFactor)*SpeedCostEnergy
 # <=> cost = timeOptimalityFactor*0.5*SpeedCostEnergy + (1-timeOptimalityFactor)*SpeedCostEnergy
 # <=> cost = (1-0.5*timeOptimalityFactor)*SpeedCostEnergy
 #  => cost = factor*SpeedCostEnergy
@@ -426,20 +426,24 @@ assign speed20Cost multiply factor speed20CostEnergy
 # - cost for standing still and accelerating (speed0CostEnergy) 
 # - cost for potential energy change due to lower cog of the biker (~15cm)
 # For time efficient cost, sum of:
-# - cost for stnanding still and accelerating (way difference to continuous travelling, 0.5 * Speed0Energy)
+# - cost for stnanding still and accelerating (way difference to continuous 
+#   travelling, 0.5 * Speed0Energy)
 # - cost for time needed to dismounting (2s for dismount + 2s for mount)
 # 
 # Formula:
-# initialPushCost =   (1 - TOF) * (    speed0CostEnergy + height2Length*dismountCOGHeightDifference)
-#					+      TOF  * (0.5*speed0CostEnergy + v*dismountMountTime)
+# initialPushCost =
+#   (1-TOF) * (    speed0CostEnergy + height2Length*dismountCOGHeightDifference)
+# +    TOF  * (0.5*speed0CostEnergy + v*dismountMountTime)
 # <==>
-# initialPushCost =   (1 - 0.5*TOF) * speed0CostEnergy
-#                   + (1 - TOF) * height2Length*dismountCOGHeightDifference
-#                   +      TOF  * v*dismountMountTime
+# initialPushCost =
+#   (1-0.5*TOF) * speed0CostEnergy
+# +     (1-TOF) * height2Length*dismountCOGHeightDifference
+# +        TOF  * v*dismountMountTime
 # <==>
-# initialPushCost =   speed0Cost
-#                   + (1 - TOF) * height2Length*dismountCOGHeightDifference
-#                   +      TOF  * v*dismountMountTime
+# initialPushCost =
+#   speed0Cost
+# + (1-TOF) * height2Length*dismountCOGHeightDifference
+# +    TOF  * v*dismountMountTime
 assign dismountCOGHeightDifference	0.15	# m - Difference of COG of biker between dismounted and mounted position
 assign dismountMountTime			4		# s - Time needed to dismount and mount back again
 assign initialPushCost	add speed0Cost
@@ -455,20 +459,22 @@ assign initialPushCost	add speed0Cost
 # - cost for standing still and accelerating
 # - cost for potential energy change due to lower cog of the biker (~15cm)
 # For time efficient cost, sum of:
-# - cost for standing still and accelerating (way difference to continuous travelling)
+# - cost for standing still and accelerating (way difference to continuous
+#   travelling)
 # - cost for time needed to dismounting (2s for dismount + 2s for mount)
 # - cost for waiting time (30min in average. One ferry every hour is assumed)
 #
 # Formula:
-# initialFerryCost =   (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference ) 
-#                    +    TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime + v*ferryWaitingTime )
+# initialFerryCost = 
+#  (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference)
+# +   TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime + v*ferryWaitingTime )
 # <==>
-# initialFerryCost =   (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference ) 
-#                    +    TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime  )
-#                    +    TOF  * ( v*ferryWaitingTime )
+# initialFerryCost = 
+#  (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference) 
+# +   TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime  )
+# +   TOF  * ( v*ferryWaitingTime )
 # <==>
-# initialFerryCost =   initialPushCost
-#                    + TOF * ( v*ferryWaitingTime )
+# initialFerryCost =   initialPushCost + TOF * ( v*ferryWaitingTime )
 assign ferryWaitingTime	multiply 30 60		# s - Waiting time for ferry (assumed one ferry every hour --> avg waiting time of 30min)
 assign initialFerryCost add initialPushCost multiply timeOptimalityFactor multiply v ferryWaitingTime
 
@@ -759,7 +765,8 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 											pavingUnsureRes
 
 
-assign smoothnessfactor		# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
+# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
+assign smoothnessfactor
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
 	switch smoothness=good		 				multiply 0.5 add 1.0 pavingStonesRes			# thin_wheels - racing bike
@@ -780,8 +787,9 @@ assign smoothnessfactor		# 1.34 Mio tags (11-2018) - https://taginfo.openstreetm
 	switch mtb:scale=6	multiply 2.5 mudRes							# more than impassable :-)
 						surfacefactor								# not known
 
-# use mean value of both, otherwise it is penalized twice
-# Scale with carryCostFactor or walkingcostfactor if carrying or walking
+# use mean value of surface and smoothness.
+# Scale with carryCostFactor or walkingcostfactor if carrying or walking since
+# this is the efficiency factor for walking or carrying
 assign rollingresistancefactor
 	multiply
 		switch isCarrying	carryCostFactor		# Use carrrycostfactor if carrying
@@ -889,6 +897,7 @@ assign maxDesiredSpeed
 	min												maxBikerSpeed
 	min switch isCarrying						2.5	999		# Speed while carrying the bike
 	min switch isWalking						5	999		# Speed while pushing the bike
+	max switch or hasCycleway anyCycleroute		25	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
 	# some special ways
 	# Now from fast to slow :-) 
 	switch highway=track 							 40		# Feldweg
@@ -898,7 +907,6 @@ assign maxDesiredSpeed
 	switch highway=unclassified						 30		# Dorfstraßen
 	switch highway=residential 						 25		# Wohnstraße
 	switch highway=service							 25		# Zugangsstraßen
-	switch or hasCycleway anyCycleroute				 25		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
 	switch highway=path  							 20		# Pfad
 	switch highway=footway  						 15		# Gehweg
 	switch route=ferry								 10		# Fähren (Bodenseefähre Konstanz, 4.4km/25min = 10.5km/h)
@@ -936,44 +944,81 @@ assign speedPenaltyDownhillFactor	add 1 multiply timeOptimalityFactor sub max 1 
 # Traffic
 ################################################################################
 
-# Remark: current DTV in Baden-Württemberg (Germany)
-# Schnellstraße:
-# Bundestraße:		14263 vehicle/day	-- https://www.bast.de/BASt_2017/DE/Statistik/Verkehrsdaten/2015/Fahrleistungen-2015.pdf?__blob=publicationFile&v=6
-# Landstraße:		 4718 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-l-str.pdf
-# Kreisstraße:		 2309 vehicle/day	-- https://www.svz-bw.de/fileadmin/verkehrszaehlung/vm/rpt-95-vm-2010-mdtv-k-str.pdf
-# Dorfstraße:
-# Wohnstraße:
+# Remark: current DTV 2020 in Baden-Württemberg (Germany)
+# 2020 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2020_Excel.zip
+# 2010 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2011_Excel.zip
+#
+# Vehicles per Day 2020 DTV (sum of both direction)
+#
+# Street with			2Lanes	3Lanes	4Lanes	6Lanes
+#-------------------------------------------------------------------------------
+# Autobahn:		58540					24535	82296
+# Bundestraße:	13821	11153	13314	28440	34845
+# Landstraße:	 5904	 5676			19949
+# Kreisstraße:	 2611	 2562	 3049	 8527
+#
+# At least 10 measurement points with streets with each number of lanes had to
+# be existing to be in this list.
 
-# get vehicles per hour for different kind of ways
-assign trafficPerHighway
-	switch highway=trunk|trunk_link				1189	# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link			 594	# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link		 197	# Landstraßen und Auffahrtenc
-	switch highway=tertiary|tertiary_link		  96	# Kreisstraßen und Auffahrten
-	switch highway=unclassified					   0	# Dorfstraßen	  
-	switch highway=residential					   0	# Wohnstraße
-	switch highway=service						   0	# Zugangsstraßen
-	switch highway=living_street				   0	# Spielstraße
-	switch highway=pedestrian					   0	# Fußgängerzone
-	switch highway=bridleway					   0	# Reit- und Fußweg
-	switch highway=cycleway						   0	# Radweg
-	switch highway=footway						   0	# Gehweg
-	switch highway=path							   0	# Pfad 
-	switch highway=track 						   0	# Feldweg
-	switch highway=road							   0	# unbekannter Typ
-												   0	# Default
+# Get number of lanes for current highway
+assign nLanes
+	switch oneway=yes|true|1
+		switch lanes=1	1
+		switch lanes=2	2
+		switch lanes=3	3
+		switch lanes=4	4
+		switch lanes=5	5
+		switch lanes=6	6
+		switch lanes=7	7
+						1
+	# else
+		switch lanes=1	0.5
+		switch lanes=2	1
+		switch lanes=3	1.5
+		switch lanes=4	2
+		switch lanes=5	2.5
+		switch lanes=6	3
+		switch lanes=7	3.5
+						1
 
-# Lanes:
-# if the highway has more than 1 lane per direction, assume double traffic
+# Traffic per highway type per hour (!)
 assign trafficPerHighway
-	switch and oneway=yes|true|1 lanes=2|3|4|5|6|7	multiply 2 trafficPerHighway
-	switch 						 lanes=3|4|5|6|7	multiply 2 trafficPerHighway
-													trafficPerHighway
+	switch highway=trunk|trunk_link			# Schnellstraßen (wie BAB) und Auffahrten
+		switch lesser nLanes 3		multiply 255.6 nLanes	# 24535/24/4 =~ 255.6
+									multiply 571.5 nLanes	# 82296/24/6 =~ 571.5
+	switch highway=primary|primary_link		# Bundesstraßen und Auffahrten
+		switch lesser nLanes 1.5	multiply 232.4 nLanes	# 11153/24/2 =~ 232.4
+		switch lesser nLanes 2		multiply 184.9 nLanes	# 13314/24/3 =~ 184.9
+		switch lesser nLanes 3		multiply 296.3 nLanes	# 28440/24/4 =~ 296.3
+									multiply 242.0 nLanes	# 34845/24/6 =~ 242.0
+	switch highway=secondary|secondary_link	# Landstraßen und Auffahrtenc
+		switch lesser nLanes 2		multiply 123.0 nLanes	#  5904/24/2 =~ 123.0
+									multiply 207.8 nLanes	# 19949/24/4 =~ 207.8
+	switch highway=tertiary|tertiary_link	# Kreisstraßen und Auffahrten
+		switch lesser nLanes 1.5	multiply  53.4 nLanes	# 2562/24/2 =~ 53.4
+		switch lesser nLanes 2		multiply  42.3 nLanes	# 3049/24/3 =~ 42.3
+									multiply  88.8 nLanes	# 8527/24/4 =~ 88.8
+	switch highway=unclassified		0		# Dorfstraßen	  
+	switch highway=residential		0		# Wohnstraße
+	switch highway=service			0		# Zugangsstraßen
+	switch highway=living_street	0		# Spielstraße
+	switch highway=pedestrian		0		# Fußgängerzone
+	switch highway=bridleway		0		# Reit- und Fußweg
+	switch highway=cycleway			0		# Radweg
+	switch highway=footway			0		# Gehweg
+	switch highway=path				0		# Pfad 
+	switch highway=track 			0		# Feldweg
+	switch highway=road				0		# unbekannter Typ
+									0		# Default
+
 
 # Different traffic classes
 # Source -- https://forum.openstreetmap.org/viewtopic.php?id=31044
 # Quote:
-# Die Verkehrssumme drückt grob gesagt aus, wieviel Meter Wohnstrasse (oder <= Tempo50 Strasse) eine Strasse versorgt, wobei diese Versorgungsbeziehung noch entfernungsabhängig untersrückt wird mit 20km Längenskala.  Für das Pseudotag wird dieser Wert logarithmiert bzw. folgendermassen gemappt:
+# Die Verkehrssumme drückt grob gesagt aus, wieviel Meter Wohnstrasse (oder 
+# <= Tempo50 Strasse) eine Strasse versorgt, wobei diese Versorgungsbeziehung 
+# noch entfernungsabhängig untersrückt wird mit 20km Längenskala. Für den
+# Pseudotag wird dieser Wert logarithmiert bzw. folgendermassen gemappt:
 # 
 # summe >   5000   estimated_traffic_class=1
 # summe >  10000   estimated_traffic_class=2
@@ -986,18 +1031,19 @@ assign trafficPerHighway
 # Traffic per hour dependency with traffic class is only a feeling without any
 # data proving this values
 assign trafficPerClass
-	switch estimated_traffic_class=7	6336
-	switch estimated_traffic_class=6	3168
-	switch estimated_traffic_class=5	1584
-	switch estimated_traffic_class=4	 792
-	switch estimated_traffic_class=3	 396
-	switch estimated_traffic_class=2	 198
-	switch estimated_traffic_class=1	  99
+	switch estimated_traffic_class=7	3168
+	switch estimated_traffic_class=6	1584
+	switch estimated_traffic_class=5	 792
+	switch estimated_traffic_class=4	 396
+	switch estimated_traffic_class=3	 198
+	switch estimated_traffic_class=2	  99
+	switch estimated_traffic_class=1	  50
 										   0
 
 assign traffic div add trafficPerClass multiply 2 trafficPerHighway 3
 
-# actual speed of vehicles will be estimated by the minimum of the taged max allowed speed and some estimations (for Germany)
+# actual speed of vehicles will be estimated by the minimum of the taged max 
+# allowed speed and some estimations (for Germany)
 assign vehicleSpeed
 	min maxAllowedSpeed	
 	switch highway=motorway|motorway_link   130	# Autobahn (BAB) und Auffahrten
@@ -1095,7 +1141,8 @@ assign weightedNoiseCost
 # Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
 # Quote:
 # OSM data recognized as forest:
-# - landuse: forest, allotments, flowerbed, orchard, vineyard, recreation_ground, village_green
+# - landuse: forest, allotments, flowerbed, orchard, vineyard,
+#   recreation_ground, village_green
 # - leisure: garden, park, nature_reserve
 # 
 # No forest buffers are used.
@@ -1171,7 +1218,8 @@ assign weightedWaterCost
 ################################################################################
 
 # here only costs not handled by the other parts are applied
-assign highwayCost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
+# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
+assign highwayCost
 	
 	# disallow non existing highways, motorways and motorroads
 	switch and highway= not route=ferry  				10000	# exclude rivers, rails etc.
@@ -1207,8 +1255,8 @@ assign highwayCost	# 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.or
 	switch     highway=track 						0.0		# Feldweg
 	switch and highway=path tracktype=grade1|grade2	0.0		# Path which is a track but is wrongly annotaded
 	switch and highway=path bicycle=designated		0.0		# Path which is a designated bicycle track
-	switch and highway=path anyCycleroute			0.1		# Path which as part of an official cycle route
-	switch     highway=path  						0.3 	# Pfad 
+	switch and highway=path anyCycleroute			0.0		# Path which as part of an official cycle route
+	switch     highway=path  						0.2 	# Pfad 
 	switch     highway=road							0.0		# unbekannter Typ
 	switch     highway=steps                        0.0		# Treppen
 	switch     route=ferry                      	0.0 	# Fähren
@@ -1255,8 +1303,9 @@ assign cycleRouteFavor
 # common cost independently of slope
 assign commonCostFactor
 	#
-	# exceptions with sub-cost below 10000 (motorway, bad one-way, ...)  should not be deleted
-	# by the decoder, to be available in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	# exceptions with sub-cost below 10000 (motorway, bad one-way, ...)  should
+	# not be deleted by the decoder, to be available in voice-hint-processing
+	# (if cost are >=10000, the decoder will delete them)
 	switch greater max accessPenalty highwayCost 9999	10000
 	min 9999										# make sure that costfactor is less or equal 9999
 	add accessPenalty								# access penalty
@@ -1352,7 +1401,7 @@ assign priorityclassifier
 		switch tracktype=grade1					6
 												4
 	switch highway=bridleway|road|path|footway	4
-	switch highway=steps							2
+	switch highway=steps						2
 	switch highway=pedestrian					2
 												0
 
@@ -1458,30 +1507,33 @@ assign barrierCost
 	# Cost even while walking:
 	
 	# Bike and biker need to be lifted over the gate
-	switch barrier=stile					add pushCost multiply height2Length 1
-	# Bike needs to be lifted over the gate. Since the bike has to be lifted quite high, same energy is assumed as for "stile" barrier
-	switch barrier=kissing_gate				add pushCost multiply height2Length 1
-	# Bike needs to be lifted over the gate. Since the bike has to be lifted quite high, same energy is assumed as for "stile" barrier	
-	switch barrier=turnstile				add pushCost multiply height2Length 1
-	# Energy and time for opening and closing the gate is assumed to be the same as for twice Dismount and Mount back again
-	switch barrier=hampshire_gate			add pushCost multiply 2 initialPushCost
+	switch barrier=stile			add pushCost multiply height2Length 1
+	# Bike needs to be lifted over the gate. Since the bike has to be lifted 
+	# quite high, same energy is assumed as for "stile" barrier
+	switch barrier=kissing_gate		add pushCost multiply height2Length 1
+	# Bike needs to be lifted over the gate. Since the bike has to be lifted 
+	# quite high, same energy is assumed as for "stile" barrier	
+	switch barrier=turnstile		add pushCost multiply height2Length 1
+	# Energy and time for opening and closing the gate is assumed to be the same
+	#  as for twice Dismount and Mount back again
+	switch barrier=hampshire_gate	add pushCost multiply 2 initialPushCost
 	
 	#
 	# No costs while walking:
-	switch way:isWalking					0
-	switch barrier=gate						pushCost
-	switch barrier=bollard					0
-	switch barrier=lift_gate				speed0Cost
-	switch barrier=cycle_barrier			speed5Cost
-	switch barrier=entrance					0
-	switch barrier=block					0
-	switch barrier=cattle_grid				speed5Cost
-	switch barrier=sally_port				0
-	switch barrier=chain					speed5Cost
-	switch barrier=door						pushCost
-	switch barrier=swing_gate				speed5Cost
-	switch barrier=bump_gate				pushCost
-											0
+	switch way:isWalking			0
+	switch barrier=gate				pushCost
+	switch barrier=bollard			0
+	switch barrier=lift_gate		speed0Cost
+	switch barrier=cycle_barrier	speed5Cost
+	switch barrier=entrance			0
+	switch barrier=block			0
+	switch barrier=cattle_grid		speed5Cost
+	switch barrier=sally_port		0
+	switch barrier=chain			speed5Cost
+	switch barrier=door				pushCost
+	switch barrier=swing_gate		speed5Cost
+	switch barrier=bump_gate		pushCost
+									0
 
 # Final Cost
 #-------------------------------------------------------------------------------
