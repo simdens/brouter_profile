@@ -15,6 +15,9 @@
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 ################################################################################
 
+# ToDo
+# - add Selector for different tires
+# - add selector for different bikes
 
 ################################################################################
 ---context:global ##############################################################
@@ -69,11 +72,11 @@ assign cycleRouteCost	-0.10	# Cost or incentive for cycle routs
 
 # elevation parameter constants
 assign considerElevation				true	# elevation will be considered
-assign downhillMaxSlopeAdditionalCost	 50		# additional cost per vertical meter for slope larger than "slopemax"
-assign uphillMaxSlopeAdditionalCost		100		# additional cost per vertical meter for slope larger than "slopemax"
-assign slopeCutoff						  0.5	# slope is ignored if smaller than this threshold
-assign elevationpenaltybuffer			  4
-assign elevationmaxbuffer				  8
+assign downhillMaxSlopeAdditionalCost	  50	# additional cost per vertical meter for slope larger than "slopemax"
+assign uphillMaxSlopeAdditionalCost		 100	# additional cost per vertical meter for slope larger than "slopemax"
+assign slopeCutoff						   0.5	# slope is ignored if smaller than this threshold
+assign elevationpenaltybuffer			   4
+assign elevationmaxbuffer				   8
 
 # Kinematic model parameters for Speed calculation
 assign maxBikerSpeed	70
@@ -373,8 +376,15 @@ assign Speedp8 multiply v 3.6
 assign height2Length		multiply div multiply m g P div Speed0 3.6
 
 # the parameters are renamed in this profile to ease the use of the profile
-assign uphillcost				switch considerElevation	height2Length	0	# cost per vertical meter
-assign downhillcost				switch considerElevation	0				0	# cost per vertical meter
+# For timeoptimality, uphill cost are included in speed cost
+assign uphillcost				# cost per vertical meter
+	switch considerElevation	
+		multiply sub 1 timeOptimalityFactor height2Length
+		0
+assign downhillcost				# cost per vertical meter
+	switch considerElevation
+		multiply sub 1 timeOptimalityFactor 0
+		0
 assign elevationbufferreduce	sub SlopeMax slopeCutoff
 assign downhillcutoff			slopeCutoff
 assign uphillcutoff				slopeCutoff
@@ -686,7 +696,7 @@ assign   pavingUnsureRes		groundRes
 
 
 # cost factors
-assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
+assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
     # 
     # Use cycleway surface with highest priority, since we use cycleways if 
     # available
@@ -766,7 +776,7 @@ assign surfacefactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 
 
 # 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
-assign smoothnessfactor
+assign smoothnessFactor
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
 	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
 	switch smoothness=good		 				multiply 0.5 add 1.0 pavingStonesRes			# thin_wheels - racing bike
@@ -785,18 +795,22 @@ assign smoothnessfactor
 	switch mtb:scale=4	multiply 1.5 mudRes							# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
 	switch mtb:scale=5	multiply 2.0 mudRes							# big boulder fields, debris, landslides.  --> smoothnes=impassable
 	switch mtb:scale=6	multiply 2.5 mudRes							# more than impassable :-)
-						surfacefactor								# not known
+						surfaceFactor								# not known
 
-# use mean value of surface and smoothness.
-# Scale with carryCostFactor or walkingcostfactor if carrying or walking since
+# use mean value of surface and smoothness for an indicator of the current 
+# surface quality / rolling resistance
+assign rollingResistanceFactor
+	multiply 0.5 add surfaceFactor smoothnessFactor
+
+# Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
+# scale with carryCostFactor or walkingcostfactor if carrying or walking since
 # this is the efficiency factor for walking or carrying
-assign rollingresistancefactor
+assign rollingResistanceCost
 	multiply
 		switch isCarrying	carryCostFactor		# Use carrrycostfactor if carrying
 		switch isWalking	pushCostFactor		# if otherwise walking, it has to be pushing
 							1					# Default
-		multiply 0.5 add surfacefactor smoothnessfactor
-
+		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
 
 # Speed
 ################################################################################
@@ -868,24 +882,24 @@ assign maxAllowedSpeed
 	switch zone:maxspeed=20						 20
 	switch zone:maxspeed=30						 30
 	# Way type
-	switch highway=motorway|motorway_link   	130 # Autobahn (BAB) und Auffahrten
+	switch highway=motorway|motorway_link		130 # Autobahn (BAB) und Auffahrten
 	switch motorroad=yes						120 # Kraftfahrstraße (wie BAB)
-	switch highway=trunk|trunk_link      		120 # Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link     	100 # Bundesstraßen und Auffahrten
+	switch highway=trunk|trunk_link				120 # Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link			100 # Bundesstraßen und Auffahrten
 	switch highway=secondary|secondary_link 	100 # Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   	100 # Kreisstraßen und Auffahrten
-	switch highway=unclassified       			 50 # Dorfstraßen
-	switch highway=residential 					 30 # Wohnstraße
-	switch highway=service                  	 30 # Zugangsstraßen
-	switch highway=cycleway                 	 30 # Radweg
-	switch highway=living_street 				 10 # Spielstraße
-	switch highway=pedestrian   				 10 # Fußgängerzone
+	switch highway=tertiary|tertiary_link		100 # Kreisstraßen und Auffahrten
+	switch highway=unclassified					 50 # Dorfstraßen
+	switch highway=residential					 30 # Wohnstraße
+	switch highway=service						 30 # Zugangsstraßen
+	switch highway=cycleway						 30 # Radweg
+	switch highway=living_street				 10 # Spielstraße
+	switch highway=pedestrian					 10 # Fußgängerzone
 	switch and bicycle=designated
-		   highway=bridleway|footway			 30 # Designated bike lanes/ways on footways
-	switch highway=bridleway                	 10 # Reit- und Fußweg
-	switch highway=footway  					 10 # Gehweg
-	switch highway=path  					    100 # Pfad
-	switch highway=track 						100 # Feldweg
+	       highway=bridleway|footway			 30 # Designated bike lanes/ways on footways
+	switch highway=bridleway					 10 # Reit- und Fußweg
+	switch highway=footway						 10 # Gehweg
+	switch highway=path							100 # Pfad
+	switch highway=track						100 # Feldweg
 	switch highway=road							100 # unbekannter Typ
 	switch highway=steps						  5 # Treppen
 												100 # Default (unknown max speed)
@@ -893,8 +907,10 @@ assign maxAllowedSpeed
 # Max desired speed by the biker in km/h
 # This speed might be lower than the maximum allowed speed (and thus the traffic
 # speed)
+# The absolute maximum speed "maxBikerSpeed" is scaled by the 
+# rollingResistanceFactor to consider the slower desired speed at bad surfaces.
 assign maxDesiredSpeed
-	min												maxBikerSpeed
+	min								div maxBikerSpeed rollingResistanceFactor
 	min switch isCarrying						2.5	999		# Speed while carrying the bike
 	min switch isWalking						5	999		# Speed while pushing the bike
 	max switch or hasCycleway anyCycleroute		25	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
@@ -907,8 +923,8 @@ assign maxDesiredSpeed
 	switch highway=unclassified						 30		# Dorfstraßen
 	switch highway=residential 						 25		# Wohnstraße
 	switch highway=service							 25		# Zugangsstraßen
-	switch highway=path  							 20		# Pfad
-	switch highway=footway  						 15		# Gehweg
+	switch highway=path								 20		# Pfad
+	switch highway=footway							 15		# Gehweg
 	switch route=ferry								 10		# Fähren (Bodenseefähre Konstanz, 4.4km/25min = 10.5km/h)
 	switch highway=steps							  2.5	# Treppen
 													999		# Default
@@ -916,7 +932,7 @@ assign maxDesiredSpeed
 # Compute maximum biker speed:
 # - the biker does never exceed the maximum desired speed for the given highway
 # - the biker might exceed the maximum allowed speed by 10% or 5km/h
-assign maxCurrentBikeSpeed
+assign bikeSpeedLimit
 	min 
 		maxDesiredSpeed 
 		max
@@ -926,19 +942,27 @@ assign maxCurrentBikeSpeed
 # speed for uphills and downhills  with "SlopeMax"
 # Here the additional current rolling resistance is included into the speed
 # calculation
-assign equivSlopeCr			multiply Cr sub rollingresistancefactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
-assign speeddvds			div sub Speedp2 Speed0 2					# Better approx. if speed for 0% and 2% is used for virtual slope due to rolling resistance
+assign equivSlopeCr			multiply 100 multiply Cr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
+assign speeddvds			div sub Speedp2 Speed0 2								# Better approx. if speed for 0% and 2% is used for virtual slope due to rolling resistance
 assign bikeSpeed			add Speed0 multiply speeddvds equivSlopeCr
 assign speeddvds			div sub bikeSpeed Speedm8 add 8 equivSlopeCr
 assign bikeSpeedDownhill	add Speedm8 multiply speeddvds equivSlopeCr
 assign speeddvds			div sub Speedp8 bikeSpeed sub 8 equivSlopeCr
 assign bikeSpeedUphill		max 0 add Speedp8 multiply speeddvds equivSlopeCr
 
+# Limit bike speed
+# Since the speed limitation is nonlinear with respect to the slope, but the
+# Brouter computation is linear (interpolation), this step is not quite
+# accurate, but there is no other known better solution. 
+assign limitedBikeSpeed			min bikeSpeedLimit bikeSpeed
+assign limitedBikeSpeedUphill	min bikeSpeedLimit bikeSpeedUphill
+assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
+
 # routing should be at least partially done time optimal
 #
-assign speedPenaltyFactor			add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeed         maxCurrentBikeSpeed 1
-assign speedPenaltyUphillFactor		add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedUphill   maxCurrentBikeSpeed 1
-assign speedPenaltyDownhillFactor	add 1 multiply timeOptimalityFactor sub max 1 div bikeSpeedDownhill maxCurrentBikeSpeed 1
+assign speedCost			multiply timeOptimalityFactor div Speed0 limitedBikeSpeed
+assign speedCostUphill		multiply timeOptimalityFactor div Speed0 limitedBikeSpeedUphill
+assign speedCostDownhill	multiply timeOptimalityFactor div Speed0 limitedBikeSpeedDownhill
 
 
 # Traffic
@@ -1059,9 +1083,9 @@ assign vehicleSpeed
 											 90 # Default
 
 # Compute overtaking vehicles per meter depending on bike speed
-assign bikeSpeedForTraffic         min maxCurrentBikeSpeed max bikeSpeed         1	# use at least 1km/h --> div by zero
-assign bikeSpeedForTrafficUphill   min maxCurrentBikeSpeed max bikeSpeedUphill   1
-assign bikeSpeedForTrafficDownhill min maxCurrentBikeSpeed max bikeSpeedDownhill 1
+assign bikeSpeedForTraffic         max limitedBikeSpeed         1	# use at least 1km/h --> div by zero
+assign bikeSpeedForTrafficUphill   max limitedBikeSpeedUphill   1
+assign bikeSpeedForTrafficDownhill max limitedBikeSpeedDownhill 1
 assign overtakingsPerHour          multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTraffic         vehicleSpeed
 assign overtakingsPerHourUphill    multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficUphill   vehicleSpeed
 assign overtakingsPerHourDownhill  multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficDownhill vehicleSpeed
@@ -1309,6 +1333,7 @@ assign commonCostFactor
 	switch greater max accessPenalty highwayCost 9999	10000
 	min 9999										# make sure that costfactor is less or equal 9999
 	add accessPenalty								# access penalty
+	add rollingResistanceCost						# Cost for surface / rolling resistance
 	add highwayCost									# cost for different types of highway
 	add	oneWayCost									# cost for cycling against oneways for cars only
 	add cycleRouteFavor								# (negative) cost for cycleroutes
@@ -1322,8 +1347,7 @@ assign costfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
-	add	multiply speedPenaltyFactor					# surface and smoothness cost times speed limit cost (>=1)
-				 rollingresistancefactor			#  If not in a speed limit, this results in surface cost
+	add speedCost									# speed cost
 		trafficCost									# traffic cost
 	
 # for uphill terrain
@@ -1331,8 +1355,7 @@ assign uphillcostfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
-	add	multiply speedPenaltyUphillFactor			# surface and smoothness cost times speed limit cost (>=1)
-				 rollingresistancefactor			#  If not in a speed limit, this results in surface cost
+	add speedCostUphill								# speed cost
 		trafficCostUphill							# traffic cost
 		
 # for downhill terrain		
@@ -1340,8 +1363,7 @@ assign downhillcostfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
-	add	multiply speedPenaltyDownhillFactor			# surface and smoothness cost times speed limit cost (>=1)
-				 rollingresistancefactor			#  If not in a speed limit, this results in surface cost
+	add speedCostDownhill							# speed cost
 		trafficCostDownhill							# traffic cost
 
 
