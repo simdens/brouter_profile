@@ -15,9 +15,6 @@
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 ################################################################################
 
-# ToDo
-# - check surface cost computation
-
 ################################################################################
 ---context:global ##############################################################
 ################################################################################
@@ -767,39 +764,63 @@ assign   pavingUnsureRes		groundRes
 
 # cost factors
 assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
-    # 
-    # Use cycleway surface with highest priority, since we use cycleways if 
-    # available
-    switch cycleway:surface=asphalt         1.0
-    switch cycleway:surface=concrete|paved  concreteRes
-    switch cycleway:surface=paving_stones   pavingStonesRes
-    switch cycleway:surface=compacted       compactedRes
-    switch cycleway:surface=sett            settRes
-    switch cycleway:surface=cobblestone     cobblestoneRes
-    switch cycleway:surface=gravel          gravelRes
-    switch cycleway:surface=fine_gravel     fineGravelRes
-    switch cycleway:surface=unpaved         dirtRes
-    #
-    # Highway surface
-    switch     surface=asphalt					1.0
-    switch and surface=concrete concrete=lanes	compactedRes
-    switch and surface=concrete concrete=plates	pavingStonesRes
-    switch     surface=concrete|paved 			concreteRes
-    switch     surface=metal                    metalRes
-    switch     surface=paving_stones            pavingStonesRes
-    switch     surface=compacted|clay           compactedRes
-    switch     surface=wood                     woodRes
-    switch     surface=sett                     settRes
-    switch     surface=pebblestone              pebblestoneRes
-    switch     surface=cobblestone              cobblestoneRes
-    switch     surface=grass_paver              grassPaverRes
-    switch     surface=gravel                   gravelRes
-    switch     surface=ground                   groundRes
-    switch     surface=fine_gravel              fineGravelRes
-    switch     surface=unpaved|dirt|earth|grass dirtRes
-    switch     surface=sand                     sandRes
-    switch     surface=mud                      mudRes
-    #
+	# 
+	# Use cycleway surface with highest priority, since we use cycleways if 
+	# available
+	switch cycleway:surface=asphalt         1.0
+	switch cycleway:surface=concrete|paved  concreteRes
+	switch cycleway:surface=paving_stones   pavingStonesRes
+	switch cycleway:surface=compacted       compactedRes
+	switch cycleway:surface=sett            settRes
+	switch cycleway:surface=cobblestone     cobblestoneRes
+	switch cycleway:surface=gravel          gravelRes
+	switch cycleway:surface=fine_gravel     fineGravelRes
+	switch cycleway:surface=unpaved         dirtRes
+	#
+	# Use smoothness key with next priority
+	# http://wiki.openstreetmap.org/wiki/Key:smoothness
+	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
+	switch smoothness=good		 				multiply 0.5 add 1.0 pavingStonesRes			# thin_wheels - racing bike
+	switch smoothness=intermediate				pavingStonesRes									# wheels - city bike, wheel chair, sport cars
+	switch smoothness=bad|robust_wheels			cobblestoneRes									# robust wheels - trekking bike, normal cars
+	switch smoothness=very_bad|high_clearance	dirtRes											# high clearance - normal cars with slightly higher clearance
+	switch smoothness=horrible|off_road_wheels	multiply 2 dirtRes								# off road wheels - off road cars 
+	switch smoothness=very_horrible				mudRes											# specialized off road vehicles - ATV, tractor
+	switch smoothness=impassable              	multiply 2 mudRes								# no wheeled vehicle - hiking path 
+	#
+	# Highway surface
+	switch     surface=asphalt					1.0
+	switch and surface=concrete concrete=lanes	compactedRes
+	switch and surface=concrete concrete=plates	pavingStonesRes
+	switch     surface=concrete|paved 			concreteRes
+	switch     surface=metal                    metalRes
+	switch     surface=paving_stones            pavingStonesRes
+	switch     surface=compacted|clay           compactedRes
+	switch     surface=wood                     woodRes
+	switch     surface=sett                     settRes
+	switch     surface=pebblestone              pebblestoneRes
+	switch     surface=cobblestone              cobblestoneRes
+	switch     surface=grass_paver              grassPaverRes
+	switch     surface=gravel                   gravelRes
+	switch     surface=ground                   groundRes
+	switch     surface=fine_gravel              fineGravelRes
+	switch     surface=unpaved|dirt|earth|grass dirtRes
+	switch     surface=sand                     sandRes
+	switch     surface=mud                      mudRes
+	#
+	# next check mtb:scale property
+	switch mtb:scale=0-	compactedRes										# Gravel or packed earth. No particular difficulties (very easy)
+	switch mtb:scale=0	cobblestoneRes										# Gravel or packed earth. No particular difficulties
+	switch mtb:scale=0+	groundRes											# Gravel or packed earth. No particular difficulties (harder one)
+	switch mtb:scale=1-	multiply 0.5 add groundRes multiply 2.0 dirtRes		# roots and small stones. (easier)
+	switch mtb:scale=1	multiply 2.0 dirtRes								# roots and small stones. --> smoothness=horrible
+	switch mtb:scale=1+	add multiply 0.25 mudRes multiply 1.5 dirtRes		# roots and small stones. (harder, betwwen scale=1 and scale=2)
+	switch mtb:scale=2	multiply 0.5 add mudRes multiply 2 dirtRes			# large rocks and stones. --> smoothness=mean(horrible & very_horrible)
+	switch mtb:scale=3	mudRes												# large obstacles such as boulders and large roots. --> smoothness=very_horrible
+	switch mtb:scale=4	multiply 1.5 mudRes									# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
+	switch mtb:scale=5	multiply 2.0 mudRes									# big boulder fields, debris, landslides.  --> smoothnes=impassable
+	switch mtb:scale=6	multiply 2.5 mudRes									# more than impassable :-)
+	#
 	# best guess for unsure paving:
 	switch highway=raceway                  1.0                 # Rennstrecke
 	switch highway=motorway|motorway_link   1.0					# Autobahn und Auffahrten
@@ -844,31 +865,6 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	# Default if really unknown
 											pavingUnsureRes
 
-
-# 1.34 Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
-assign smoothnessFactor
-	# http://wiki.openstreetmap.org/wiki/Key:smoothness
-	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				multiply 0.5 add 1.0 pavingStonesRes			# thin_wheels - racing bike
-	switch smoothness=intermediate				pavingStonesRes									# wheels - city bike, wheel chair, sport cars
-	switch smoothness=bad|robust_wheels			cobblestoneRes									# robust wheels - trekking bike, normal cars
-	switch smoothness=very_bad|high_clearance	dirtRes											# high clearance - normal cars with slightly higher clearance
-	switch smoothness=horrible|off_road_wheels	multiply 2 dirtRes								# off road wheels - off road cars 
-	switch smoothness=very_horrible				mudRes											# specialized off road vehicles - ATV, tractor
-	switch smoothness=impassable              	multiply 2 mudRes								# no wheeled vehicle - hiking path 
-	#
-	# If smoothness is not given, estimate smoothness on mtb:scale property
-	switch mtb:scale=0	dirtRes										# Gravel or packed earth. No particular difficulties. --> smoothness=very_bad
-	switch mtb:scale=1	multiply 2.0 dirtRes						# roots and small stones. --> smoothness=horrible
-	switch mtb:scale=2	multiply 0.5 add mudRes multiply 2 dirtRes	# large rocks and stones. --> smoothness=mean(horrible & very_horrible)
-	switch mtb:scale=3	mudRes										# large obstacles such as boulders and large roots. --> smoothness=very_horrible
-	switch mtb:scale=4	multiply 1.5 mudRes							# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
-	switch mtb:scale=5	multiply 2.0 mudRes							# big boulder fields, debris, landslides.  --> smoothnes=impassable
-	switch mtb:scale=6	multiply 2.5 mudRes							# more than impassable :-)
-						surfaceFactor								# not known
-
-# use mean value of surface and smoothness for an indicator of the current 
-# surface quality / rolling resistance
 # scale rolling resistance of the car to a rolling resistance for the current 
 # bike
 assign rollingResistanceFactor
@@ -878,8 +874,7 @@ assign rollingResistanceFactor
 			# scale resistance increase with normalization factor for used tire
 			div snfBike snfCar
 			sub
-				# take mean of smoothness and surface
-				multiply 0.5 add surfaceFactor smoothnessFactor
+				surfaceFactor
 				1
 
 # Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
