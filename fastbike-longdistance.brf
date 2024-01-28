@@ -527,7 +527,7 @@ assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
 # For carrying it is assumed, that the needed energy is doubled compared to
 # pushing
 assign carryCostFactor
-	multiply 2 pushCostFactor
+	multiply 3 pushCostFactor
 
 
 # In open street maps normally to traffic signal nodes are passed for each 
@@ -787,19 +787,6 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	switch     surface=sand                     sandRes
 	switch     surface=mud                      mudRes
 	#
-	# next check mtb:scale property
-	switch mtb:scale=0-	compactedRes										# Gravel or packed earth. No particular difficulties (very easy)
-	switch mtb:scale=0	cobblestoneRes										# Gravel or packed earth. No particular difficulties
-	switch mtb:scale=0+	groundRes											# Gravel or packed earth. No particular difficulties (harder one)
-	switch mtb:scale=1-	multiply 0.5 add groundRes multiply 2.0 dirtRes		# roots and small stones. (easier)
-	switch mtb:scale=1	multiply 2.0 dirtRes								# roots and small stones. --> smoothness=horrible
-	switch mtb:scale=1+	add multiply 0.25 mudRes multiply 1.5 dirtRes		# roots and small stones. (harder, betwwen scale=1 and scale=2)
-	switch mtb:scale=2	multiply 0.5 add mudRes multiply 2 dirtRes			# large rocks and stones. --> smoothness=mean(horrible & very_horrible)
-	switch mtb:scale=3	mudRes												# large obstacles such as boulders and large roots. --> smoothness=very_horrible
-	switch mtb:scale=4	multiply 1.5 mudRes									# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
-	switch mtb:scale=5	multiply 2.0 mudRes									# big boulder fields, debris, landslides.  --> smoothnes=impassable
-	switch mtb:scale=6	multiply 2.5 mudRes									# more than impassable :-)
-	#
 	# best guess for unsure paving:
 	switch highway=raceway                  1.0                 # Rennstrecke
 	switch highway=motorway|motorway_link   1.0					# Autobahn und Auffahrten
@@ -831,7 +818,6 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	switch and highway=track tracktype=grade3	multiply 0.5 add compactedRes groundRes	# Even mixture of hard and soft materials.
 	switch and highway=track tracktype=grade4	groundRes								# Mostly soft
 	switch and highway=track tracktype=grade5	dirtRes									# soft
-	switch and highway=track tracktype=			dirtRes									# unknown, but most likely soft
 	#
 	# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
 	switch and highway=path tracktype=grade1	1.0										# Asphalt surface
@@ -839,7 +825,22 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	switch and highway=path tracktype=grade3	multiply 0.5 add compactedRes groundRes	# Even mixture of hard and soft materials.
 	switch and highway=path tracktype=grade4	groundRes								# Mostly soft
 	switch and highway=path tracktype=grade5	dirtRes									# soft
-	switch and highway=path tracktype=			dirtRes									# unknown, but most likely soft
+	#
+	# for a path or track without tracktype or an unknown highway, check mtb:scale property
+	switch mtb:scale=0-	compactedRes										# Gravel or packed earth. No particular difficulties (very easy)
+	switch mtb:scale=0	cobblestoneRes										# Gravel or packed earth. No particular difficulties
+	switch mtb:scale=0+	groundRes											# Gravel or packed earth. No particular difficulties (harder one)
+	switch mtb:scale=1-	multiply 0.5 add groundRes multiply 2.0 dirtRes		# roots and small stones. (easier)
+	switch mtb:scale=1	multiply 2.0 dirtRes								# roots and small stones. --> smoothness=horrible
+	switch mtb:scale=1+	add multiply 0.25 mudRes multiply 1.5 dirtRes		# roots and small stones. (harder, betwwen scale=1 and scale=2)
+	switch mtb:scale=2	multiply 0.5 add mudRes multiply 2 dirtRes			# large rocks and stones. --> smoothness=mean(horrible & very_horrible)
+	switch mtb:scale=3	mudRes												# large obstacles such as boulders and large roots. --> smoothness=very_horrible
+	switch mtb:scale=4	multiply 1.5 mudRes									# large boulders, roots. --> smoothness=mean(very_horrible & impassable)
+	switch mtb:scale=5	multiply 2.0 mudRes									# big boulder fields, debris, landslides.  --> smoothnes=impassable
+	switch mtb:scale=6	multiply 2.5 mudRes									# more than impassable :-)
+	#
+	# Defaults for path & track
+	switch and highway=path|track tracktype=	dirtRes						# unknown, but most likely soft
 	#
 	# Default if really unknown
 											pavingUnsureRes
@@ -881,9 +882,10 @@ assign isCarrying
 											false
 
 assign isWalking
-	or isCarrying									# carrying is a special case of walkung
+	or isCarrying									# carrying is a special case of walking
 	or badOneWay									# bad oneways are only allowed while pushing
-	switch and footAccess not bikeAccess	true	# only foot access --> pushing
+	or and estimated_forest_class=5 highway=path	# path inside forests are most likely pushing
+	switch not bikeAccess					true	# only foot access --> pushing
 											false
 
 
