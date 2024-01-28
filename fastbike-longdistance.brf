@@ -33,7 +33,7 @@ assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cy
 assign SlopeMax					8.0		# %SlopeMax% 					| % - maximum allowed slope (up & downhill, soft limit) | number
 
 # time optimallity parameter
-assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - Percentage to consider travel time. 0% - energy optimized, 100% - time optimized | number
+assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - 0% - energy optimized route, 100% - time optimized route | number
 
 # traffic cost
 assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
@@ -43,7 +43,7 @@ assign StickToCycleRoute		true	# %StickToCycleRoute%			| cycle routes will be pr
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
 assign PreferWater				true	# %PreferWater%					| routes next to water or waterways are prefered | boolean
 assign AvoidNoisyRoads			true	# %AvoidNoisyRoads%				| | boolean
-assign AllowSteps				true	# %AllowSteps%					| | boolean
+assign AllowSteps				true	# %AllowSteps%					| allow usage of steps or any other carrying passages | boolean
 assign AllowFerries				false	# %AllowFerries%				| | boolean
 
 # Turn instruction settings
@@ -59,7 +59,7 @@ assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to
 #-------------------------------------------------------------------------------
 
 # for debug
-assign	processUnusedTags			true	# Set true to output unused tags in data tab
+assign	processUnusedTags			false	# Set true to output unused tags in data tab
 
 # way cost constants
 assign noiseCost		 0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
@@ -645,28 +645,7 @@ assign nodeaccessgranted
 		lcn=yes
 
 
-# Access Costs
-################################################################################
-
-# Check for access. With penalty 100000, the segment is ignored and not used
-assign accessPenalty
-	if      bikeAccess then 0
-	else if footAccess then 0
-	else                    100000
-
-# store if this way segment can only be accessed by pushing or carrying the bike
-assign isCarrying
-	switch highway=steps 					true	# on steps, the bike needs to be carried
-											false
-
-assign isWalking
-	or isCarrying									# carrying is a special case of walkung
-	or badOneWay									# bad oneways are only allowed while pushing
-	switch and footAccess not bikeAccess	true	# only foot access --> pushing
-											false
-
-
-# Surfaces
+# Surfaces / Rolling Resistance
 ################################################################################
 
 # Different Rolling resistances for car tires
@@ -877,6 +856,39 @@ assign rollingResistanceFactor
 				surfaceFactor
 				1
 
+
+# Access Costs
+################################################################################
+
+# Check for access. With penalty 100000, the segment is ignored and not used
+assign accessPenalty
+	if      bikeAccess then 0
+	else if footAccess then 0
+	else                    100000
+
+# store if this way segment can only be accessed by pushing or carrying the bike
+assign isCarrying
+	switch greater surfaceFactor mudRes		true	# if surface is mud or worse, the bike has to be carried
+	switch 											# if path without bike access and part of the hiking network
+		and not bikeAccess
+		and highway=path 
+		or  route_hiking_iwn=yes
+		or  route_hiking_nwn=yes
+		or  route_hiking_rwn=yes
+		or  route_hiking_lwn=yes
+		    route_hiking_=yes				true
+	switch highway=steps 					true	# on steps, the bike needs to be carried
+											false
+
+assign isWalking
+	or isCarrying									# carrying is a special case of walkung
+	or badOneWay									# bad oneways are only allowed while pushing
+	switch and footAccess not bikeAccess	true	# only foot access --> pushing
+											false
+
+
+# Rolling Resistance Cost
+################################################################################
 # Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
 # scale with carryCostFactor or walkingcostfactor if carrying or walking since
 # this is the efficiency factor for walking or carrying
@@ -886,6 +898,9 @@ assign rollingResistanceCost
 		switch isWalking	pushCostFactor		# if otherwise walking, it has to be pushing
 							1					# Default
 		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
+
+
+
 
 # Speed
 ################################################################################
@@ -1329,7 +1344,7 @@ assign highwayCost
 	# should not be deleted by the decoder, to be available
 	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
 	switch and not AllowFerries route=ferry				 9999
-	switch and not AllowSteps   highway=steps			 9999
+	switch and not AllowSteps   isCarrying				 9999
 	
 	# Exceptions which shal not be penalized
 	switch hasCycleway							0
