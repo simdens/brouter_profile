@@ -16,8 +16,7 @@
 ################################################################################
 
 # ToDo
-# - add Selector for different tires
-# - add selector for different bikes
+# - check surface cost computation
 
 ################################################################################
 ---context:global ##############################################################
@@ -29,12 +28,19 @@
 
 # For UI 
 #-------------------------------------------------------------------------------
-assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cyclist+luggage) | number
+assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Tour - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
 assign NominalPower				165		# %NominalPower%				| W - continuous available power of cyclist | number
+assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cyclist+luggage) | number
 
 # elevation cost parameters
 assign SlopeMax					8.0		# %SlopeMax% 					| % - maximum allowed slope (up & downhill, soft limit) | number
- 
+
+# time optimallity parameter
+assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - Percentage to consider travel time. 0% - energy optimized, 100% - time optimized | number
+
+# traffic cost
+assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
+
 # additional cost for different kind of transportation
 assign StickToCycleRoute		true	# %StickToCycleRoute%			| cycle routes will be preferred | boolean
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
@@ -43,19 +49,13 @@ assign AvoidNoisyRoads			true	# %AvoidNoisyRoads%				| | boolean
 assign AllowSteps				true	# %AllowSteps%					| | boolean
 assign AllowFerries				false	# %AllowFerries%				| | boolean
 
-# traffic cost
-assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
-
-# time optimallity parameter
-assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - Percentage to consider travel time. 0% - energy optimized, 100% - time optimized | number
-
 # Turn instruction settings
 # (Removed "%" such that they do not show up in the UI but might be easily 
 # added again)
 assign turnInstructionMode			1		# turnInstructionMode				| Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
 assign turnInstructionCatchingRange	40		# turnInstructionCatchingRange		| m - Within this distance several turning instructions are combined into one and the turning angles are better approximated to the general direction | number
 assign turnInstructionRoundabouts	true	# turnInstructionRoundabouts		| Set false to avoid generating special turning instructions for roundabouts | boolean
-assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to take turn restrictions into account | boolean
+assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to take turn restrictions into account | b
 
 
 # General routing parameters 
@@ -79,15 +79,42 @@ assign elevationpenaltybuffer			   4
 assign elevationmaxbuffer				   8
 
 # Kinematic model parameters for Speed calculation
-assign maxBikerSpeed	70
-assign CwA				 0.6005			# drag coefficient times the reference area in m^2 -- http://www.kreuzotter.de/deutsch/speed.htm
-assign Cr				 0.0029			# rolling resistance coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speed.htm
-assign Cv				 0.1			# viscouse damping coefficient (dimensionless) -- http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign rho				 1.16038		# Air density in kg/m³ @ 20°C & 300m above sea level  -- http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign n				 0.98			# Efficiency factor of the power transmission of the bike 
-assign g				 9.81			# Gravity coefficient in N/kg
-assign m				SystemWeight	# shorter Name
-assign P				NominalPower	# shorter Name
+assign maxBikerSpeed		70
+assign CwA									# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
+	switch equal Bike 1		0.50				# m² - Roadbike, bit higher than the given 0.4891m² (top handlebar) since I use a more relaxed Canyon Endurace
+	switch equal Bike 2		0.50				# m² - Gravel, bit higher than the given 0.4891m² for a road bike (top handlebar)
+	switch equal Bike 3		0.65				# m² - Tour, in between MTB and roadster
+	switch equal Bike 4		0.57				# m² - MTB without suspension
+	switch equal Bike 5		0.50				# m² - Winter, same as Tour
+							999					# Error / will never be reaced
+assign Cr					 				# rolling resistance coefficient (dimensionless)
+	switch equal Bike 1		0.00363				# Roadbike - Continental Grand Prix 5000   25mm Tube @ 5.5bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 2		0.00531				# Gravel   - Schwalbe G One RS             40mm Tube @ 3.1bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 3		0.00764				# Tour     - Schwalbe Marathon Plus        37mm Tube @ 4.0bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 4		0.00893				# MTB      - Conti Cross King Protection   58mm Tube @ 2.4bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 5		0.012				# Winter   - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar - https://doi.org/10.1016/j.coldregions.2021.103282
+							999					# Error / will never be reached
+assign Cv					 0.1			# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign rho					 1.16038		# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign n					 0.98			# Efficiency factor of the power transmission of the bike 
+assign g					 9.81			# Gravity coefficient in N/kg
+assign m					SystemWeight	# shorter Name
+assign P					NominalPower	# shorter Name
+assign tireWidth							# width of tires. Used to estimate the influence of the surface to the rolling resistance
+	switch equal Bike 1		28					# mm - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 0.035 :-) 
+	switch equal Bike 2		40					# mm - Gravel   - Schwalbe G One RS             40mm Tube
+	switch equal Bike 3		37					# mm - Tour     - Schwalbe Marathon Plus        37mm Tube
+	switch equal Bike 4		58					# mm - MTB      - Conti Cross King Protection   58mm Tube
+	switch equal Bike 5		35					# mm - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 0.035 :-) 
+							999					# Error / will never be reaced
+assign tirePressure							# Pressure of tires. Used to estimate the influence of the surface to the rolling resistance
+	switch equal Bike 1		5.0					# bar - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 5.5 * 25 / 28 bar = 5.0bar
+	switch equal Bike 2		3.1					# bar - Gravel   - Schwalbe G One RS             40mm Tube
+	switch equal Bike 3		4.0					# bar - Tour     - Schwalbe Marathon Plus        37mm Tube
+	switch equal Bike 4		2.4					# bar - MTB      - Conti Cross King Protection   58mm Tube
+	switch equal Bike 5		2.4					# bar - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 2.0 * 42 / 32 bar = 2.4bar
+							999					# Error / will never be reaced
+
 
 # brouter search algorithm
 assign pass1coefficient		1.5
@@ -118,6 +145,7 @@ assign totalMass  m
 
 # Time optimality factor 0 to 1
 assign timeOptimalityFactor min 1 max 0 div TimeOptimalityPercentage 100
+
 
 # Speed Parameter Calculation:
 #-------------------------------------------------------------------------------
@@ -675,6 +703,48 @@ assign isWalking
 # paved        | concrete
 # unpaved      | dirt
 
+# To make rolling resistance changes with respect to surfaces somewhat 
+# comparable to bike tires, they are normalized to the normal force per contact
+# patch area - at least as good as possible. The idea is, that for a MTB the
+# increase in rolling resistance on gavel is far less than for a roadbike due 
+# to the much bigger contact patch area with almost the same normal force.
+#
+# pc = m / Ac
+#    = m / (w * lc)
+#    = m / (w * ct / pt)
+# <==> 
+# snf != pc/ct = m * pt/w
+#
+# with:
+#  snf - kg*bar/mm - surface normalization factor
+#  pc  - bar - Pressure on surface at contact patch area
+#  m   - kg - mass on one wheel
+#  Ac  - mm² - contact patch area size
+#  w   - mm - width of contact patch area (estimated by tire width)
+#  lc  - mm - length of contact patch area. Estimated by the quotient of some
+#        unknown constant ct and the tire pressure pt. (Educated guees! No 
+#        evidence for this relation!)
+#  ct  - mm/bar - Unknown constant for the relation between contact path length
+#        and tire pressure
+#  pt  - bar - tire pressure
+
+# surface normalization factor of a car:
+# Golf V:
+# m = 1600kg --> 400kg per wheel
+# w = 205mm
+# pt = 2.2bar
+assign snfCar	4.292682927								# kg*bar/mm
+
+# surface normalization factor  of the bike:
+assign snfBike	multiply 0.5 multiply m div tirePressure tireWidth	# kg*bar/mm
+# for a normal touring bike, this about 25% higher than the one of a car
+# m = 100kg --> 50kg per wheel
+# w = 37mm
+# pt = 3.5bar
+# => snfBike = 5.41 kg*bar/mm
+# ==> snfBike/snfCar = 1.102
+
+
 # Assign costs 
 #        AsphaltRes				 1.0
 assign   concreteRes			 1.1
@@ -799,8 +869,18 @@ assign smoothnessFactor
 
 # use mean value of surface and smoothness for an indicator of the current 
 # surface quality / rolling resistance
+# scale rolling resistance of the car to a rolling resistance for the current 
+# bike
 assign rollingResistanceFactor
-	multiply 0.5 add surfaceFactor smoothnessFactor
+	add 
+		1
+		multiply
+			# scale resistance increase with normalization factor for used tire
+			div snfBike snfCar
+			sub
+				# take mean of smoothness and surface
+				multiply 0.5 add surfaceFactor smoothnessFactor
+				1
 
 # Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
 # scale with carryCostFactor or walkingcostfactor if carrying or walking since
@@ -954,9 +1034,9 @@ assign bikeSpeedUphill		max 0 add Speedp8 multiply speeddvds equivSlopeCr
 # Since the speed limitation is nonlinear with respect to the slope, but the
 # Brouter computation is linear (interpolation), this step is not quite
 # accurate, but there is no other known better solution. 
-assign limitedBikeSpeed			min bikeSpeedLimit bikeSpeed
-assign limitedBikeSpeedUphill	min bikeSpeedLimit bikeSpeedUphill
-assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
+assign limitedBikeSpeed			max 0.001 min bikeSpeedLimit bikeSpeed
+assign limitedBikeSpeedUphill	max 0.001 min bikeSpeedLimit bikeSpeedUphill
+assign limitedBikeSpeedDownhill	max 0.001 min bikeSpeedLimit bikeSpeedDownhill
 
 # routing should be at least partially done time optimal
 #
