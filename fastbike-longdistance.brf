@@ -16,6 +16,8 @@
 ################################################################################
 
 # ToDo
+# - extend bike speed computation with additional value in LUT
+# - validate bike speed computation
 # - rework detection of Carrying and Walking passages
 #   - Ideas
 #     - detect on surfacefactor threshold
@@ -32,6 +34,7 @@
 #         - https://www.focus-bikes.com/de_de/bike-classification
 #         - https://srm.de/wp-content/uploads/2022/12/SRM_ASTM-F2043-13.pdf
 #         - https://newsroom.astm.org/newsroom-articles/astm-standard-bicycle-classification-usage-revised-proposed-trailer-cycles
+# - rethink elevation cost
 
 ################################################################################
 ---context:global ##############################################################
@@ -43,7 +46,7 @@
 
 # For UI 
 #-------------------------------------------------------------------------------
-assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Tour - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
+assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Cat1 - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Cat2 - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Tour - Cat1 - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Cat3 - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Cat1 - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
 assign NominalPower				165		# %NominalPower%				| W - continuous available power of cyclist | number
 assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cyclist+luggage) | number
 
@@ -131,7 +134,20 @@ assign tirePressure							# Pressure of tires. Used to estimate the influence of
 	switch equal Bike 4		2.4					# bar - MTB      - Conti Cross King Protection   58mm Tube
 	switch equal Bike 5		2.4					# bar - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 2.0 * 42 / 32 bar = 2.4bar
 							999					# Error / will never be reaced
-
+assign bikeCategory							# Bike Category according to ASTM Classifikation ASTM F2043-13
+	switch equal Bike 1		1					# Roadbike
+	switch equal Bike 2		2					# Gravel
+	switch equal Bike 3		1					# Tour
+	switch equal Bike 4		3					# MTB XC
+	switch equal Bike 5		1					# Tour
+							1					# Error / will never be reaced - 1 is the worst case category
+# Category Description
+# 1 - Roadbike     - no drops
+# 2 - Gravel       - drop height <15cm
+# 3 - MTB XC       - drop height <60cm
+# 4 - MTB Enduro   - drop height <120cm
+# 5 - MTB Downhill - drop height >120cm
+# 6 - Roadbike     - racing machines --> this category is combined with cat 1
 
 # brouter search algorithm
 assign pass1coefficient		1.5
