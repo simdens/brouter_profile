@@ -16,23 +16,6 @@
 ################################################################################
 
 # ToDo
-# - validate bike speed computation
-# - rework detection of Carrying and Walking passages
-#   - Ideas
-#     - detect on surfacefactor threshold
-#     - make an additinal walking & carrying look up table
-#     - If Speed < Speed@SlopeMax 
-#   - Influencing properties
-#     - smoothness 
-#     - Surface (e.g. very muddy or very rough stones)
-#     - mtb:scale
-#     - sac:scale
-#     - bike type
-#       - ASTM Classifikation ASTM F2043-13(2018):
-#         - https://media1.rosebikes.de/cms/astm_kategorien_de_neu.pdf
-#         - https://www.focus-bikes.com/de_de/bike-classification
-#         - https://srm.de/wp-content/uploads/2022/12/SRM_ASTM-F2043-13.pdf
-#         - https://newsroom.astm.org/newsroom-articles/astm-standard-bicycle-classification-usage-revised-proposed-trailer-cycles
 # - rethink elevation cost
 
 ################################################################################
@@ -63,7 +46,7 @@ assign StickToCycleRoute		true	# %StickToCycleRoute%			| cycle routes will be pr
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
 assign PreferWater				true	# %PreferWater%					| routes next to water or waterways are prefered | boolean
 assign AvoidNoisyRoads			true	# %AvoidNoisyRoads%				| | boolean
-assign AllowSteps				true	# %AllowSteps%					| allow usage of steps or any other carrying passages | boolean
+assign AllowCarrying			true	# %AllowCarrying%				| allow carrying passages, e.g. steps | boolean
 assign AllowFerries				false	# %AllowFerries%				| | boolean
 
 # Turn instruction settings
@@ -821,7 +804,7 @@ assign nodeaccessgranted
 		lcn=yes
 
 
-# Surfaces / Rolling Resistance
+# Surfaces - Rolling Resistance
 ################################################################################
 
 # Different Rolling resistances for car tires
@@ -1028,41 +1011,172 @@ assign rollingResistanceFactor
 		1
 		multiply
 			# scale resistance increase with normalization factor for used tire
-			div snfBike snfCar
+			div snfBike snfCar		# = 1.76 for roadbike
 			sub
 				surfaceFactor
 				1
 
 
-# Access Costs
+# Walking / Carrying detection
 ################################################################################
 
-# Check for access. With penalty 100000, the segment is ignored and not used
-assign accessPenalty
-	if      bikeAccess then 0
-	else if footAccess then 0
-	else                    100000
+# store needed bike category to ride on this way segment.
+#	( bike category - way category ) < 0 --> Walking
+#	( bike category - way category ) < 1 --> Carrying
+# 
+# Category Description
+# 1  - Roadbike     - no drops
+# 2  - Gravel       - drop height <15cm
+# 3  - MTB XC       - drop height <60cm
+# 4  - MTB Enduro   - drop height <120cm
+# 5  - MTB Downhill - drop height >120cm
+# 9  - Carrying Passage for all bike categories
 
-# store if this way segment can only be accessed by pushing or carrying the bike
-assign isCarrying
-	switch greater surfaceFactor mudRes		true	# if surface is mud or worse, the bike has to be carried
-	switch 											# if path without bike access and part of the hiking network
-		and not bikeAccess
+# For flat ways without any slope
+assign wayCategory
+	# very clear tags
+	switch wheelchair=yes					1
+	# 
+	# Use cycleway surface with high priority, since we use cycleways if 
+	# available
+	switch cycleway:surface=asphalt			1
+	switch cycleway:surface=concrete|paved	1
+	switch cycleway:surface=paving_stones	1
+	switch cycleway:surface=compacted		1
+	switch cycleway:surface=sett			1
+	switch cycleway:surface=cobblestone		1
+	switch cycleway:surface=gravel			2
+	switch cycleway:surface=fine_gravel		1
+#	switch cycleway:surface=unpaved
+	#
+	# Use smoothness key with next priority
+	# http://wiki.openstreetmap.org/wiki/Key:smoothness
+	switch smoothness=excellent|very_good		1	# thin_rollers - roller blade, skate board
+	switch smoothness=good		 				1	# thin_wheels - racing bike
+	switch smoothness=intermediate				1	# wheels - city bike, wheel chair, sport cars
+	switch smoothness=bad|robust_wheels			1	# robust wheels - trekking bike, normal cars
+	switch smoothness=very_bad|high_clearance	2	# high clearance - normal cars with slightly higher clearance
+	switch smoothness=horrible|off_road_wheels	3	# off road wheels - off road cars 
+	switch smoothness=very_horrible				4	# specialized off road vehicles - ATV, tractor
+	switch smoothness=impassable				9	# no wheeled vehicle - hiking path 
+	#
+	# Highway surface
+	switch     surface=asphalt					1
+	switch and surface=concrete concrete=lanes	1
+	switch and surface=concrete concrete=plates	1
+	switch     surface=concrete|paved 			1
+	switch     surface=metal					1
+	switch     surface=paving_stones			1
+	switch     surface=compacted|clay			1
+	switch     surface=wood						1
+	switch     surface=sett						1
+	switch     surface=pebblestone				1
+	switch     surface=cobblestone				1
+	switch     surface=grass_paver				1
+	switch     surface=gravel					2
+#	switch     surface=ground					
+	switch     surface=fine_gravel				1
+#	switch     surface=unpaved|dirt|earth|grass	
+	switch     surface=sand						2
+	switch     surface=mud						3
+	#
+	# best guess for unsure paving:
+	switch highway=raceway						1	# Rennstrecke
+	switch highway=motorway|motorway_link		1	# Autobahn und Auffahrten
+	switch highway=trunk|trunk_link				1	# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link			1	# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link		1	# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link   	1	# Kreisstraßen und Auffahrten
+	switch highway=unclassified					1	# Dorfstraßen
+	switch highway=residential 					1	# Wohnstraße
+	switch highway=rest_area|services			1	# Rastplatz
+	switch highway=corridor						1	# Hallway inside a building
+	switch highway=crossing						1	# Street crossing
+	switch highway=bus_stop						1	# Bus stop on the street
+	switch highway=mini_roundabout				1	# Mini roundabout in the street
+	switch highway=turning_loop					1	# Turning Loop
+	switch highway=platform						1	# Bushaltestelle (wo die Personen stehen)
+	switch highway=living_street				1	# Spielstraße
+	switch highway=pedestrian					1	# Fußgängerzone
+	switch highway=service						1	# Zugangsstraßen
+#	switch highway=bridleway						# Reit- und Fußweg
+#	switch highway=cycleway							# Radweg
+#	switch highway=footway  						# Gehweg
+#	switch highway=unsurfaced						# street without surface
+#	switch highway=road								# unbekannter Typ
+	switch highway=steps						3	# Treppen
+	#
+	# for highway=track, check the tracktype
+	switch and highway=track tracktype=grade1	1	# Asphalt surface
+	switch and highway=track tracktype=grade2	1	# mostly solid
+	switch and highway=track tracktype=grade3	1	# Even mixture of hard and soft materials.
+	switch and highway=track tracktype=grade4	1	# Mostly soft
+	switch and highway=track tracktype=grade5	2	# soft
+	#
+	# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
+	switch and highway=path tracktype=grade1	1	# Asphalt surface
+	switch and highway=path tracktype=grade2	1	# mostly solid
+	switch and highway=path tracktype=grade3	1	# Even mixture of hard and soft materials.
+	switch and highway=path tracktype=grade4	1	# Mostly soft
+	switch and highway=path tracktype=grade5	2	# soft
+	#
+	# mtb:scale
+	switch mtb:scale=0-							1	# Gravel or packed earth. No particular difficulties (very easy)
+	switch mtb:scale=0							1	# Gravel or packed earth. No particular difficulties
+	switch mtb:scale=0+							1	# Gravel or packed earth. No particular difficulties (harder one)
+	switch mtb:scale=1-							2	# roots and small stones (easier)
+	switch mtb:scale=1							2	# roots and small stones
+	switch mtb:scale=1+							2	# roots and small stones (harder)
+	switch mtb:scale=2							3	# large rocks and stones
+	switch mtb:scale=3							3	# large obstacles such as boulders and large roots
+	switch mtb:scale=4							4	# large boulders, roots
+	switch mtb:scale=5							5	# big boulder fields, debris, landslides
+	switch mtb:scale=6							5	#
+	#
+	# SAC scale for hiking trails
+#	switch sac_scale=hiking						
+	switch sac_scale=mountain_hiking			3
+	switch sac_scale=demanding_mountain_hiking	4
+	switch sac_scale=alpine_hiking				5
+	switch sac_scale=demanding_alpine_hiking	9
+	switch sac_scale=difficult_alpine_hiking	9
+	#
+	# Some heuristics if still unknown
+	switch 
+		and not bikeAccess 
 		and highway=path 
-		or  route_hiking_iwn=yes
-		or  route_hiking_nwn=yes
-		or  route_hiking_rwn=yes
-		or  route_hiking_lwn=yes
-		    route_hiking_=yes				true
-	switch highway=steps 					true	# on steps, the bike needs to be carried
-											false
+			or not sac_scale=
+			or route_hiking_iwn=yes
+			or route_hiking_nwn=yes
+			or route_hiking_rwn=yes
+			or route_hiking_lwn=yes
+			   route_hiking_=yes						9	# path without bike access and part of the hiking network
+	switch and estimated_forest_class=5 highway=path	3	# path inside forests is most likely only for MTB
+	#
+	# Default if really unknown
+												1	# use way by default
 
-assign isWalking
-	or isCarrying									# carrying is a special case of walking
-	or badOneWay									# bad oneways are only allowed while pushing
-	or and estimated_forest_class=5 highway=path	# path inside forests are most likely pushing
-	switch not bikeAccess					true	# only foot access --> pushing
-											false
+# Category for Uphill ways
+assign wayCategoryUphill
+	# Only things which are different to flat situation
+	switch highway=steps						9
+	switch mtb:scale=4							9	# large boulders, roots
+	switch mtb:scale=5							9	# big boulder fields, debris, landslides
+	switch mtb:scale=6							9	#
+												wayCategory	# Use flat as default
+
+# Category for Downhill ways
+assign wayCategoryDownhill	wayCategory		# Use flat as default
+
+# Walking flag
+assign isWalking			or not bikeAccess or badOneWay greater wayCategory         bikeCategory
+assign isWalkingUphill		or not bikeAccess or badOneWay greater wayCategoryUphill   bikeCategory
+assign isWalkingDownhill	or not bikeAccess or badOneWay greater wayCategoryDownhill bikeCategory
+
+# Carrying Flag
+assign isCarrying			greater wayCategory         add bikeCategory 1
+assign isCarryingUphill		greater wayCategoryUphill   add bikeCategory 1
+assign isCarryingDownhill	greater wayCategoryDownhill add bikeCategory 1
 
 
 # Rolling Resistance Cost
@@ -1077,7 +1191,19 @@ assign rollingResistanceCost
 							1					# Default
 		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
 
+assign rollingResistanceCostUphill
+	multiply
+		switch isCarryingUphill	carryCostFactor		# Use carrrycostfactor if carrying
+		switch isWalkingUphill	pushCostFactor		# if otherwise walking, it has to be pushing
+								1					# Default
+		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
 
+assign rollingResistanceCostDownhill
+	multiply
+		switch isCarryingDownhill	carryCostFactor		# Use carrrycostfactor if carrying
+		switch isWalkingDownhill	pushCostFactor		# if otherwise walking, it has to be pushing
+									1					# Default
+		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
 
 
 # Speed
@@ -1178,9 +1304,7 @@ assign maxAllowedSpeed
 # The absolute maximum speed "maxBikerSpeed" is scaled by the 
 # rollingResistanceFactor to consider the slower desired speed at bad surfaces.
 assign maxDesiredSpeed
-	min								div maxBikerSpeed rollingResistanceFactor
-	min switch isCarrying						2.5	999		# Speed while carrying the bike
-	min switch isWalking						5	999		# Speed while pushing the bike
+	min	div maxBikerSpeed rollingResistanceFactor
 	max switch or hasCycleway anyCycleroute		25	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
 	# some special ways
 	# Now from fast to slow :-) 
@@ -1225,6 +1349,8 @@ assign speeddvdsp3	div sub speedp3 speedp2 slopeStepSize		# Slope of speed over 
 assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
 assign bikeSpeedDownhill
 	max 0.001
+	min switch isCarryingDownhill	2.5	999		# Speed while carrying the bike
+	min switch isWalkingDownhill	5	999		# Speed while pushing the bike
 	switch lesser tmpSlope multiply -1 slopeStepSize	# choose interpolation point
 		add speedm2 multiply speeddvdsm2 sub tmpSlope multiply -2 slopeStepSize
 	switch lesser tmpSlope 0
@@ -1239,6 +1365,8 @@ assign bikeSpeedDownhill
 assign tmpSlope	equivSlopeCr
 assign bikeSpeed
 	max 0.001
+	min switch isCarrying			2.5	999		# Speed while carrying the bike
+	min switch isWalking			5	999		# Speed while pushing the bike
 	switch lesser tmpSlope slopeStepSize				# choose interpolation point
 		add speed0 multiply speeddvdsp1 tmpSlope
 	switch lesser tmpSlope multiply 2 slopeStepSize
@@ -1249,6 +1377,8 @@ assign bikeSpeed
 assign tmpSlope	add equivSlopeCr SlopeMax
 assign bikeSpeedUphill
 	max 0.001
+	min switch isCarryingUphill		2.5	999		# Speed while carrying the bike
+	min switch isWalkingUphill		5	999		# Speed while pushing the bike
 	switch greater tmpSlope multiply 2 slopeStepSize	# choose interpolation point
 		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
 	switch greater tmpSlope slopeStepSize
@@ -1549,8 +1679,7 @@ assign weightedWaterCost
 
 # here only costs not handled by the other parts are applied
 # 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
-assign highwayCost
-	
+assign highwayCostCommon
 	# disallow non existing highways, motorways and motorroads
 	switch and highway= not route=ferry  				10000	# exclude rivers, rails etc.
 	switch    highway=proposed|abandoned|construction   10000	# construction sites 
@@ -1560,7 +1689,6 @@ assign highwayCost
 	# should not be deleted by the decoder, to be available
 	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
 	switch and not AllowFerries route=ferry				 9999
-	switch and not AllowSteps   isCarrying				 9999
 	
 	# Exceptions which shal not be penalized
 	switch hasCycleway							0
@@ -1591,6 +1719,31 @@ assign highwayCost
 	switch     highway=steps                        0.0		# Treppen
 	switch     route=ferry                      	0.0 	# Fähren
 													0.0		# Default
+
+assign highwayCost
+	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	switch and not AllowCarrying isCarrying			9999
+													highwayCostCommon
+
+assign highwayCostUphill
+	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	switch and not AllowCarrying isCarryingUphill	9999
+													highwayCostCommon
+
+assign highwayCostDownhill
+	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
+	switch and not AllowCarrying isCarryingDownhill	9999
+													highwayCostCommon
+
+
+# Access Costs
+################################################################################
+
+# Check for access. With penalty 100000, the segment is ignored and not used
+assign accessPenalty
+	if      bikeAccess then 0
+	else if footAccess then 0
+	else                    100000
 
 
 # Miscellaneous costs
@@ -1639,7 +1792,6 @@ assign commonCostFactor
 	switch greater max accessPenalty highwayCost 9999	10000
 	min 9999										# make sure that costfactor is less or equal 9999
 	add accessPenalty								# access penalty
-	add rollingResistanceCost						# Cost for surface / rolling resistance
 	add highwayCost									# cost for different types of highway
 	add	oneWayCost									# cost for cycling against oneways for cars only
 	add cycleRouteFavor								# (negative) cost for cycleroutes
@@ -1653,6 +1805,7 @@ assign costfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
+	add rollingResistanceCost						# Cost for surface / rolling resistance
 	add speedCost									# speed cost
 		trafficCost									# traffic cost
 	
@@ -1661,6 +1814,7 @@ assign uphillcostfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
+	add rollingResistanceCostUphill					# Cost for surface / rolling resistance
 	add speedCostUphill								# speed cost
 		trafficCostUphill							# traffic cost
 		
@@ -1669,6 +1823,7 @@ assign downhillcostfactor
 	switch greater commonCostFactor 9999	10000	# If forbidden --> 10000, else the following
 	min 9999										# make sure that costfactor is less or equal 9999
 	add commonCostFactor							# common cost independently of slope
+	add rollingResistanceCostDownhill				# Cost for surface / rolling resistance
 	add speedCostDownhill							# speed cost
 		trafficCostDownhill							# traffic cost
 
@@ -1681,6 +1836,8 @@ assign downhillcostfactor
 #
 assign initialclassifier
      if      route=ferry then classifierFerry
+     # it is not possible to refer to the uphill or downhill situation, thus 
+     # only the "isWalking" for flats is used
      else if isWalking   then classifierWalking
 	 else	classifierNone 				  
 #
@@ -1827,7 +1984,9 @@ assign trafficCalmingCost
 #
 # Currently it is not possible to detect if the following way segment is a 
 # pushing segment. Thus, in this situation, the initialPushCost is applied
-# twice. 
+# twice unfortunately :-/ 
+# It is not possible to detect if "isWalking", "isWalkingUphill" or 
+# "isWalkingDownhill" has to be used. Thus use "isWalking" as best guess.
 assign pushCost	switch way:isWalking	0	initialPushCost
 
 assign barrierCost
