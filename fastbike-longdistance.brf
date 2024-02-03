@@ -33,13 +33,13 @@ assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cy
 assign SlopeMax					8.0		# %SlopeMax% 					| % - maximum allowed slope (up & downhill, soft limit) | number
 
 # time optimallity parameter
-assign TimeOptimalityPercentage	50		# %TimeOptimalityPercentage%	| % - 0% - energy optimized route, 100% - time optimized route | number
+assign TimeOptimalityPercentage	75		# %TimeOptimalityPercentage%	| % - 0% - energy optimized route, 100% - time optimized route | number
 
 # traffic cost
 assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
 
 # additional cost for different kind of transportation
-assign StickToCycleRoute		true	# %StickToCycleRoute%			| cycle routes will be preferred | boolean
+assign StickToCycleRoute		false	# %StickToCycleRoute%			| cycle routes will be preferred | boolean
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
 assign PreferWater				true	# %PreferWater%					| routes next to water or waterways are prefered | boolean
 assign AvoidNoisyRoads			true	# %AvoidNoisyRoads%				| | boolean
