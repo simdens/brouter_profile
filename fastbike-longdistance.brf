@@ -16,7 +16,6 @@
 ################################################################################
 
 # ToDo
-# - extend bike speed computation with additional value in LUT
 # - validate bike speed computation
 # - rework detection of Carrying and Walking passages
 #   - Ideas
@@ -46,7 +45,7 @@
 
 # For UI 
 #-------------------------------------------------------------------------------
-assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Cat1 - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Cat2 - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Tour - Cat1 - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Cat3 - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Cat1 - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
+assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Cat1 - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Cat2 - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Touring - Cat1 - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Cat3 - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Cat1 - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
 assign NominalPower				165		# %NominalPower%				| W - continuous available power of cyclist | number
 assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cyclist+luggage) | number
 
@@ -83,7 +82,7 @@ assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to
 assign	processUnusedTags			false	# Set true to output unused tags in data tab
 
 # way cost constants
-assign noiseCost		 0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway
+assign noiseCost		 0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway (Autobahn)
 assign greenCost		-0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
 assign waterCost		-0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
 assign cycleRouteCost	-0.10	# Cost or incentive for cycle routs
@@ -147,7 +146,6 @@ assign bikeCategory							# Bike Category according to ASTM Classifikation ASTM 
 # 3 - MTB XC       - drop height <60cm
 # 4 - MTB Enduro   - drop height <120cm
 # 5 - MTB Downhill - drop height >120cm
-# 6 - Roadbike     - racing machines --> this category is combined with cat 1
 
 # brouter search algorithm
 assign pass1coefficient		1.5
@@ -173,7 +171,7 @@ assign classifierFerry    	3
 assign maxSpeed   min maxBikerSpeed 45	# absolute maximum speed in km/h for travel time computation
 assign S_C_x      multiply CwA rho		# drag coefficient times the reference area times the air density for travel time computation
 assign C_r        multiply 1.5 Cr		# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
-assign bikerPower P
+assign bikerPower multiply P n			# power times efficiency of the bike
 assign totalMass  m 
 
 # Time optimality factor 0 to 1
@@ -324,7 +322,10 @@ assign timeOptimalityFactor min 1 max 0 div TimeOptimalityPercentage 100
 # Newton Method Step:
 # vn+1 = vn - value/derivative
 
-assign slope		multiply -1 SlopeMax	# SpeedmSlopeMax
+# Compute speed for interpolation points with at minimum distance 4%
+assign slopeStepSize	min 4 multiply 0.5 SlopeMax
+
+assign slope		multiply -2 slopeStepSize
 assign v			20		# start value in m/s for root finding 
 # Constants
 assign mPn			multiply -1   multiply P n
@@ -361,9 +362,9 @@ assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
 assign v			sub v div value derivative
 # Result
-assign SpeedmSlopeMax multiply v 3.6
+assign speedm2 multiply v 3.6
 
-assign slope		multiply -0.5 SlopeMax	# SpeedmhSlopeMax
+assign slope		multiply -1 slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 # Constants
@@ -401,9 +402,9 @@ assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
 assign v			sub v div value derivative
 # Result
-assign SpeedmhSlopeMax multiply v 3.6
+assign speedm1 multiply v 3.6
 
-assign slope		 0			# Speed0
+assign slope		 0			# speed0
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
@@ -440,9 +441,9 @@ assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
 assign v			sub v div value derivative
 # Result
-assign Speed0 multiply v 3.6
+assign speed0 multiply v 3.6
 
-assign slope		multiply 0.5 SlopeMax	# SpeedphSlopeMax
+assign slope		slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
@@ -479,9 +480,9 @@ assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
 assign v			sub v div value derivative
 # Result
-assign SpeedphSlopeMax multiply v 3.6
+assign speedp1 multiply v 3.6
 
-assign slope		SlopeMax		# SpeedpSlopeMax
+assign slope		multiply 2 slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
@@ -518,8 +519,46 @@ assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
 assign v			sub v div value derivative
 # Result
-assign SpeedpSlopeMax multiply v 3.6
+assign speedp2 multiply v 3.6
 
+assign slope		multiply 3 slopeStepSize
+# start value for v is the result of the previous computation
+# Constants
+assign mPn			multiply -1   multiply P n
+assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign hrhoCwA		multiply  0.5 multiply rho CwA
+# Iteration 1
+assign vvhrhoCwA	multiply v multiply v hrhoCwA
+assign vCv			multiply v Cv
+assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
+assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
+assign v			sub v div value derivative
+# Iteration 2
+assign vvhrhoCwA	multiply v multiply v hrhoCwA
+assign vCv			multiply v Cv
+assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
+assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
+assign v			sub v div value derivative
+# Iteration 3
+assign vvhrhoCwA	multiply v multiply v hrhoCwA
+assign vCv			multiply v Cv
+assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
+assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
+assign v			sub v div value derivative
+# Iteration 4
+assign vvhrhoCwA	multiply v multiply v hrhoCwA
+assign vCv			multiply v Cv
+assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
+assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
+assign v			sub v div value derivative
+# Iteration 5
+assign vvhrhoCwA	multiply v multiply v hrhoCwA
+assign vCv			multiply v Cv
+assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
+assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
+assign v			sub v div value derivative
+# Result
+assign speedp3 multiply v 3.6
 
 # Elevation Parameter Calculation
 #-------------------------------------------------------------------------------
@@ -528,7 +567,7 @@ assign SpeedpSlopeMax multiply v 3.6
 							#	mass * gravity / power * speed 
 							#   <-------------------->
 							#      height meters / s 
-assign height2Length		multiply div multiply m g P div Speed0 3.6
+assign height2Length		multiply div multiply m g P div speed0 3.6
 
 # the parameters are renamed in this profile to ease the use of the profile
 # For timeoptimality, uphill cost are included in speed cost
@@ -558,16 +597,16 @@ assign uphillmaxbuffercost		add uphillMaxSlopeAdditionalCost   uphillcost
 # deceleration and accelerating afterwards compared to continuous cruising 
 # speed. At least @ 26.3km/h, 165W, 100kg and 0% slope, this is roughly half of 
 # the cost of the energy optimized cost. 
-assign v				div Speed0	3.6		# Speed on flat terrain in m/s
-assign v5				div 5		3.6		#  5km/h in m/s
-assign v10				div 10		3.6		# 10km/h in m/s
-assign v15				div 15		3.6		# 15km/h in m/s
-assign v20				div 20		3.6		# 20km/h in m/s
-assign kineticEnergy	multiply 0.5 multiply m multiply   v   v
-assign kineticEnergy5	multiply 0.5 multiply m multiply  v5  v5
-assign kineticEnergy10	multiply 0.5 multiply m multiply v10 v10
-assign kineticEnergy15	multiply 0.5 multiply m multiply v15 v15
-assign kineticEnergy20	multiply 0.5 multiply m multiply v20 v20
+assign v					div speed0	3.6		# Speed on flat terrain in m/s
+assign v5					div 5		3.6		#  5km/h in m/s
+assign v10					div 10		3.6		# 10km/h in m/s
+assign v15					div 15		3.6		# 15km/h in m/s
+assign v20					div 20		3.6		# 20km/h in m/s
+assign kineticEnergy		multiply 0.5 multiply m multiply   v   v
+assign kineticEnergy5		multiply 0.5 multiply m multiply  v5  v5
+assign kineticEnergy10		multiply 0.5 multiply m multiply v10 v10
+assign kineticEnergy15		multiply 0.5 multiply m multiply v15 v15
+assign kineticEnergy20		multiply 0.5 multiply m multiply v20 v20
 assign speed0CostEnergy		multiply v div kineticEnergy                     P
 assign speed5CostEnergy		multiply v div max 0 sub kineticEnergy kineticEnergy5  P
 assign speed10CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy10 P
@@ -611,13 +650,14 @@ assign speed20Cost multiply factor speed20CostEnergy
 # +    TOF  * v*dismountMountTime
 assign dismountCOGHeightDifference	0.15	# m - Difference of COG of biker between dismounted and mounted position
 assign dismountMountTime			4		# s - Time needed to dismount and mount back again
-assign initialPushCost	add speed0Cost
-						add multiply sub 1 timeOptimalityFactor
-						    multiply height2Length
-							         dismountCOGHeightDifference
-							multiply timeOptimalityFactor
-							multiply v
-									 dismountMountTime
+assign initialPushCost
+	add speed0Cost
+	add multiply sub 1 timeOptimalityFactor
+	    multiply height2Length
+		         dismountCOGHeightDifference
+		multiply timeOptimalityFactor
+		multiply v
+				 dismountMountTime
 
 # cost to enter a ferry
 # For energy efficient cost, sum of:
@@ -640,19 +680,25 @@ assign initialPushCost	add speed0Cost
 # +   TOF  * ( v*ferryWaitingTime )
 # <==>
 # initialFerryCost =   initialPushCost + TOF * ( v*ferryWaitingTime )
-assign ferryWaitingTime	multiply 30 60		# s - Waiting time for ferry (assumed one ferry every hour --> avg waiting time of 30min)
-assign initialFerryCost add initialPushCost multiply timeOptimalityFactor multiply v ferryWaitingTime
+
+assign ferryWaitingTime	multiply 30 60	# s - Waiting time for ferry (assumed 
+# one ferry every hour --> avg waiting time of 30min)
+assign initialFerryCost
+	add initialPushCost 
+		multiply timeOptimalityFactor
+		multiply v
+		         ferryWaitingTime
 
 
 # From https://en.wikipedia.org/wiki/Bicycle_performance#Energy_efficiency
 # "a human at 70kg requires about 60W to walk at 5 km/h on a firm and flat 
 # ground [1]"
-# [1] https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf
+# [1]https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf
 # --> 60Wh for 5km --> 12Wh/km
 # Energy for one km for the biker: --> bikerPower * 1h / bikerSpeed 
 # Example: bikerPower = 165W, bikerSpeed = 26,3kmH ==> 6.27Wh/km
 assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
-	div 12 div NominalPower Speed0
+	div 12 div NominalPower speed0
 
 # For carrying it is assumed, that the needed energy is doubled compared to
 # pushing
@@ -671,7 +717,7 @@ assign carryCostFactor
 #      = timeOptimalityFactor *     3.125*v(in km/h) + speed0Cost
 # for v = 26.3kmh --> Cost  = 147.2m
 assign	trafficSignalCost
-	add speed0Cost multiply timeOptimalityFactor multiply 3.125 Speed0 
+	add speed0Cost multiply timeOptimalityFactor multiply 3.125 speed0 
 
 
 ################################################################################
@@ -1164,31 +1210,65 @@ assign bikeSpeedLimit
 # speed for uphills and downhills  with "SlopeMax"
 # Here the additional current rolling resistance is included into the speed
 # calculation
-assign equivSlopeCr			multiply 100 multiply Cr sub rollingResistanceFactor 1			# Equivalent (virtual) slope due to rolling resistance difference to asphalt
-assign speeddvds			div sub SpeedphSlopeMax Speed0 multiply 0.5 SlopeMax			# Slope of speed over slope curve between 0 and SlopeMax/2
-assign bikeSpeed			add Speed0 multiply speeddvds equivSlopeCr						# New bike speed for 0% slope
-assign speeddvds			div sub SpeedmhSlopeMax SpeedmSlopeMax multiply 0.5 SlopeMax	# Slope of speed over slope curve between -SlopeMax and -SlopeMax/2
-assign bikeSpeedDownhill	add SpeedmSlopeMax multiply speeddvds equivSlopeCr				# new bike speed for -SlopeMax % slope
-assign speeddvds			div sub SpeedpSlopeMax SpeedphSlopeMax multiply 0.5 SlopeMax	# Slope of speed over slope curve between SlopeMax/2 and SlopeMax
-assign bikeSpeedUphill		add SpeedpSlopeMax multiply speeddvds equivSlopeCr				# new bike speed for +SlopeMax % slope
+#
+# Additionally make sure that bike speed is at least somewhat positive to avoid
+# div by zero errors.
+assign equivSlopeCr	multiply 100 multiply Cr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
+
+assign speeddvdsm2	div sub speedm1 speedm2 slopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
+assign speeddvdsm1	div sub speed0  speedm1 slopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
+assign speeddvdsp1	div sub speedp1 speed0  slopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
+assign speeddvdsp2	div sub speedp2 speedp1 slopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
+assign speeddvdsp3	div sub speedp3 speedp2 slopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
+
+# new bike speed for -SlopeMax% slope
+assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
+assign bikeSpeedDownhill
+	max 0.001
+	switch lesser tmpSlope multiply -1 slopeStepSize	# choose interpolation point
+		add speedm2 multiply speeddvdsm2 sub tmpSlope multiply -2 slopeStepSize
+	switch lesser tmpSlope 0
+		add speedm1 multiply speeddvdsm1 sub tmpSlope multiply -1 slopeStepSize
+	switch lesser tmpSlope slopeStepSize
+		add speed0 multiply speeddvdsp1 tmpSlope
+	switch lesser tmpSlope multiply 2 slopeStepSize
+		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
+		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
+
+# New bike speed for 0% slope
+assign tmpSlope	equivSlopeCr
+assign bikeSpeed
+	max 0.001
+	switch lesser tmpSlope slopeStepSize				# choose interpolation point
+		add speed0 multiply speeddvdsp1 tmpSlope
+	switch lesser tmpSlope multiply 2 slopeStepSize
+		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
+		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
+
+# new bike speed for +SlopeMax% slope
+assign tmpSlope	add equivSlopeCr SlopeMax
+assign bikeSpeedUphill
+	max 0.001
+	switch greater tmpSlope multiply 2 slopeStepSize	# choose interpolation point
+		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
+	switch greater tmpSlope slopeStepSize
+		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
+		add speed0  multiply speeddvdsp1 tmpSlope
 
 # Limit bike speed
 #
 # Since the speed limitation is nonlinear with respect to the slope, but the
 # Brouter computation is linear (interpolation), this step is not quite
-# accurate, but there is no other known better solution. 
-#
-# Additionally make sure that bike speed is at least somewhat positive to avoid
-# div by zero errors.
-assign limitedBikeSpeed			max 0.001 min bikeSpeedLimit bikeSpeed
-assign limitedBikeSpeedUphill	max 0.001 min bikeSpeedLimit bikeSpeedUphill
-assign limitedBikeSpeedDownhill	max 0.001 min bikeSpeedLimit bikeSpeedDownhill
+# accurate, but there is no other known better solution.
+assign limitedBikeSpeed			min bikeSpeedLimit bikeSpeed
+assign limitedBikeSpeedUphill	min bikeSpeedLimit bikeSpeedUphill
+assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
 
 # routing should be at least partially done time optimal
 #
-assign speedCost			multiply timeOptimalityFactor div Speed0 limitedBikeSpeed
-assign speedCostUphill		multiply timeOptimalityFactor div Speed0 limitedBikeSpeedUphill
-assign speedCostDownhill	multiply timeOptimalityFactor div Speed0 limitedBikeSpeedDownhill
+assign speedCost			multiply timeOptimalityFactor div speed0 limitedBikeSpeed
+assign speedCostUphill		multiply timeOptimalityFactor div speed0 limitedBikeSpeedUphill
+assign speedCostDownhill	multiply timeOptimalityFactor div speed0 limitedBikeSpeedDownhill
 
 
 # Traffic
