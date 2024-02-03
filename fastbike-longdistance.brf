@@ -15,9 +15,6 @@
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 ################################################################################
 
-# ToDo
-# - rethink elevation cost
-
 ################################################################################
 ---context:global ##############################################################
 ################################################################################
@@ -72,8 +69,6 @@ assign cycleRouteCost	-0.10	# Cost or incentive for cycle routs
 
 # elevation parameter constants
 assign considerElevation				true	# elevation will be considered
-assign downhillMaxSlopeAdditionalCost	  50	# additional cost per vertical meter for slope larger than "slopemax"
-assign uphillMaxSlopeAdditionalCost		 100	# additional cost per vertical meter for slope larger than "slopemax"
 assign slopeCutoff						   0.5	# slope is ignored if smaller than this threshold
 assign elevationpenaltybuffer			   4
 assign elevationmaxbuffer				   8
@@ -543,10 +538,33 @@ assign v			sub v div value derivative
 # Result
 assign speedp3 multiply v 3.6
 
+# Push and Carry Cost Factors
+#-------------------------------------------------------------------------------
+
+# From https://en.wikipedia.org/wiki/Bicycle_performance#Energy_efficiency
+# "a human at 70kg requires about 60W to walk at 5 km/h on a firm and flat 
+# ground [1]"
+# [1]https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf
+# Energy needed for walking: 60Wh for 5km --> 12Wh/km
+# Energy needed for pushing a bike: Cr * mBike * g * 1000m 
+# = 0.00363 * 20kg * 9.91N/kg * 1000m 
+# = 0.00363 * 54,5Wh/km
+# = 0.2Wh/km ==> 0.5Wh/km is used for all types of tires
+# Energy for one km for the biker: --> bikerPower * 1h / bikerSpeed 
+# Example: bikerPower = 165W, bikerSpeed = 26,3kmH ==> 6.27Wh/km
+assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
+	div 12.5 div NominalPower speed0
+
+# For carrying it is assumed, that the needed energy is doubled compared to
+# pushing
+assign carryCostFactor
+	multiply 3 pushCostFactor
+
+
 # Elevation Parameter Calculation
 #-------------------------------------------------------------------------------
 
-# compute equivalent length for one meter height
+# compute equivalent length for one meter height. ==> 45.36 m/m for roadbike
 							#	mass * gravity / power * speed 
 							#   <-------------------->
 							#      height meters / s 
@@ -562,11 +580,18 @@ assign downhillcost				# cost per vertical meter
 	switch considerElevation
 		multiply sub 1 timeOptimalityFactor 0
 		0
-assign elevationbufferreduce	sub SlopeMax slopeCutoff
-assign downhillcutoff			slopeCutoff
-assign uphillcutoff				slopeCutoff
-assign downhillmaxbuffercost	add downhillMaxSlopeAdditionalCost downhillcost
-assign uphillmaxbuffercost		add uphillMaxSlopeAdditionalCost   uphillcost
+assign elevationbufferreduce			sub SlopeMax slopeCutoff
+assign downhillcutoff					slopeCutoff
+assign uphillcutoff						slopeCutoff
+
+# additional cost per vertical meter for slope larger than "slopemax"
+# Cost due to the increased energy usage due to pushing the bike in steep hills
+assign uphillMaxSlopeAdditionalCost		multiply height2Length sub pushCostFactor 1
+# Downhill cost to reduce the need of braking in very steep hills.
+assign downhillMaxSlopeAdditionalCost	multiply 0.5 uphillMaxSlopeAdditionalCost
+assign downhillmaxbuffercost			add downhillMaxSlopeAdditionalCost downhillcost
+assign uphillmaxbuffercost				add uphillMaxSlopeAdditionalCost   uphillcost
+
 
 
 # Constants depending on speed or elevation constants
@@ -671,23 +696,6 @@ assign initialFerryCost
 		multiply timeOptimalityFactor
 		multiply v
 		         ferryWaitingTime
-
-
-# From https://en.wikipedia.org/wiki/Bicycle_performance#Energy_efficiency
-# "a human at 70kg requires about 60W to walk at 5 km/h on a firm and flat 
-# ground [1]"
-# [1]https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf
-# --> 60Wh for 5km --> 12Wh/km
-# Energy for one km for the biker: --> bikerPower * 1h / bikerSpeed 
-# Example: bikerPower = 165W, bikerSpeed = 26,3kmH ==> 6.27Wh/km
-assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
-	div 12 div NominalPower speed0
-
-# For carrying it is assumed, that the needed energy is doubled compared to
-# pushing
-assign carryCostFactor
-	multiply 3 pushCostFactor
-
 
 # In open street maps normally to traffic signal nodes are passed for each 
 # intersection. The cost are estimated by:
