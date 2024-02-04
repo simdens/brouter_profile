@@ -25,8 +25,7 @@ Related projects\:
 ## Profiles
 ### fastbike_longdistance.brf
    * Currently maintained
-   * Patched version of Brouter needed which includes _DIV_ command and _uphillmaxbuffercost_ and _downhillmaxbuffercost_ parameters.
-   * Patched version of Brouter is available on [Github](https://github.com/simdens/brouter/tree/dev) 
+   * Brouter Version >=1.7.4 needed which includes _DIVIDE_ command.
 
 ### fastbike_longdistance_legacy.brf
    * Profile for non patched versions of Brouter
