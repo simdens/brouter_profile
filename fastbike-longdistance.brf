@@ -11,7 +11,7 @@
 
 ################################################################################
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# !!           the forked version of brouter by simdens is needed           !! #
+# !!                     Brouter V1.7.4 or newer needed                     !! #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 ################################################################################
 
@@ -154,7 +154,7 @@ assign bikerPower multiply P n			# power times efficiency of the bike
 assign totalMass  m 
 
 # Time optimality factor 0 to 1
-assign timeOptimalityFactor min 1 max 0 div TimeOptimalityPercentage 100
+assign timeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
 
 
 # Speed Parameter Calculation:
@@ -308,38 +308,38 @@ assign slope		multiply -2 slopeStepSize
 assign v			20		# start value in m/s for root finding 
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speedm2 multiply v 3.6
 
@@ -348,38 +348,38 @@ assign slope		multiply -1 slopeStepSize
 # Constants
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speedm1 multiply v 3.6
 
@@ -387,38 +387,38 @@ assign slope		 0			# speed0
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speed0 multiply v 3.6
 
@@ -426,38 +426,38 @@ assign slope		slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speedp1 multiply v 3.6
 
@@ -465,38 +465,38 @@ assign slope		multiply 2 slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speedp2 multiply v 3.6
 
@@ -504,38 +504,38 @@ assign slope		multiply 3 slopeStepSize
 # start value for v is the result of the previous computation
 # Constants
 assign mPn			multiply -1   multiply P n
-assign gmCrSl		multiply  g   multiply m add Cr div slope 100
+assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
 assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 2
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 3
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 4
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Iteration 5
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
 assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
 assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v div value derivative
+assign v			sub v divide value derivative
 # Result
 assign speedp3 multiply v 3.6
 
@@ -554,7 +554,7 @@ assign speedp3 multiply v 3.6
 # Energy for one km for the biker: --> bikerPower * 1h / bikerSpeed 
 # Example: bikerPower = 165W, bikerSpeed = 26,3kmH ==> 6.27Wh/km
 assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
-	div 12.5 div NominalPower speed0
+	divide 12.5 divide NominalPower speed0
 
 # For carrying it is assumed, that the needed energy is doubled compared to
 # pushing
@@ -569,10 +569,23 @@ assign carryCostFactor
 							#	mass * gravity / power * speed 
 							#   <-------------------->
 							#      height meters / s 
-assign height2Length		multiply div multiply m g P div speed0 3.6
+assign height2Length		multiply divide multiply m g P divide speed0 3.6
 
-# the parameters are renamed in this profile to ease the use of the profile
-# For timeoptimality, uphill cost are included in speed cost
+
+# Elevation value is reduced by this cutoff without penalizing the elevation.
+assign downhillcutoff					slopeCutoff
+assign uphillcutoff						slopeCutoff
+# When reaching the "elevationbufferreduce" slope, uphillcostfactor (or 
+# downhillcostfactor) are used by 100%
+assign elevationbufferreduce			sub SlopeMax slopeCutoff
+# When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
+#"downhillcost". Most likely = elevationbufferreduce
+assign downhillmaxslope					sub SlopeMax slopeCutoff
+# When exceeding "uphillmaxslope", "uphillmaxslopecost" is used instead of 
+# "uphillcost". Most likely = elevationbufferreduce
+assign uphillmaxslope					sub SlopeMax slopeCutoff
+
+# Uphill and downhill cost for the energy optimized situation.
 assign uphillcost				# cost per vertical meter
 	switch considerElevation	
 		multiply sub 1 timeOptimalityFactor height2Length
@@ -581,18 +594,16 @@ assign downhillcost				# cost per vertical meter
 	switch considerElevation
 		multiply sub 1 timeOptimalityFactor 0
 		0
-assign elevationbufferreduce			sub SlopeMax slopeCutoff
-assign downhillcutoff					slopeCutoff
-assign uphillcutoff						slopeCutoff
 
 # additional cost per vertical meter for slope larger than "slopemax"
 # Cost due to the increased energy usage due to pushing the bike in steep hills
 assign uphillMaxSlopeAdditionalCost		multiply height2Length sub pushCostFactor 1
 # Downhill cost to reduce the need of braking in very steep hills.
 assign downhillMaxSlopeAdditionalCost	multiply 0.5 uphillMaxSlopeAdditionalCost
-assign downhillmaxbuffercost			add downhillMaxSlopeAdditionalCost downhillcost
-assign uphillmaxbuffercost				add uphillMaxSlopeAdditionalCost   uphillcost
-
+# Uphill and downhill cost for elevation exceeding the "(up|down)hillmaxslope" 
+# threshold
+assign downhillmaxslopecost		add downhillMaxSlopeAdditionalCost downhillcost
+assign uphillmaxslopecost		add uphillMaxSlopeAdditionalCost   uphillcost
 
 
 # Constants depending on speed or elevation constants
@@ -606,21 +617,21 @@ assign uphillmaxbuffercost				add uphillMaxSlopeAdditionalCost   uphillcost
 # deceleration and accelerating afterwards compared to continuous cruising 
 # speed. At least @ 26.3km/h, 165W, 100kg and 0% slope, this is roughly half of 
 # the cost of the energy optimized cost. 
-assign v					div speed0	3.6		# Speed on flat terrain in m/s
-assign v5					div 5		3.6		#  5km/h in m/s
-assign v10					div 10		3.6		# 10km/h in m/s
-assign v15					div 15		3.6		# 15km/h in m/s
-assign v20					div 20		3.6		# 20km/h in m/s
+assign v					divide speed0	3.6		# Speed on flat terrain in m/s
+assign v5					divide 5		3.6		#  5km/h in m/s
+assign v10					divide 10		3.6		# 10km/h in m/s
+assign v15					divide 15		3.6		# 15km/h in m/s
+assign v20					divide 20		3.6		# 20km/h in m/s
 assign kineticEnergy		multiply 0.5 multiply m multiply   v   v
 assign kineticEnergy5		multiply 0.5 multiply m multiply  v5  v5
 assign kineticEnergy10		multiply 0.5 multiply m multiply v10 v10
 assign kineticEnergy15		multiply 0.5 multiply m multiply v15 v15
 assign kineticEnergy20		multiply 0.5 multiply m multiply v20 v20
-assign speed0CostEnergy		multiply v div kineticEnergy                     P
-assign speed5CostEnergy		multiply v div max 0 sub kineticEnergy kineticEnergy5  P
-assign speed10CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy10 P
-assign speed15CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy15 P
-assign speed20CostEnergy	multiply v div max 0 sub kineticEnergy kineticEnergy20 P
+assign speed0CostEnergy		multiply v divide kineticEnergy                     P
+assign speed5CostEnergy		multiply v divide max 0 sub kineticEnergy kineticEnergy5  P
+assign speed10CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy10 P
+assign speed15CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy15 P
+assign speed20CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy20 P
 
 # Linear interpolation between energy optimal cost and time optimal cost.
 #     cost = timeOptimalityFactor*      SpeedCostTime + (1-timeOptimalityFactor)*SpeedCostEnergy
@@ -880,7 +891,7 @@ assign nodeaccessgranted
 assign snfCar	4.292682927								# kg*bar/mm
 
 # surface normalization factor  of the bike:
-assign snfBike	multiply 0.5 multiply m div tirePressure tireWidth	# kg*bar/mm
+assign snfBike	multiply 0.5 multiply m divide tirePressure tireWidth	# kg*bar/mm
 # for a normal touring bike, this about 25% higher than the one of a car
 # m = 100kg --> 50kg per wheel
 # w = 37mm
@@ -1020,7 +1031,7 @@ assign rollingResistanceFactor
 		1
 		multiply
 			# scale resistance increase with normalization factor for used tire
-			div snfBike snfCar		# = 2.08 for the roadbike
+			divide snfBike snfCar		# = 2.08 for the roadbike
 			sub
 				surfaceFactor
 				1
@@ -1321,7 +1332,7 @@ assign maxAllowedSpeed
 # The absolute maximum speed "maxBikerSpeed" is scaled by the 
 # rollingResistanceFactor to consider the slower desired speed at bad surfaces.
 assign maxDesiredSpeed
-	min	div maxBikerSpeed rollingResistanceFactor
+	min	divide maxBikerSpeed rollingResistanceFactor
 	max switch or hasCycleway anyCycleroute		30	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 30km/h
 	# some special ways
 	# Now from fast to slow :-) 
@@ -1356,11 +1367,11 @@ assign bikeSpeedLimit
 # div by zero errors.
 assign equivSlopeCr	multiply 100 multiply Cr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
 
-assign speeddvdsm2	div sub speedm1 speedm2 slopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
-assign speeddvdsm1	div sub speed0  speedm1 slopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
-assign speeddvdsp1	div sub speedp1 speed0  slopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
-assign speeddvdsp2	div sub speedp2 speedp1 slopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
-assign speeddvdsp3	div sub speedp3 speedp2 slopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
+assign speeddvdsm2	divide sub speedm1 speedm2 slopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
+assign speeddvdsm1	divide sub speed0  speedm1 slopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
+assign speeddvdsp1	divide sub speedp1 speed0  slopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
+assign speeddvdsp2	divide sub speedp2 speedp1 slopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
+assign speeddvdsp3	divide sub speedp3 speedp2 slopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
 
 # new bike speed for -SlopeMax% slope
 assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
@@ -1413,9 +1424,9 @@ assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
 
 # routing should be at least partially done time optimal
 #
-assign speedCost			multiply timeOptimalityFactor div speed0 limitedBikeSpeed
-assign speedCostUphill		multiply timeOptimalityFactor div speed0 limitedBikeSpeedUphill
-assign speedCostDownhill	multiply timeOptimalityFactor div speed0 limitedBikeSpeedDownhill
+assign speedCost			multiply timeOptimalityFactor divide speed0 limitedBikeSpeed
+assign speedCostUphill		multiply timeOptimalityFactor divide speed0 limitedBikeSpeedUphill
+assign speedCostDownhill	multiply timeOptimalityFactor divide speed0 limitedBikeSpeedDownhill
 
 
 # Traffic
@@ -1517,7 +1528,7 @@ assign trafficPerClass
 	switch estimated_traffic_class=1	  50
 										   0
 
-assign traffic div add trafficPerClass multiply 2 trafficPerHighway 3
+assign traffic divide add trafficPerClass multiply 2 trafficPerHighway 3
 
 # actual speed of vehicles will be estimated by the minimum of the taged max 
 # allowed speed and some estimations (for Germany)
@@ -1539,12 +1550,12 @@ assign vehicleSpeed
 assign bikeSpeedForTraffic         max limitedBikeSpeed         1	# use at least 1km/h --> div by zero
 assign bikeSpeedForTrafficUphill   max limitedBikeSpeedUphill   1
 assign bikeSpeedForTrafficDownhill max limitedBikeSpeedDownhill 1
-assign overtakingsPerHour          multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTraffic         vehicleSpeed
-assign overtakingsPerHourUphill    multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficUphill   vehicleSpeed
-assign overtakingsPerHourDownhill  multiply traffic div max 0 sub vehicleSpeed bikeSpeedForTrafficDownhill vehicleSpeed
-assign overtakingsPerMeter         div overtakingsPerHour         multiply 1000 bikeSpeedForTraffic
-assign overtakingsPerMeterUphill   div overtakingsPerHourUphill   multiply 1000 bikeSpeedForTrafficUphill
-assign overtakingsPerMeterDownhill div overtakingsPerHourDownhill multiply 1000 bikeSpeedForTrafficDownhill
+assign overtakingsPerHour          multiply traffic divide max 0 sub vehicleSpeed bikeSpeedForTraffic         vehicleSpeed
+assign overtakingsPerHourUphill    multiply traffic divide max 0 sub vehicleSpeed bikeSpeedForTrafficUphill   vehicleSpeed
+assign overtakingsPerHourDownhill  multiply traffic divide max 0 sub vehicleSpeed bikeSpeedForTrafficDownhill vehicleSpeed
+assign overtakingsPerMeter         divide overtakingsPerHour         multiply 1000 bikeSpeedForTraffic
+assign overtakingsPerMeterUphill   divide overtakingsPerHourUphill   multiply 1000 bikeSpeedForTrafficUphill
+assign overtakingsPerMeterDownhill divide overtakingsPerHourDownhill multiply 1000 bikeSpeedForTrafficDownhill
 
 # Treat traffic penalty differently for cycling lanes		
 assign trafficVehicleCostScaled 
@@ -1605,7 +1616,7 @@ assign noiseFactor
 	switch estimated_noise_class=1	0.05
 									0
 
-assign noiseFactor div noiseFactor 0.9		# normalize
+assign noiseFactor divide noiseFactor 0.9		# normalize
 
 assign weightedNoiseCost
 	switch AvoidNoisyRoads
@@ -1647,7 +1658,7 @@ assign greenFactor
 	switch estimated_forest_class=1	0.15
 									0
 
-assign greenFactor div greenFactor 0.99		# normalize
+assign greenFactor divide greenFactor 0.99		# normalize
 
 assign weightedGreenCost
 	switch PreferGreen
@@ -1683,7 +1694,7 @@ assign waterFactor
 	switch estimated_river_class=1	0.05
 									0
 
-assign waterFactor div waterFactor 0.95		# normalize
+assign waterFactor divide waterFactor 0.95		# normalize
 
 assign weightedWaterCost
 	switch PreferWater
@@ -1982,7 +1993,7 @@ assign trafficLightCost
 			switch not way:iswayreverse					trafficSignalCost 0
 		switch traffic_signals:direction=backward
 			switch way:iswayreverse						trafficSignalCost 0
-		div trafficSignalCost 2
+		divide trafficSignalCost 2
 	0
 
 # Traffic Calming
