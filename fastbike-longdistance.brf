@@ -38,13 +38,14 @@ assign TimeOptimalityPercentage	75		# %TimeOptimalityPercentage%	| % - 0% - ener
 # traffic cost
 assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
 
-# additional cost for different kind of transportation
+# Settings to modify the roue
 assign StickToCycleRoute		false	# %StickToCycleRoute%			| cycle routes will be preferred | boolean
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
 assign PreferWater				true	# %PreferWater%					| routes next to water or waterways are prefered | boolean
 assign AvoidNoisyRoads			true	# %AvoidNoisyRoads%				| | boolean
 assign AllowCarrying			true	# %AllowCarrying%				| allow carrying passages, e.g. steps | boolean
 assign AllowFerries				false	# %AllowFerries%				| | boolean
+assign PavedRoadsOnly			false	# %PavedRoadsOnly%				| | boolean
 
 # Turn instruction settings
 # (Removed "%" such that they do not show up in the UI but might be easily 
@@ -888,24 +889,24 @@ assign snfBike	multiply 0.5 multiply m div tirePressure tireWidth	# kg*bar/mm
 # ==> snfBike/snfCar = 1.102
 
 
-# Assign costs 
-#        AsphaltRes				 1.0
-assign   concreteRes			 1.1
-assign   metalRes				 1.1
-assign   pavingStonesRes		 1.5
-assign   compactedRes			 1.8
-assign   woodRes				 1.8
-assign   settRes				 2.0
-assign   pebblestoneRes			 2.4
-assign   cobblestoneRes			 2.5
-assign   grassPaverRes			 2.7
-assign   gravelRes				 3.0
-assign   groundRes				 3.4
-assign   fineGravelRes			 4.0
-assign   dirtRes				 5.0
-assign   sandRes				10.0
-assign   mudRes					15.0
-assign   pavingUnsureRes		groundRes
+# Assign costs 					PavedRoadsOnly Cost		Normal Cost
+assign asphaltRes		switch PavedRoadsOnly	 1.0	 1.0
+assign sconcreteRes		switch PavedRoadsOnly	 1.1	 1.1
+assign metalRes			switch PavedRoadsOnly	 1.1	 1.1
+assign pavingStonesRes	switch PavedRoadsOnly	 1.5	 1.5
+assign compactedRes		switch PavedRoadsOnly	10  	 1.8
+assign woodRes			switch PavedRoadsOnly	 1.8	 1.8
+assign settRes			switch PavedRoadsOnly	 2.0	 2.0
+assign pebblestoneRes	switch PavedRoadsOnly	10  	 2.4
+assign cobblestoneRes	switch PavedRoadsOnly	 2.5	 2.5
+assign grassPaverRes	switch PavedRoadsOnly	10  	 2.7
+assign gravelRes		switch PavedRoadsOnly	10  	 3.0
+assign groundRes		switch PavedRoadsOnly	10  	 3.4
+assign fineGravelRes	switch PavedRoadsOnly	10  	 4.0
+assign dirtRes			switch PavedRoadsOnly	10  	 5.0
+assign sandRes			switch PavedRoadsOnly	10  	10.0
+assign mudRes			switch PavedRoadsOnly	15  	15.0
+assign pavingUnsureRes	switch PavedRoadsOnly	10  	groundRes
 
 
 # cost factors
@@ -913,7 +914,7 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	# 
 	# Use cycleway surface with highest priority, since we use cycleways if 
 	# available
-	switch cycleway:surface=asphalt         1.0
+	switch cycleway:surface=asphalt         asphaltRes
 	switch cycleway:surface=concrete|paved  concreteRes
 	switch cycleway:surface=paving_stones   pavingStonesRes
 	switch cycleway:surface=compacted       compactedRes
@@ -925,7 +926,7 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	#
 	# Use smoothness key with next priority
 	# http://wiki.openstreetmap.org/wiki/Key:smoothness
-	switch smoothness=excellent|very_good		1.0												# thin_rollers - roller blade, skate board
+	switch smoothness=excellent|very_good		asphaltRes										# thin_rollers - roller blade, skate board
 	switch smoothness=good		 				multiply 0.5 add 1.0 pavingStonesRes			# thin_wheels - racing bike
 	switch smoothness=intermediate				pavingStonesRes									# wheels - city bike, wheel chair, sport cars
 	switch smoothness=bad|robust_wheels			cobblestoneRes									# robust wheels - trekking bike, normal cars
@@ -935,7 +936,7 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	switch smoothness=impassable              	multiply 2 mudRes								# no wheeled vehicle - hiking path 
 	#
 	# Highway surface
-	switch     surface=asphalt					1.0
+	switch     surface=asphalt					asphaltRes
 	switch and surface=concrete concrete=lanes	compactedRes
 	switch and surface=concrete concrete=plates	pavingStonesRes
 	switch     surface=concrete|paved 			concreteRes
@@ -955,39 +956,39 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	switch     surface=mud                      mudRes
 	#
 	# best guess for unsure paving:
-	switch highway=raceway                  1.0                 # Rennstrecke
-	switch highway=motorway|motorway_link   1.0					# Autobahn und Auffahrten
-	switch highway=trunk|trunk_link      	1.0					# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link    	1.0					# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link	1.0					# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   1.0					# Kreisstraßen und Auffahrten
-	switch highway=unclassified       		1.0					# Dorfstraßen	  
-	switch highway=residential 				1.0					# Wohnstraße
-	switch highway=rest_area|services       1.0                 # Rastplatz
-	switch highway=corridor                 1.0                 # Hallway inside a building
-	switch highway=crossing                 1.0                 # Street crossing
-	switch highway=bus_stop                 1.0                 # Bus stop on the street
-	switch highway=mini_roundabout          1.0                 # Mini roundabout in the street
-	switch highway=turning_loop             1.0                 # Turning Loop
-	switch highway=platform                 pavingStonesRes		# Bushaltestelle (wo die Personen stehen)
-	switch highway=living_street 			pavingStonesRes		# Spielstraße
-	switch highway=pedestrian   			settRes				# Fußgängerzone
-	switch highway=service                  pavingStonesRes		# Zugangsstraßen
-	switch highway=bridleway                compactedRes		# Reit- und Fußweg
-	switch highway=cycleway                 pavingStonesRes		# Radweg
+	switch highway=raceway					asphaltRes			# Rennstrecke
+	switch highway=motorway|motorway_link	asphaltRes			# Autobahn und Auffahrten
+	switch highway=trunk|trunk_link			asphaltRes			# Schnellstraßen (wie BAB) und Auffahrten
+	switch highway=primary|primary_link		asphaltRes			# Bundesstraßen und Auffahrten
+	switch highway=secondary|secondary_link	asphaltRes			# Landstraßen und Auffahrten
+	switch highway=tertiary|tertiary_link	asphaltRes			# Kreisstraßen und Auffahrten
+	switch highway=unclassified				asphaltRes			# Dorfstraßen	  
+	switch highway=residential 				asphaltRes			# Wohnstraße
+	switch highway=rest_area|services		asphaltRes			# Rastplatz
+	switch highway=corridor					asphaltRes			# Hallway inside a building
+	switch highway=crossing					asphaltRes			# Street crossing
+	switch highway=bus_stop					asphaltRes			# Bus stop on the street
+	switch highway=mini_roundabout			asphaltRes			# Mini roundabout in the street
+	switch highway=turning_loop				asphaltRes			# Turning Loop
+	switch highway=platform					pavingStonesRes		# Bushaltestelle (wo die Personen stehen)
+	switch highway=living_street			pavingStonesRes		# Spielstraße
+	switch highway=pedestrian				settRes				# Fußgängerzone
+	switch highway=service					pavingStonesRes		# Zugangsstraßen
+	switch highway=bridleway				compactedRes		# Reit- und Fußweg
+	switch highway=cycleway					pavingStonesRes		# Radweg
 	switch highway=footway  				groundRes			# Gehweg
-	switch highway=unsurfaced               dirtRes				# street without surface
+	switch highway=unsurfaced				dirtRes				# street without surface
 	switch highway=road						pavingUnsureRes	# unbekannter Typ
 	#
 	# for highway=track, check the tracktype
-	switch and highway=track tracktype=grade1	1.0										# Asphalt surface
+	switch and highway=track tracktype=grade1	asphaltRes								# Asphalt surface
 	switch and highway=track tracktype=grade2	compactedRes							# mostly solid
 	switch and highway=track tracktype=grade3	multiply 0.5 add compactedRes groundRes	# Even mixture of hard and soft materials.
 	switch and highway=track tracktype=grade4	groundRes								# Mostly soft
 	switch and highway=track tracktype=grade5	dirtRes									# soft
 	#
 	# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
-	switch and highway=path tracktype=grade1	1.0										# Asphalt surface
+	switch and highway=path tracktype=grade1	asphaltRes								# Asphalt surface
 	switch and highway=path tracktype=grade2	compactedRes							# mostly solid
 	switch and highway=path tracktype=grade3	multiply 0.5 add compactedRes groundRes	# Even mixture of hard and soft materials.
 	switch and highway=path tracktype=grade4	groundRes								# Mostly soft
