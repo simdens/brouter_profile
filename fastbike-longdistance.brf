@@ -891,7 +891,7 @@ assign snfBike	multiply 0.5 multiply m div tirePressure tireWidth	# kg*bar/mm
 
 # Assign costs 					PavedRoadsOnly Cost		Normal Cost
 assign asphaltRes		switch PavedRoadsOnly	 1.0	 1.0
-assign sconcreteRes		switch PavedRoadsOnly	 1.1	 1.1
+assign concreteRes		switch PavedRoadsOnly	 1.1	 1.1
 assign metalRes			switch PavedRoadsOnly	 1.1	 1.1
 assign pavingStonesRes	switch PavedRoadsOnly	 1.5	 1.5
 assign compactedRes		switch PavedRoadsOnly	10  	 1.8
@@ -1020,7 +1020,7 @@ assign rollingResistanceFactor
 		1
 		multiply
 			# scale resistance increase with normalization factor for used tire
-			div snfBike snfCar		# = 1.76 for roadbike
+			div snfBike snfCar		# = 2.08 for the roadbike
 			sub
 				surfaceFactor
 				1
@@ -1041,129 +1041,137 @@ assign rollingResistanceFactor
 # 5  - MTB Downhill - drop height >120cm
 # 9  - Carrying Passage for all bike categories
 
-# For flat ways without any slope
+# For flat ways without any slope.
 assign wayCategory
-	# very clear tags
+	# very clear tags superseeding all others in descending priority:
 	switch wheelchair=yes					1
-	# 
-	# Use cycleway surface with high priority, since we use cycleways if 
-	# available
-	switch cycleway:surface=asphalt			1
-	switch cycleway:surface=concrete|paved	1
-	switch cycleway:surface=paving_stones	1
-	switch cycleway:surface=compacted		1
-	switch cycleway:surface=sett			1
-	switch cycleway:surface=cobblestone		1
-	switch cycleway:surface=gravel			2
-	switch cycleway:surface=fine_gravel		1
-#	switch cycleway:surface=unpaved
-	#
-	# Use smoothness key with next priority
-	# http://wiki.openstreetmap.org/wiki/Key:smoothness
-	switch smoothness=excellent|very_good		1	# thin_rollers - roller blade, skate board
-	switch smoothness=good		 				1	# thin_wheels - racing bike
-	switch smoothness=intermediate				1	# wheels - city bike, wheel chair, sport cars
-	switch smoothness=bad|robust_wheels			1	# robust wheels - trekking bike, normal cars
-	switch smoothness=very_bad|high_clearance	2	# high clearance - normal cars with slightly higher clearance
-	switch smoothness=horrible|off_road_wheels	3	# off road wheels - off road cars 
-	switch smoothness=very_horrible				4	# specialized off road vehicles - ATV, tractor
-	switch smoothness=impassable				9	# no wheeled vehicle - hiking path 
-	#
-	# Highway surface
-	switch     surface=asphalt					1
-	switch and surface=concrete concrete=lanes	1
-	switch and surface=concrete concrete=plates	1
-	switch     surface=concrete|paved 			1
-	switch     surface=metal					1
-	switch     surface=paving_stones			1
-	switch     surface=compacted|clay			1
-	switch     surface=wood						1
-	switch     surface=sett						1
-	switch     surface=pebblestone				1
-	switch     surface=cobblestone				1
-	switch     surface=grass_paver				1
-	switch     surface=gravel					2
-#	switch     surface=ground					
-	switch     surface=fine_gravel				1
-#	switch     surface=unpaved|dirt|earth|grass	
-	switch     surface=sand						2
-	switch     surface=mud						3
-	#
-	# best guess for unsure paving:
-	switch highway=raceway						1	# Rennstrecke
-	switch highway=motorway|motorway_link		1	# Autobahn und Auffahrten
-	switch highway=trunk|trunk_link				1	# Schnellstraßen (wie BAB) und Auffahrten
-	switch highway=primary|primary_link			1	# Bundesstraßen und Auffahrten
-	switch highway=secondary|secondary_link		1	# Landstraßen und Auffahrten
-	switch highway=tertiary|tertiary_link   	1	# Kreisstraßen und Auffahrten
-	switch highway=unclassified					1	# Dorfstraßen
-	switch highway=residential 					1	# Wohnstraße
-	switch highway=rest_area|services			1	# Rastplatz
-	switch highway=corridor						1	# Hallway inside a building
-	switch highway=crossing						1	# Street crossing
-	switch highway=bus_stop						1	# Bus stop on the street
-	switch highway=mini_roundabout				1	# Mini roundabout in the street
-	switch highway=turning_loop					1	# Turning Loop
-	switch highway=platform						1	# Bushaltestelle (wo die Personen stehen)
-	switch highway=living_street				1	# Spielstraße
-	switch highway=pedestrian					1	# Fußgängerzone
-	switch highway=service						1	# Zugangsstraßen
-#	switch highway=bridleway						# Reit- und Fußweg
-#	switch highway=cycleway							# Radweg
-#	switch highway=footway  						# Gehweg
-#	switch highway=unsurfaced						# street without surface
-#	switch highway=road								# unbekannter Typ
-	switch highway=steps						3	# Treppen
-	#
-	# for highway=track, check the tracktype
-	switch and highway=track tracktype=grade1	1	# Asphalt surface
-	switch and highway=track tracktype=grade2	1	# mostly solid
-	switch and highway=track tracktype=grade3	1	# Even mixture of hard and soft materials.
-	switch and highway=track tracktype=grade4	1	# Mostly soft
-	switch and highway=track tracktype=grade5	2	# soft
-	#
-	# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
-	switch and highway=path tracktype=grade1	1	# Asphalt surface
-	switch and highway=path tracktype=grade2	1	# mostly solid
-	switch and highway=path tracktype=grade3	1	# Even mixture of hard and soft materials.
-	switch and highway=path tracktype=grade4	1	# Mostly soft
-	switch and highway=path tracktype=grade5	2	# soft
-	#
-	# mtb:scale
-	switch mtb:scale=0-							1	# Gravel or packed earth. No particular difficulties (very easy)
-	switch mtb:scale=0							1	# Gravel or packed earth. No particular difficulties
-	switch mtb:scale=0+							1	# Gravel or packed earth. No particular difficulties (harder one)
-	switch mtb:scale=1-							2	# roots and small stones (easier)
-	switch mtb:scale=1							2	# roots and small stones
-	switch mtb:scale=1+							2	# roots and small stones (harder)
-	switch mtb:scale=2							3	# large rocks and stones
-	switch mtb:scale=3							3	# large obstacles such as boulders and large roots
-	switch mtb:scale=4							4	# large boulders, roots
-	switch mtb:scale=5							5	# big boulder fields, debris, landslides
-	switch mtb:scale=6							5	#
-	#
-	# SAC scale for hiking trails
-#	switch sac_scale=hiking						
-	switch sac_scale=mountain_hiking			3
-	switch sac_scale=demanding_mountain_hiking	4
-	switch sac_scale=alpine_hiking				5
-	switch sac_scale=demanding_alpine_hiking	9
-	switch sac_scale=difficult_alpine_hiking	9
-	#
-	# Some heuristics if still unknown
-	switch 
-		and not bikeAccess 
-		and highway=path 
-			or not sac_scale=
-			or route_hiking_iwn=yes
-			or route_hiking_nwn=yes
-			or route_hiking_rwn=yes
-			or route_hiking_lwn=yes
-			   route_hiking_=yes						9	# path without bike access and part of the hiking network
-	switch and estimated_forest_class=5 highway=path	3	# path inside forests is most likely only for MTB
-	#
-	# Default if really unknown
-												1	# use way by default
+		
+	# Take the maximum category due to of the following keys
+	max
+		#
+		# Smoothness
+		# http://wiki.openstreetmap.org/wiki/Key:smoothness
+		switch smoothness=excellent|very_good		1	# thin_rollers - roller blade, skate board
+		switch smoothness=good		 				1	# thin_wheels - racing bike
+		switch smoothness=intermediate				1	# wheels - city bike, wheel chair, sport cars
+		switch smoothness=bad|robust_wheels			1	# robust wheels - trekking bike, normal cars
+		switch smoothness=very_bad|high_clearance	2	# high clearance - normal cars with slightly higher clearance
+		switch smoothness=horrible|off_road_wheels	3	# off road wheels - off road cars 
+		switch smoothness=very_horrible				4	# specialized off road vehicles - ATV, tractor
+		switch smoothness=impassable				9	# no wheeled vehicle - hiking path 
+													0
+	max
+		# 
+		# Highway Type
+		switch highway=steps						3	# stairs
+													0
+	max
+		# 
+		# Surface
+		# cycleway surface with high priority
+		switch cycleway:surface=asphalt				1
+		switch cycleway:surface=concrete|paved		1
+		switch cycleway:surface=paving_stones		1
+		switch cycleway:surface=compacted			1
+		switch cycleway:surface=sett				1
+		switch cycleway:surface=cobblestone			1
+		switch cycleway:surface=gravel				2
+		switch cycleway:surface=fine_gravel			1
+		switch cycleway:surface=unpaved				2
+		# Highway surface
+		switch     surface=asphalt					1
+		switch and surface=concrete concrete=lanes	1
+		switch and surface=concrete concrete=plates	1
+		switch     surface=concrete|paved 			1
+		switch     surface=metal					1
+		switch     surface=paving_stones			1
+		switch     surface=compacted|clay			1
+		switch     surface=wood						1
+		switch     surface=sett						1
+		switch     surface=pebblestone				1
+		switch     surface=cobblestone				1
+		switch     surface=grass_paver				1
+		switch     surface=gravel					2
+		switch     surface=ground					2
+		switch     surface=fine_gravel				1
+		switch     surface=unpaved|dirt|earth|grass	2
+		switch     surface=sand						2
+		switch     surface=mud						3
+		# best guess for unsure surface
+		switch highway=raceway						1	# Rennstrecke
+		switch highway=motorway|motorway_link		1	# Autobahn und Auffahrten
+		switch highway=trunk|trunk_link				1	# Schnellstraßen (wie BAB) und Auffahrten
+		switch highway=primary|primary_link			1	# Bundesstraßen und Auffahrten
+		switch highway=secondary|secondary_link		1	# Landstraßen und Auffahrten
+		switch highway=tertiary|tertiary_link   	1	# Kreisstraßen und Auffahrten
+		switch highway=unclassified					1	# Dorfstraßen
+		switch highway=residential 					1	# Wohnstraße
+		switch highway=rest_area|services			1	# Rastplatz
+		switch highway=corridor						1	# Hallway inside a building
+		switch highway=crossing						1	# Street crossing
+		switch highway=bus_stop						1	# Bus stop on the street
+		switch highway=mini_roundabout				1	# Mini roundabout in the street
+		switch highway=turning_loop					1	# Turning Loop
+		switch highway=platform						1	# Bushaltestelle (wo die Personen stehen)
+		switch highway=living_street				1	# Spielstraße
+		switch highway=pedestrian					1	# Fußgängerzone
+		switch highway=service						1	# Zugangsstraßen
+	#	switch highway=bridleway						# Reit- und Fußweg
+	#	switch highway=cycleway							# Radweg
+	#	switch highway=footway  						# Gehweg
+		switch highway=unsurfaced					2	# street without surface
+	#	switch highway=road								# unbekannter Typ
+	#	switch highway=steps							# Treppen
+		# for highway=track, check the tracktype
+		switch and highway=track tracktype=grade1	1	# Asphalt surface
+		switch and highway=track tracktype=grade2	1	# mostly solid
+		switch and highway=track tracktype=grade3	1	# Even mixture of hard and soft materials.
+		switch and highway=track tracktype=grade4	2	# Mostly soft
+		switch and highway=track tracktype=grade5	2	# soft
+		# for highway=path, check the tracktype	(sometimes a track is wrongly annotaded as a path and a tracktype is added)
+		switch and highway=path tracktype=grade1	1	# Asphalt surface
+		switch and highway=path tracktype=grade2	1	# mostly solid
+		switch and highway=path tracktype=grade3	1	# Even mixture of hard and soft materials.
+		switch and highway=path tracktype=grade4	2	# Mostly soft
+		switch and highway=path tracktype=grade5	2	# soft
+													0
+	max
+		#
+		# MTB or hiking Scale
+		# mtb:scale
+		switch mtb:scale=0-							1	# Gravel or packed earth. No particular difficulties (very easy)
+		switch mtb:scale=0							1	# Gravel or packed earth. No particular difficulties
+		switch mtb:scale=0+							1	# Gravel or packed earth. No particular difficulties (harder one)
+		switch mtb:scale=1-							2	# roots and small stones (easier)
+		switch mtb:scale=1							2	# roots and small stones
+		switch mtb:scale=1+							2	# roots and small stones (harder)
+		switch mtb:scale=2							3	# large rocks and stones
+		switch mtb:scale=3							3	# large obstacles such as boulders and large roots
+		switch mtb:scale=4							4	# large boulders, roots
+		switch mtb:scale=5							5	# big boulder fields, debris, landslides
+		switch mtb:scale=6							5	#
+		# SAC scale for hiking trails
+	#	switch sac_scale=hiking						
+		switch sac_scale=mountain_hiking			3
+		switch sac_scale=demanding_mountain_hiking	4
+		switch sac_scale=alpine_hiking				5
+		switch sac_scale=demanding_alpine_hiking	9
+		switch sac_scale=difficult_alpine_hiking	9
+													0
+	#max 2nd operator
+		#
+		# Some heuristics
+		switch 
+			and not bikeAccess 
+			and highway=path 
+				or not sac_scale=
+				or route_hiking_iwn=yes
+				or route_hiking_nwn=yes
+				or route_hiking_rwn=yes
+				or route_hiking_lwn=yes
+				   route_hiking_=yes						9	# path without bike access and part of the hiking network
+		switch and estimated_forest_class=5 highway=path	3	# path inside forests is most likely only for MTB
+															0
 
 # Category for Uphill ways
 assign wayCategoryUphill
@@ -1314,7 +1322,7 @@ assign maxAllowedSpeed
 # rollingResistanceFactor to consider the slower desired speed at bad surfaces.
 assign maxDesiredSpeed
 	min	div maxBikerSpeed rollingResistanceFactor
-	max switch or hasCycleway anyCycleroute		25	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 25km/h
+	max switch or hasCycleway anyCycleroute		30	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 30km/h
 	# some special ways
 	# Now from fast to slow :-) 
 	switch highway=track 							 40		# Feldweg
