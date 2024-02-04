@@ -28,5 +28,5 @@ Related projects\:
    * Brouter Version >=1.7.4 needed which includes _DIVIDE_ command.
 
 ### fastbike_longdistance_legacy.brf
-   * Profile for non patched versions of Brouter
+   * Profile for <=1.7.3 versions of Brouter
    * currently not maintained
