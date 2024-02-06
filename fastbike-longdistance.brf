@@ -147,10 +147,10 @@ assign classifierFerry    	3
 ################################################################################
 
 # Kinematic model parameters for Brouter travel time calculation
-assign maxSpeed   min maxBikerSpeed 45	# absolute maximum speed in km/h for travel time computation
-assign S_C_x      multiply CwA rho		# drag coefficient times the reference area times the air density for travel time computation
-assign C_r        multiply 1.5 Cr		# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
-assign bikerPower multiply P n			# power times efficiency of the bike
+assign maxSpeed   min maxBikerSpeed 45				# absolute maximum speed in km/h for travel time computation
+assign S_C_x      multiply 0.5 multiply CwA rho		# drag coefficient times the reference area times half the air density for travel time computation
+assign C_r        multiply 1.5 Cr					# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
+assign bikerPower multiply P n						# power times efficiency of the bike
 assign totalMass  m 
 
 # Time optimality factor 0 to 1
