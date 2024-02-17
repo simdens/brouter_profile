@@ -9,6 +9,7 @@ ToDo
 --------------------------------------------------------------------------------
 - rework speed limit to include new possibilities
 - move AllowCarrying flag from highway cost section to energy cost section
+- Rename to longdistance.brf
 
 --------------------------------------------------------------------------------
 
@@ -32,12 +33,13 @@ Coding Guidelines
 
 Variable Naming
 --------------------------------------------------------------------------------
-| Example         | Description             | Definition                              |
-|:----------------|:------------------------|:----------------------------------------|
-|`UserParameter`  | UI adjustable parameter | CamelCases starting with capital letter |
-|`generalVariable`| general variable        | CamelCases starting with small letter   |
-|`localvariable`  | local variable          | all small letters                       |
-|`broutervariable`| BRouter variable        | all small letters                       |
+
+| Example         | Description                            | Definition                                 |
+|:----------------|:---------------------------------------|:-------------------------------------------|
+|`broutervariable`| BRouter variable                       | as defined in `profile_developers_guide.md`|
+|`UserParameter`  | UI adjustable parameter                | CamelCases starting with capital letter    |
+|`gParameterValue`| Variable defined within global context | CamelCases starting with `g`               |
+|`costValue`      | Variable within way or node context    | CamelCases starting with small letter      |
 
 Global Context
 ================================================================================
@@ -237,7 +239,7 @@ $$
 	E_c = \frac{P}{v_0}
 $$
 with the speed $v_0$ at a slope of 0%. 
-The energy efficiency factor `pushCostFactor` between pushing and cycling is the ration $E_p/E_c$.
+The energy efficiency factor `gPushCostFactor` between pushing and cycling is the ration $E_p/E_c$.
 
 For carrying, no values for the energy consumptions are available. 
 Thus, the needed energy is guessed as three times the energy for pushing a bike.
@@ -475,10 +477,10 @@ Walking & Carrying Detection
 To detect if the bike needs to be pushed (⇒ *Walking*) or carried (⇒ *Walking* & *Carrying*), the bike category is compared to the estimation which bike category is needed.
 Id est:
 $$
-	\text{isWalking} = \text{wayCategory} > \text{bikeCategory}
+	\text{isWalking} = \text{wayCategory} > \text{gBikeCategory}
 $$
 $$
-	\text{isCarrying} = \text{wayCategory} > (\text{bikeCategory} + 1)
+	\text{isCarrying} = \text{wayCategory} > (\text{gBikeCategory} + 1)
 $$
 The $\text{isWalking}$ and $\text{isCarrying}$ flags are used later on.
 

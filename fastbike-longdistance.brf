@@ -46,53 +46,53 @@ assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to
 assign processUnusedTags			false	# Set true to output unused tags in data tab
 
 # way cost constants
-assign noiseCost				   0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway (Autobahn)
-assign greenCost				  -0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
-assign waterCost				  -0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
-assign cycleRouteCost			  -0.10	# Cost or incentive for cycle routs
+assign gNoiseCost				   0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway (Autobahn)
+assign gGreenCost				  -0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
+assign gWaterCost				  -0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
+assign gCycleRouteCost			  -0.10	# Cost or incentive for cycle routs
 
 # elevation parameter constants
-assign considerElevation		true	# elevation will be considered
-assign slopeCutoff				   0.5	# slope is ignored if smaller than this threshold
+assign gConsiderElevation		true	# elevation will be considered
+assign gSlopeCutoff				   0.5	# slope is ignored if smaller than this threshold
 assign elevationpenaltybuffer	   4
 assign elevationmaxbuffer		   8
 
 # Kinematic model parameters for speed calculation
-assign maxBikerSpeed			  70
-assign Cv					 	   0.1		# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign rho						   1.16038	# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign n						   0.98		# Efficiency factor of the power transmission of the bike 
+assign gMaxBikerSpeed			  70
+assign gCv					 	   0.1		# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign gRho						   1.16038	# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign gEta						   0.98		# Efficiency factor of the power transmission of the bike 
 
 # Bike specific parameters
-assign CwA								# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
+assign gCwA								# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
 	switch equal Bike 1			   0.50		# m² - Roadbike, bit higher than the given 0.4891m² (top handlebar) since I use a more relaxed Canyon Endurace
 	switch equal Bike 2			   0.50		# m² - Gravel, bit higher than the given 0.4891m² for a road bike (top handlebar)
 	switch equal Bike 3			   0.65		# m² - Tour, in between MTB and roadster
 	switch equal Bike 4			   0.57		# m² - MTB without suspension
 	switch equal Bike 5			   0.50		# m² - Winter, same as Tour
 								999			# Error / will never be reaced
-assign Cr					 			# rolling resistance coefficient (dimensionless)
+assign gCr					 			# rolling resistance coefficient (dimensionless)
 	switch equal Bike 1			   0.00363	# Roadbike - Continental Grand Prix 5000   25mm Tube @ 5.5bar - https://www.bicyclerollingresistance.com/
 	switch equal Bike 2			   0.00531	# Gravel   - Schwalbe G One RS             40mm Tube @ 3.1bar - https://www.bicyclerollingresistance.com/
 	switch equal Bike 3			   0.00764	# Tour     - Schwalbe Marathon Plus        37mm Tube @ 4.0bar - https://www.bicyclerollingresistance.com/
 	switch equal Bike 4			   0.00893	# MTB      - Conti Cross King Protection   58mm Tube @ 2.4bar - https://www.bicyclerollingresistance.com/
 	switch equal Bike 5			   0.012	# Winter   - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar - https://doi.org/10.1016/j.coldregions.2021.103282
 								999			# Error / will never be reached
-assign tireWidth						# width of tires. Used to estimate the influence of the surface to the rolling resistance
+assign gTireWidth						# width of tires. Used to estimate the influence of the surface to the rolling resistance
 	switch equal Bike 1			 28			# mm - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 0.035 :-) 
 	switch equal Bike 2			 40			# mm - Gravel   - Schwalbe G One RS             40mm Tube
 	switch equal Bike 3			 37			# mm - Tour     - Schwalbe Marathon Plus        37mm Tube
 	switch equal Bike 4			 58			# mm - MTB      - Conti Cross King Protection   58mm Tube
 	switch equal Bike 5			 35			# mm - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 0.035 :-) 
 								999					# Error / will never be reaced
-assign tirePressure						# Pressure of tires. Used to estimate the influence of the surface to the rolling resistance
+assign gTirePressure						# Pressure of tires. Used to estimate the influence of the surface to the rolling resistance
 	switch equal Bike 1			   5.0		# bar - Roadbike - Continental Grand Prix 5000   25mm Tube, but I use the 28mm Variant --> 5.5 * 25/28bar=5.0bar
 	switch equal Bike 2			   3.1		# bar - Gravel   - Schwalbe G One RS             40mm Tube
 	switch equal Bike 3			   4.0		# bar - Tour     - Schwalbe Marathon Plus        37mm Tube
 	switch equal Bike 4			   2.4		# bar - MTB      - Conti Cross King Protection   58mm Tube
 	switch equal Bike 5			   2.4		# bar - Winter   - Schwalbe Marathon Winter Plus 42mm Tube, but I use the 35mm Variant --> 2.0 * 42/32bar=2.4bar
 								999			# Error / will never be reaced
-assign bikeCategory						# Bike Category according to ASTM Classifikation ASTM F2043-13
+assign gBikeCategory						# Bike Category according to ASTM Classifikation ASTM F2043-13
 	switch equal Bike 1			   1		# Roadbike
 	switch equal Bike 2			   2		# Gravel
 	switch equal Bike 3			   1		# Tour
@@ -109,376 +109,380 @@ assign pass2coefficient			   0
 #-------------------------------------------------------------------------------
 
 # genaral constants
-assign g					9.81			# Gravity coefficient in N/kg
-assign m					SystemWeight	# shorter Name
-assign P					NominalPower	# shorter Name
+assign gGravity				9.81			# Gravity coefficient in N/kg
 
 # set that this is a bike profile
 assign validForBikes       	1
 
 # classifier constants
-assign classifierNone     	1
-assign classifierWalking  	2
-assign classifierFerry    	3
+assign gClassifierNone     	1
+assign gClassifierWalking  	2
+assign gClassifierFerry    	3
 
 
 # Computed Constants
 #-------------------------------------------------------------------------------
 
 # scale
-assign timeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
+assign gTimeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
 
 # BRouter internal kinematic model parameters for travel time calculation
-assign maxSpeed   min maxBikerSpeed 45				# absolute maximum speed in km/h for travel time computation
-assign S_C_x      multiply 0.5 multiply CwA rho		# drag coefficient times the reference area times half the air density for travel time computation
-assign C_r        multiply 1.5 Cr					# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
-assign bikerPower multiply P n						# power times efficiency of the bike
-assign totalMass  m 
+assign maxSpeed   min gMaxBikerSpeed 45				# absolute maximum speed in km/h for travel time computation
+assign S_C_x      multiply 0.5 multiply gCwA gRho	# drag coefficient times the reference area times half the air density for travel time computation
+assign C_r        multiply 1.5 gCr					# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
+assign bikerPower multiply NominalPower gEta					# power times efficiency of the bike
+assign totalMass  SystemWeight 
 
 
 # Speed Parameter Calculation:
 #-------------------------------------------------------------------------------
               
 # Constants          
-assign slopeStepSize	min 4 multiply 0.5 SlopeMax
-assign mPn				multiply -1   multiply P n
-assign hrhoCwA			multiply  0.5 multiply rho CwA
+assign gSlopeStepSize	min 4 multiply 0.5 SlopeMax
+assign gmPn				multiply -1   multiply NominalPower gEta
+assign ghrhoCwA			multiply  0.5 multiply gRho gCwA
 
 
-assign v			20		# start value in m/s for root finding
+assign gv			20		# start value in m/s for root finding
 # -2*Slopestepsize
-assign slope		multiply -2 slopeStepSize
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+assign gSlope		multiply -2 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speedm2 multiply v 3.6
+assign gSpeedm2 multiply gv 3.6
 
 # -Slopestepsize
-# start value for v is the result of the previous computation
-assign slope		multiply -1 slopeStepSize
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+# start gValue for gv is the result of the previous computation
+assign gSlope		multiply -1 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speedm1 multiply v 3.6
+assign gSpeedm1 multiply gv 3.6
 
 # 0%
-# start value for v is the result of the previous computation
-assign slope		 0
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+# start gValue for gv is the result of the previous computation
+assign gSlope		 0
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speed0 multiply v 3.6
+assign gSpeed0 multiply gv 3.6
 
 # Slopestepsize
-# start value for v is the result of the previous computation
-assign slope		slopeStepSize
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+# start gValue for gv is the result of the previous computation
+assign gSlope		gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speedp1 multiply v 3.6
+assign gSpeedp1 multiply gv 3.6
 
 # 2*Slopestepsize
-# start value for v is the result of the previous computation
-assign slope		multiply 2 slopeStepSize
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+# start gValue for gv is the result of the previous computation
+assign gSlope		multiply 2 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speedp2 multiply v 3.6
+assign gSpeedp2 multiply gv 3.6
 
 # 3*Slopestepsize
-# start value for v is the result of the previous computation
-assign slope		multiply 3 slopeStepSize
-assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
+# start gValue for gv is the result of the previous computation
+assign gSlope		multiply 3 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
 # Iteration 1
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 2
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 3
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 4
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Iteration 5
-assign vvhrhoCwA	multiply v multiply v hrhoCwA
-assign vCv			multiply v Cv
-assign value		add mPn multiply v add gmCrSl add vCv vvhrhoCwA
-assign derivative	add gmCrSl add multiply 2 vCv multiply 3 vvhrhoCwA
-assign v			sub v divide value derivative
+assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
+assign gvCv			multiply gv gCv
+assign gValue		add gmPn multiply gv add ggmCrSl add gvCv gvvhrhoCwA
+assign gDerivative	add ggmCrSl add multiply 2 gvCv multiply 3 gvvhrhoCwA
+assign gv			sub gv divide gValue gDerivative
 # Result
-assign speedp3 multiply v 3.6
+assign gSpeedp3 multiply gv 3.6
 
 
 # Push and Carry Cost Factors
 #-------------------------------------------------------------------------------
 
 # Energy needed for pushing: 12.2Wh/km
-# Energy needed for cycling: P/speed0 ==> 6.27 @ 165W, 26.3km/h
-assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
-	divide 12.5 divide NominalPower speed0
+# Energy needed for cycling: NominalPower/gSpeed0 ==> 6.27 @ 165W, 26.3km/h
+assign gPushCostFactor		# additional cost for 5km/h walking/pushing pace
+	divide 12.5 divide NominalPower gSpeed0
 
 # For carrying it is assumed, that the needed energy is doubled compared to
 # pushing
-assign carryCostFactor
-	multiply 3 pushCostFactor
+assign gCarryCostFactor
+	multiply 3 gPushCostFactor
 
 
 # Elevation Cost Parameters
 #-------------------------------------------------------------------------------
 
 # compute equivalent length for one meter height. ==> 45.36 m/m for roadbike
-assign height2Length		multiply divide multiply m g P divide speed0 3.6
+assign gHeight2Length		
+	multiply 
+		divide 
+			multiply SystemWeight gGravity
+			NominalPower
+		divide
+			gSpeed0
+			3.6
 
 # Elevation value is reduced by this cutoff without penalizing the elevation.
-assign downhillcutoff					slopeCutoff
-assign uphillcutoff						slopeCutoff
+assign downhillcutoff					gSlopeCutoff
+assign uphillcutoff						gSlopeCutoff
 
 # When reaching the "elevationbufferreduce" slope, uphillcostfactor (or 
 # downhillcostfactor) are used by 100%
-assign elevationbufferreduce			sub SlopeMax slopeCutoff
+assign elevationbufferreduce			sub SlopeMax gSlopeCutoff
 
 # When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
 #"downhillcost". Most likely = elevationbufferreduce
-assign downhillmaxslope					sub SlopeMax slopeCutoff
+assign downhillmaxslope					sub SlopeMax gSlopeCutoff
 # When exceeding "uphillmaxslope", "uphillmaxslopecost" is used instead of 
 # "uphillcost". Most likely = elevationbufferreduce
-assign uphillmaxslope					sub SlopeMax slopeCutoff
+assign uphillmaxslope					sub SlopeMax gSlopeCutoff
 
 # Uphill and downhill cost for the energy optimized situation.
 assign uphillcost				# cost per vertical meter
-	switch considerElevation	
-		multiply sub 1 timeOptimalityFactor height2Length
+	switch gConsiderElevation	
+		multiply sub 1 gTimeOptimalityFactor gHeight2Length
 		0
 assign downhillcost				# cost per vertical meter
-	switch considerElevation
-		multiply sub 1 timeOptimalityFactor 0
+	switch gConsiderElevation
+		multiply sub 1 gTimeOptimalityFactor 0
 		0
 
 # additional cost per vertical meter for slope larger than "slopemax"
 # Cost due to the increased energy usage due to pushing the bike in steep hills
-assign uphillMaxSlopeAdditionalCost		multiply height2Length sub pushCostFactor 1
+assign gUphillMaxSlopeAdditionalCost	multiply gHeight2Length sub gPushCostFactor 1
 # Downhill cost to reduce the need of braking in very steep hills.
-assign downhillMaxSlopeAdditionalCost	multiply 0.5 uphillMaxSlopeAdditionalCost
+assign gDownhillMaxSlopeAdditionalCost	multiply 0.5 gUphillMaxSlopeAdditionalCost
 # Uphill and downhill cost for elevation exceeding the "(up|down)hillmaxslope" 
 # threshold
-assign downhillmaxslopecost		add downhillMaxSlopeAdditionalCost downhillcost
-assign uphillmaxslopecost		add uphillMaxSlopeAdditionalCost   uphillcost
+assign downhillmaxslopecost		add gDownhillMaxSlopeAdditionalCost downhillcost
+assign uphillmaxslopecost		add gUphillMaxSlopeAdditionalCost   uphillcost
 
 
 # Constants depending on speed or elevation constants
 #-------------------------------------------------------------------------------
 
 # Costs to decelerate to lower speed and accelerate back again to cruising speed
-assign v					divide speed0	3.6		# Speed on flat terrain in m/s
-assign v5					divide 5		3.6		#  5km/h in m/s
-assign v10					divide 10		3.6		# 10km/h in m/s
-assign v15					divide 15		3.6		# 15km/h in m/s
-assign v20					divide 20		3.6		# 20km/h in m/s
-assign kineticEnergy		multiply 0.5 multiply m multiply   v   v
-assign kineticEnergy5		multiply 0.5 multiply m multiply  v5  v5
-assign kineticEnergy10		multiply 0.5 multiply m multiply v10 v10
-assign kineticEnergy15		multiply 0.5 multiply m multiply v15 v15
-assign kineticEnergy20		multiply 0.5 multiply m multiply v20 v20
-assign speed0CostEnergy		multiply v divide kineticEnergy                     P
-assign speed5CostEnergy		multiply v divide max 0 sub kineticEnergy kineticEnergy5  P
-assign speed10CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy10 P
-assign speed15CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy15 P
-assign speed20CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy20 P
+assign gv0					divide gSpeed0	3.6		# Speed on flat terrain in m/s
+assign gv5					divide 5		3.6		#  5km/h in m/s
+assign gv10					divide 10		3.6		# 10km/h in m/s
+assign gv15					divide 15		3.6		# 15km/h in m/s
+assign gv20					divide 20		3.6		# 20km/h in m/s
+assign gKineticEnergy		multiply 0.5 multiply SystemWeight multiply  gv0  gv0
+assign gKineticEnergy5		multiply 0.5 multiply SystemWeight multiply  gv5  gv5
+assign gKineticEnergy10		multiply 0.5 multiply SystemWeight multiply gv10 gv10
+assign gKineticEnergy15		multiply 0.5 multiply SystemWeight multiply gv15 gv15
+assign gKineticEnergy20		multiply 0.5 multiply SystemWeight multiply gv20 gv20
+assign gSpeed0CostEnergy	multiply gv0 divide           gKineticEnergy                  NominalPower
+assign gSpeed5CostEnergy	multiply gv0 divide max 0 sub gKineticEnergy gKineticEnergy5  NominalPower
+assign gSpeed10CostEnergy	multiply gv0 divide max 0 sub gKineticEnergy gKineticEnergy10 NominalPower
+assign gSpeed15CostEnergy	multiply gv0 divide max 0 sub gKineticEnergy gKineticEnergy15 NominalPower
+assign gSpeed20CostEnergy	multiply gv0 divide max 0 sub gKineticEnergy gKineticEnergy20 NominalPower
 
 # Linear interpolation between energy optimal cost and time optimal cost.
-assign factor      sub 1 multiply 0.5 timeOptimalityFactor
-assign speed0Cost  multiply factor speed0CostEnergy
-assign speed5Cost  multiply factor speed5CostEnergy
-assign speed10Cost multiply factor speed10CostEnergy
-assign speed15Cost multiply factor speed15CostEnergy
-assign speed20Cost multiply factor speed20CostEnergy
+assign gFactor      sub 1 multiply 0.5 gTimeOptimalityFactor
+assign gSpeed0Cost  multiply gFactor gSpeed0CostEnergy
+assign gSpeed5Cost  multiply gFactor gSpeed5CostEnergy
+assign gSpeed10Cost multiply gFactor gSpeed10CostEnergy
+assign gSpeed15Cost multiply gFactor gSpeed15CostEnergy
+assign gSpeed20Cost multiply gFactor gSpeed20CostEnergy
 
 # initialPushCost 
-assign dismountCOGHeightDifference	0.15	# m - Difference of COG of biker between dismounted and mounted position
-assign dismountMountTime			4		# s - Time needed to dismount and mount back again
-assign initialPushCost
-	add speed0Cost
-	add multiply sub 1 timeOptimalityFactor
-	    multiply height2Length
-		         dismountCOGHeightDifference
-		multiply timeOptimalityFactor
-		multiply v
-				 dismountMountTime
+assign gDismountCOGHeightDifference	0.15	# m - Difference of COG of biker between dismounted and mounted position
+assign gDismountMountTime			4		# s - Time needed to dismount and mount back again
+assign gInitialPushCost
+	add gSpeed0Cost
+	add multiply sub 1 gTimeOptimalityFactor
+	    multiply gHeight2Length
+		         gDismountCOGHeightDifference
+		multiply gTimeOptimalityFactor
+		multiply gv0
+				 gDismountMountTime
 
 # InitialFerryCost
-assign ferryWaitingTime	multiply 30 60	# s - Waiting time for ferry (assumed 
+assign gFerryWaitingTime	multiply 30 60	# s - Waiting time for ferry (assumed 
 # one ferry every hour --> avg waiting time of 30min)
-assign initialFerryCost
-	add initialPushCost 
-		multiply timeOptimalityFactor
-		multiply v
-		         ferryWaitingTime
-
+assign gInitialFerryCost
+	add gInitialPushCost 
+		multiply gTimeOptimalityFactor
+		multiply gv0
+		         gFerryWaitingTime
 
 # trafficSignalCost
 # cost for waiting at a traffic signal (90s traffic signal cycle time)
 # for v = 26.3kmh --> Cost  = 147.2m
-assign	trafficSignalCost
-	add speed0Cost multiply timeOptimalityFactor multiply 3.125 speed0 
+assign	gTrafficSignalCost
+	add gSpeed0Cost multiply gTimeOptimalityFactor multiply 3.125 gSpeed0 
 
 
 
@@ -725,7 +729,7 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 # pt = 3.5bar
 # => snfBike = 5.41 kg*bar/mm
 # ==> snfBike/snfCar = 1.102
-assign snfBike	multiply 0.5 multiply m divide tirePressure tireWidth
+assign snfBike	multiply 0.5 multiply SystemWeight divide gTirePressure gTireWidth
 
 # surface normalization factor of a car:
 # 
@@ -908,41 +912,41 @@ assign wayCategoryUphill
 assign wayCategoryDownhill	wayCategory		# Use flat as default
 
 # Walking flag
-assign isWalking			or not bikeAccess or badOneWay greater wayCategory         bikeCategory
-assign isWalkingUphill		or not bikeAccess or badOneWay greater wayCategoryUphill   bikeCategory
-assign isWalkingDownhill	or not bikeAccess or badOneWay greater wayCategoryDownhill bikeCategory
+assign isWalking			or not bikeAccess or badOneWay greater wayCategory         gBikeCategory
+assign isWalkingUphill		or not bikeAccess or badOneWay greater wayCategoryUphill   gBikeCategory
+assign isWalkingDownhill	or not bikeAccess or badOneWay greater wayCategoryDownhill gBikeCategory
 
 # Carrying Flag
-assign isCarrying			greater wayCategory         add bikeCategory 1
-assign isCarryingUphill		greater wayCategoryUphill   add bikeCategory 1
-assign isCarryingDownhill	greater wayCategoryDownhill add bikeCategory 1
+assign isCarrying			greater wayCategory         add gBikeCategory 1
+assign isCarryingUphill		greater wayCategoryUphill   add gBikeCategory 1
+assign isCarryingDownhill	greater wayCategoryDownhill add gBikeCategory 1
 
 
 # Rolling Resistance Cost
 #-------------------------------------------------------------------------------
-# Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
-# scale with carryCostFactor or walkingcostfactor if carrying or walking since
+# Rolling resistance cost are scaled by the gTimeOptimalityFactor. Additionally
+# scale with gCarryCostFactor or walkingcostfactor if carrying or walking since
 # this is the efficiency factor for walking or carrying
 assign rollingResistanceCost
 	multiply
-		switch isCarrying	carryCostFactor		# Use carrrycostfactor if carrying
-		switch isWalking	pushCostFactor		# if otherwise walking, it has to be pushing
+		switch isCarrying	gCarryCostFactor	# Use carrrycostfactor if carrying
+		switch isWalking	gPushCostFactor		# if otherwise walking, it has to be pushing
 							1					# Default
-		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
+		multiply rollingResistanceFactor sub 1 gTimeOptimalityFactor
 
 assign rollingResistanceCostUphill
 	multiply
-		switch isCarryingUphill	carryCostFactor		# Use carrrycostfactor if carrying
-		switch isWalkingUphill	pushCostFactor		# if otherwise walking, it has to be pushing
+		switch isCarryingUphill	gCarryCostFactor	# Use carrrycostfactor if carrying
+		switch isWalkingUphill	gPushCostFactor		# if otherwise walking, it has to be pushing
 								1					# Default
-		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
+		multiply rollingResistanceFactor sub 1 gTimeOptimalityFactor
 
 assign rollingResistanceCostDownhill
 	multiply
-		switch isCarryingDownhill	carryCostFactor		# Use carrrycostfactor if carrying
-		switch isWalkingDownhill	pushCostFactor		# if otherwise walking, it has to be pushing
+		switch isCarryingDownhill	gCarryCostFactor	# Use carrrycostfactor if carrying
+		switch isWalkingDownhill	gPushCostFactor		# if otherwise walking, it has to be pushing
 									1					# Default
-		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
+		multiply rollingResistanceFactor sub 1 gTimeOptimalityFactor
 
 
 # Speed Cost
@@ -1040,10 +1044,10 @@ assign maxAllowedSpeed
 # Max desired speed by the biker in km/h
 # This speed might be lower than the maximum allowed speed (and thus the traffic
 # speed)
-# The absolute maximum speed "maxBikerSpeed" is scaled by the 
+# The absolute maximum speed "gMaxBikerSpeed" is scaled by the 
 # rollingResistanceFactor to consider the slower desired speed at bad surfaces.
 assign maxDesiredSpeed
-	min	divide maxBikerSpeed rollingResistanceFactor
+	min	divide gMaxBikerSpeed rollingResistanceFactor
 	max switch or hasCycleway anyCycleroute		30	0		# Cycleroutes and cycleways are assumed to be more bike friendly and allow at least 30km/h
 	# some special ways
 	# Now from fast to slow :-) 
@@ -1076,13 +1080,13 @@ assign bikeSpeedLimit
 #
 # Additionally make sure that bike speed is at least somewhat positive to avoid
 # div by zero errors.
-assign equivSlopeCr	multiply 100 multiply Cr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
+assign equivSlopeCr	multiply 100 multiply gCr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
 
-assign speeddvdsm2	divide sub speedm1 speedm2 slopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
-assign speeddvdsm1	divide sub speed0  speedm1 slopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
-assign speeddvdsp1	divide sub speedp1 speed0  slopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
-assign speeddvdsp2	divide sub speedp2 speedp1 slopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
-assign speeddvdsp3	divide sub speedp3 speedp2 slopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
+assign speeddvdsm2	divide sub gSpeedm1 gSpeedm2 gSlopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
+assign speeddvdsm1	divide sub gSpeed0  gSpeedm1 gSlopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
+assign speeddvdsp1	divide sub gSpeedp1 gSpeed0  gSlopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
+assign speeddvdsp2	divide sub gSpeedp2 gSpeedp1 gSlopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
+assign speeddvdsp3	divide sub gSpeedp3 gSpeedp2 gSlopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
 
 # new bike speed for -SlopeMax% slope
 assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
@@ -1090,15 +1094,15 @@ assign bikeSpeedDownhill
 	max 0.001
 	min switch isCarryingDownhill	2.5	999		# Speed while carrying the bike
 	min switch isWalkingDownhill	5	999		# Speed while pushing the bike
-	switch lesser tmpSlope multiply -1 slopeStepSize	# choose interpolation point
-		add speedm2 multiply speeddvdsm2 sub tmpSlope multiply -2 slopeStepSize
+	switch lesser tmpSlope multiply -1 gSlopeStepSize	# choose interpolation point
+		add gSpeedm2 multiply speeddvdsm2 sub tmpSlope multiply -2 gSlopeStepSize
 	switch lesser tmpSlope 0
-		add speedm1 multiply speeddvdsm1 sub tmpSlope multiply -1 slopeStepSize
-	switch lesser tmpSlope slopeStepSize
-		add speed0 multiply speeddvdsp1 tmpSlope
-	switch lesser tmpSlope multiply 2 slopeStepSize
-		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
-		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
+		add gSpeedm1 multiply speeddvdsm1 sub tmpSlope multiply -1 gSlopeStepSize
+	switch lesser tmpSlope gSlopeStepSize
+		add gSpeed0 multiply speeddvdsp1 tmpSlope
+	switch lesser tmpSlope multiply 2 gSlopeStepSize
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
 
 # New bike speed for 0% slope
 assign tmpSlope	equivSlopeCr
@@ -1106,11 +1110,11 @@ assign bikeSpeed
 	max 0.001
 	min switch isCarrying			2.5	999		# Speed while carrying the bike
 	min switch isWalking			5	999		# Speed while pushing the bike
-	switch lesser tmpSlope slopeStepSize				# choose interpolation point
-		add speed0 multiply speeddvdsp1 tmpSlope
-	switch lesser tmpSlope multiply 2 slopeStepSize
-		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
-		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
+	switch lesser tmpSlope gSlopeStepSize				# choose interpolation point
+		add gSpeed0 multiply speeddvdsp1 tmpSlope
+	switch lesser tmpSlope multiply 2 gSlopeStepSize
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
 
 # new bike speed for +SlopeMax% slope
 assign tmpSlope	add equivSlopeCr SlopeMax
@@ -1118,11 +1122,11 @@ assign bikeSpeedUphill
 	max 0.001
 	min switch isCarryingUphill		2.5	999		# Speed while carrying the bike
 	min switch isWalkingUphill		5	999		# Speed while pushing the bike
-	switch greater tmpSlope multiply 2 slopeStepSize	# choose interpolation point
-		add speedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 slopeStepSize
-	switch greater tmpSlope slopeStepSize
-		add speedp1 multiply speeddvdsp2 sub tmpSlope slopeStepSize
-		add speed0  multiply speeddvdsp1 tmpSlope
+	switch greater tmpSlope multiply 2 gSlopeStepSize	# choose interpolation point
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
+	switch greater tmpSlope gSlopeStepSize
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
+		add gSpeed0  multiply speeddvdsp1 tmpSlope
 
 # Limit bike speed
 #
@@ -1135,9 +1139,9 @@ assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
 
 # routing should be at least partially done time optimal
 #
-assign speedCost			multiply timeOptimalityFactor divide speed0 limitedBikeSpeed
-assign speedCostUphill		multiply timeOptimalityFactor divide speed0 limitedBikeSpeedUphill
-assign speedCostDownhill	multiply timeOptimalityFactor divide speed0 limitedBikeSpeedDownhill
+assign speedCost			multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeed
+assign speedCostUphill		multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeedUphill
+assign speedCostDownhill	multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeedDownhill
 
 
 # Traffic Cost
@@ -1268,7 +1272,7 @@ assign noiseFactor divide noiseFactor 0.9		# normalize
 
 assign weightedNoiseCost
 	switch AvoidNoisyRoads
-		multiply noiseCost noiseFactor
+		multiply gNoiseCost noiseFactor
 		0
 
 
@@ -1287,7 +1291,7 @@ assign greenFactor divide greenFactor 0.99		# normalize
 
 assign weightedGreenCost
 	switch PreferGreen
-		multiply greenCost greenFactor
+		multiply gGreenCost greenFactor
 		0
 
 
@@ -1306,7 +1310,7 @@ assign waterFactor divide waterFactor 0.95		# normalize
 
 assign weightedWaterCost
 	switch PreferWater
-		multiply waterCost waterFactor
+		multiply gWaterCost waterFactor
 		0
 
 
@@ -1406,7 +1410,7 @@ assign oneWayCost
 	
 # prefer cycleroutes
 assign cycleRouteFavor 
-	switch and StickToCycleRoute anyCycleroute		cycleRouteCost	0
+	switch and StickToCycleRoute anyCycleroute		gCycleRouteCost	0
 
 
 # Final calculation of costs
@@ -1471,18 +1475,18 @@ assign downhillcostfactor
 # for any change in initialclassifier, initialcost is added once
 #
 assign initialclassifier
-     if      route=ferry then classifierFerry
+     if      route=ferry then gClassifierFerry
      # it is not possible to refer to the uphill or downhill situation, thus 
      # only the "isWalking" for flats is used
-     else if isWalking   then classifierWalking
-	 else	classifierNone 				  
+     else if isWalking   then gClassifierWalking
+	 else	gClassifierNone 				  
 #
 # calculate the initial cost
 # this is added to the total cost each time the initialclassifier changes
 #
 assign initialcost
-	switch ( equal initialclassifier classifierFerry   )	initialFerryCost
-	switch ( equal initialclassifier classifierWalking )	initialPushCost
+	switch ( equal initialclassifier gClassifierFerry   )	gInitialFerryCost
+	switch ( equal initialclassifier gClassifierWalking )	gInitialPushCost
 															0	   
 
 
@@ -1492,7 +1496,7 @@ assign initialcost
 # this is the cost (in Meter) for a 90-degree turn
 # The actual cost is calculated as turncost*cos(angle)
 assign turncost = if junction=roundabout then 0
-                  else speed0Cost
+                  else gSpeed0Cost
 
 
 # Voice hint generation stuff
@@ -1587,60 +1591,60 @@ assign initialcost
 #-------------------------------------------------------------------------------
 assign trafficLightCost
 	switch highway=traffic_signals
-		switch traffic_signals:direction=both			trafficSignalCost
+		switch traffic_signals:direction=both			gTrafficSignalCost
 		switch traffic_signals:direction=forward
-			switch not way:iswayreverse					trafficSignalCost 0
+			switch not way:iswayreverse					gTrafficSignalCost 0
 		switch traffic_signals:direction=backward
-			switch way:iswayreverse						trafficSignalCost 0
-		divide trafficSignalCost 2
+			switch way:iswayreverse						gTrafficSignalCost 0
+		divide gTrafficSignalCost 2
 	0
 
 
 # Traffic Calming Cost
 #-------------------------------------------------------------------------------
 assign trafficCalmingCost
-	switch traffic_calming=bump				speed10Cost
-	switch traffic_calming=dip				speed10Cost
-	switch traffic_calming=hump				speed20Cost
-	switch traffic_calming=table			speed20Cost
-	switch traffic_calming=rumble_strip		speed20Cost
+	switch traffic_calming=bump				gSpeed10Cost
+	switch traffic_calming=dip				gSpeed10Cost
+	switch traffic_calming=hump				gSpeed20Cost
+	switch traffic_calming=table			gSpeed20Cost
+	switch traffic_calming=rumble_strip		gSpeed20Cost
 											0
 
 # Barrier Cost
 #-------------------------------------------------------------------------------
 # Only apply initial pushcost for node if the biker is not already walking
-assign pushCost	switch way:isWalking	0	initialPushCost
+assign pushCost	switch way:isWalking	0	gInitialPushCost
 
 assign barrierCost
 	#
 	# Cost even while walking:
 	
 	# Bike and biker need to be lifted over the gate
-	switch barrier=stile			add pushCost multiply height2Length 1
+	switch barrier=stile			add pushCost multiply gHeight2Length 1
 	# Bike needs to be lifted over the gate. Since the bike has to be lifted 
 	# quite high, same energy is assumed as for "stile" barrier
-	switch barrier=kissing_gate		add pushCost multiply height2Length 1
+	switch barrier=kissing_gate		add pushCost multiply gHeight2Length 1
 	# Bike needs to be lifted over the gate. Since the bike has to be lifted 
 	# quite high, same energy is assumed as for "stile" barrier	
-	switch barrier=turnstile		add pushCost multiply height2Length 1
+	switch barrier=turnstile		add pushCost multiply gHeight2Length 1
 	# Energy and time for opening and closing the gate is assumed to be the same
 	#  as for twice Dismount and Mount back again
-	switch barrier=hampshire_gate	add pushCost multiply 2 initialPushCost
+	switch barrier=hampshire_gate	add pushCost multiply 2 gInitialPushCost
 	
 	#
 	# No costs while walking:
 	switch way:isWalking			0
 	switch barrier=gate				pushCost
 	switch barrier=bollard			0
-	switch barrier=lift_gate		speed0Cost
-	switch barrier=cycle_barrier	speed5Cost
+	switch barrier=lift_gate		gSpeed0Cost
+	switch barrier=cycle_barrier	gSpeed5Cost
 	switch barrier=entrance			0
 	switch barrier=block			0
-	switch barrier=cattle_grid		speed5Cost
+	switch barrier=cattle_grid		gSpeed5Cost
 	switch barrier=sally_port		0
-	switch barrier=chain			speed5Cost
+	switch barrier=chain			gSpeed5Cost
 	switch barrier=door				pushCost
-	switch barrier=swing_gate		speed5Cost
+	switch barrier=swing_gate		gSpeed5Cost
 	switch barrier=bump_gate		pushCost
 									0
 
@@ -1652,13 +1656,3 @@ assign initialcost
 	add trafficCalmingCost
 		barrierCost
 
-
-# Coding Guidelines
-#===============================================================================
-
-# Naming:
-################################################################################
-# UserParameter		user changeable parameters	CamelCases starting with capital letter
-# genaralVariable	general variable			CamelCases starting with small letter
-# localvaribale		local variable				all small letters
-# broutervariable	Brouter varibales			all small letters 
