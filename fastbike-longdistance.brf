@@ -43,73 +43,73 @@ assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to
 #-------------------------------------------------------------------------------
 
 # Debug
-assign	processUnusedTags			false	# Set true to output unused tags in data tab
+assign processUnusedTags			false	# Set true to output unused tags in data tab
 
 # way cost constants
-assign noiseCost		 0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway (Autobahn)
-assign greenCost		-0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
-assign waterCost		-0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
-assign cycleRouteCost	-0.10	# Cost or incentive for cycle routs
+assign noiseCost				   0.20	# Cost factor for noisy roads. Equivalent cost for having a way immediately next to a motorway (Autobahn)
+assign greenCost				  -0.10	# Cost or incentive factor for green roads. Equivalent cost for a way through a forest or garden
+assign waterCost				  -0.10	# Cost or incentive factor for roads next to water. Equivalent cost for having a way immediately next to a waterway
+assign cycleRouteCost			  -0.10	# Cost or incentive for cycle routs
 
 # elevation parameter constants
-assign considerElevation				true	# elevation will be considered
-assign slopeCutoff						   0.5	# slope is ignored if smaller than this threshold
-assign elevationpenaltybuffer			   4
-assign elevationmaxbuffer				   8
+assign considerElevation		true	# elevation will be considered
+assign slopeCutoff				   0.5	# slope is ignored if smaller than this threshold
+assign elevationpenaltybuffer	   4
+assign elevationmaxbuffer		   8
 
 # Kinematic model parameters for speed calculation
-assign maxBikerSpeed		70
-assign Cv					 0.1			# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign rho					 1.16038		# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
-assign n					 0.98			# Efficiency factor of the power transmission of the bike 
+assign maxBikerSpeed			  70
+assign Cv					 	   0.1		# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign rho						   1.16038	# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
+assign n						   0.98		# Efficiency factor of the power transmission of the bike 
 
 # Bike specific parameters
-assign CwA									# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
-	switch equal Bike 1		0.50				# m² - Roadbike, bit higher than the given 0.4891m² (top handlebar) since I use a more relaxed Canyon Endurace
-	switch equal Bike 2		0.50				# m² - Gravel, bit higher than the given 0.4891m² for a road bike (top handlebar)
-	switch equal Bike 3		0.65				# m² - Tour, in between MTB and roadster
-	switch equal Bike 4		0.57				# m² - MTB without suspension
-	switch equal Bike 5		0.50				# m² - Winter, same as Tour
-							999					# Error / will never be reaced
-assign Cr					 				# rolling resistance coefficient (dimensionless)
-	switch equal Bike 1		0.00363				# Roadbike - Continental Grand Prix 5000   25mm Tube @ 5.5bar - https://www.bicyclerollingresistance.com/
-	switch equal Bike 2		0.00531				# Gravel   - Schwalbe G One RS             40mm Tube @ 3.1bar - https://www.bicyclerollingresistance.com/
-	switch equal Bike 3		0.00764				# Tour     - Schwalbe Marathon Plus        37mm Tube @ 4.0bar - https://www.bicyclerollingresistance.com/
-	switch equal Bike 4		0.00893				# MTB      - Conti Cross King Protection   58mm Tube @ 2.4bar - https://www.bicyclerollingresistance.com/
-	switch equal Bike 5		0.012				# Winter   - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar - https://doi.org/10.1016/j.coldregions.2021.103282
-							999					# Error / will never be reached
-assign tireWidth							# width of tires. Used to estimate the influence of the surface to the rolling resistance
-	switch equal Bike 1		28					# mm - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 0.035 :-) 
-	switch equal Bike 2		40					# mm - Gravel   - Schwalbe G One RS             40mm Tube
-	switch equal Bike 3		37					# mm - Tour     - Schwalbe Marathon Plus        37mm Tube
-	switch equal Bike 4		58					# mm - MTB      - Conti Cross King Protection   58mm Tube
-	switch equal Bike 5		35					# mm - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 0.035 :-) 
-							999					# Error / will never be reaced
-assign tirePressure							# Pressure of tires. Used to estimate the influence of the surface to the rolling resistance
-	switch equal Bike 1		5.0					# bar - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 5.5 * 25 / 28 bar = 5.0bar
-	switch equal Bike 2		3.1					# bar - Gravel   - Schwalbe G One RS             40mm Tube
-	switch equal Bike 3		4.0					# bar - Tour     - Schwalbe Marathon Plus        37mm Tube
-	switch equal Bike 4		2.4					# bar - MTB      - Conti Cross King Protection   58mm Tube
-	switch equal Bike 5		2.4					# bar - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 2.0 * 42 / 32 bar = 2.4bar
-							999					# Error / will never be reaced
-assign bikeCategory							# Bike Category according to ASTM Classifikation ASTM F2043-13
-	switch equal Bike 1		1					# Roadbike
-	switch equal Bike 2		2					# Gravel
-	switch equal Bike 3		1					# Tour
-	switch equal Bike 4		3					# MTB XC
-	switch equal Bike 5		1					# Tour
-							1					# Error / will never be reaced - 1 is the worst case category
+assign CwA								# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
+	switch equal Bike 1			   0.50		# m² - Roadbike, bit higher than the given 0.4891m² (top handlebar) since I use a more relaxed Canyon Endurace
+	switch equal Bike 2			   0.50		# m² - Gravel, bit higher than the given 0.4891m² for a road bike (top handlebar)
+	switch equal Bike 3			   0.65		# m² - Tour, in between MTB and roadster
+	switch equal Bike 4			   0.57		# m² - MTB without suspension
+	switch equal Bike 5			   0.50		# m² - Winter, same as Tour
+								999			# Error / will never be reaced
+assign Cr					 			# rolling resistance coefficient (dimensionless)
+	switch equal Bike 1			   0.00363	# Roadbike - Continental Grand Prix 5000   25mm Tube @ 5.5bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 2			   0.00531	# Gravel   - Schwalbe G One RS             40mm Tube @ 3.1bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 3			   0.00764	# Tour     - Schwalbe Marathon Plus        37mm Tube @ 4.0bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 4			   0.00893	# MTB      - Conti Cross King Protection   58mm Tube @ 2.4bar - https://www.bicyclerollingresistance.com/
+	switch equal Bike 5			   0.012	# Winter   - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar - https://doi.org/10.1016/j.coldregions.2021.103282
+								999			# Error / will never be reached
+assign tireWidth						# width of tires. Used to estimate the influence of the surface to the rolling resistance
+	switch equal Bike 1			 28			# mm - Roadbike - Continental Grand Prix 5000   25mm Tube, but since I use the 28mm Variant --> 0.035 :-) 
+	switch equal Bike 2			 40			# mm - Gravel   - Schwalbe G One RS             40mm Tube
+	switch equal Bike 3			 37			# mm - Tour     - Schwalbe Marathon Plus        37mm Tube
+	switch equal Bike 4			 58			# mm - MTB      - Conti Cross King Protection   58mm Tube
+	switch equal Bike 5			 35			# mm - Winter   - Schwalbe Marathon Winter Plus 42mm Tubem, but since I use the 35mm Variant --> 0.035 :-) 
+								999					# Error / will never be reaced
+assign tirePressure						# Pressure of tires. Used to estimate the influence of the surface to the rolling resistance
+	switch equal Bike 1			   5.0		# bar - Roadbike - Continental Grand Prix 5000   25mm Tube, but I use the 28mm Variant --> 5.5 * 25/28bar=5.0bar
+	switch equal Bike 2			   3.1		# bar - Gravel   - Schwalbe G One RS             40mm Tube
+	switch equal Bike 3			   4.0		# bar - Tour     - Schwalbe Marathon Plus        37mm Tube
+	switch equal Bike 4			   2.4		# bar - MTB      - Conti Cross King Protection   58mm Tube
+	switch equal Bike 5			   2.4		# bar - Winter   - Schwalbe Marathon Winter Plus 42mm Tube, but I use the 35mm Variant --> 2.0 * 42/32bar=2.4bar
+								999			# Error / will never be reaced
+assign bikeCategory						# Bike Category according to ASTM Classifikation ASTM F2043-13
+	switch equal Bike 1			   1		# Roadbike
+	switch equal Bike 2			   2		# Gravel
+	switch equal Bike 3			   1		# Tour
+	switch equal Bike 4			   3		# MTB XC
+	switch equal Bike 5			   1		# Tour
+								   1		# Error / will never be reaced - 1 is the worst case category
 
 # brouter search algorithm
-assign pass1coefficient		1.5
-assign pass2coefficient		0
+assign pass1coefficient			   1.5
+assign pass2coefficient			   0
 
 
 # Constants (not to be changed by the user)
 #-------------------------------------------------------------------------------
 
 # genaral constants
-assign g					 9.81			# Gravity coefficient in N/kg
+assign g					9.81			# Gravity coefficient in N/kg
 assign m					SystemWeight	# shorter Name
 assign P					NominalPower	# shorter Name
 
@@ -1651,7 +1651,7 @@ assign initialcost
 	add	trafficLightCost
 	add trafficCalmingCost
 		barrierCost
--
+
 
 # Coding Guidelines
 #===============================================================================
