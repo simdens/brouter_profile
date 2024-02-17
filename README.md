@@ -1,10 +1,11 @@
-# Fast Bike profile for [BRouter Android application](http://brouter.de/brouter/) 
+# Longdistance Bike profile for [BRouter Android application](http://brouter.de/brouter/) 
 
 ( see Brouter-Web [Brouter-web](http://brouter.de/brouter-web/) as web front end)
  
-This contains profiles for fast bike long distance routing.
+This contains profiles for long distance routing initially developed for road bikes.
 
 Profile preferences:
+
    * paved roads
    * tertiary roads
    * low traffic
@@ -12,7 +13,6 @@ Profile preferences:
    * no traffic lights
    * energy optimal ways
 
-Profile is based on `fastbike_lowtraffic.brd` directly from [BRouter](https://github.com/abrensch/brouter)
 
 Related projects\:  
    * [BRouter](https://github.com/abrensch/brouter)
@@ -23,7 +23,7 @@ Related projects\:
    * [Jacob's city/street profile](https://github.com/utack/utack_brouter_data)
    
 ## Profiles
-### fastbike_longdistance.brf
+### longdistance.brf
    * Currently maintained
    * Brouter Version >=1.7.4 needed which includes _DIVIDE_ command.
 

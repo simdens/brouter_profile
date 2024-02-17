@@ -1,4 +1,4 @@
-Fastbike Longdistance Brouter Profile
+Longdistance Brouter Profile
 ================================================================================
 Brouter V1.7.4 or newer is needed
 
@@ -9,7 +9,6 @@ ToDo
 --------------------------------------------------------------------------------
 - rework speed limit to include new possibilities
 - move AllowCarrying flag from highway cost section to energy cost section
-- Rename to longdistance.brf
 
 --------------------------------------------------------------------------------
 
