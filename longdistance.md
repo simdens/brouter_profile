@@ -8,7 +8,7 @@ surfaces, hills and high traffic.
 ToDo
 --------------------------------------------------------------------------------
 - rework speed limit to include new possibilities
-- move AllowCarrying flag from highway cost section to energy cost section
+- rethink energy optimized cost
 
 --------------------------------------------------------------------------------
 
