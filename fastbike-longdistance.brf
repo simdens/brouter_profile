@@ -1,44 +1,27 @@
-################################################################################
-# A BRouter profile suited for a road bike long distance travels               #
-# Avoids bad surfaces, hills and high traffic                                  #
-################################################################################
-
-# Some of the profile is inspired by:
-# - default profiles of brouter  
-#   https://github.com/abrensch/brouter
-# - trekking profile by poutnikl
-#   https://github.com/poutnikl/Brouter-profiles
-
-################################################################################
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# !!                     Brouter V1.7.4 or newer needed                     !! #
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-################################################################################
-
-################################################################################
----context:global ##############################################################
-################################################################################
-# following code refers to global config
-
-# Routing Parameters
-################################################################################
-
-# For UI 
+# Fastbike Longdistance Brouter Profile
+#===============================================================================
+# Brouter V1.7.4 or newer is needed
+#
+# A Brouter profile suited for bicycle long distance travels. It avoids bad 
+# surfaces, hills and high traffic.
+#
 #-------------------------------------------------------------------------------
+
+---context:global
+#===============================================================================
+
+# UI Parameters
+#-------------------------------------------------------------------------------
+
+# Bike and Biker centric parameters
 assign Bike						1		# %Bike%						| Type of used bike (Air Drag & Rolling Resistance) | [1=Roadbike - Cat1 - Continental Grand Prix 5000 25mm Tube @ 5.5bar, 2=Gravel - Cat2 - Schwalbe G One RS 40mm Tube @ 3.1bar, 3=Touring - Cat1 - Schwalbe Marathon Plus 37mm Tube @ 4.0bar, 4=MTB - Cat3 - Conti Cross King Protection 58mm Tube @ 2.4bar, 5=Winter - Cat1 - Schwalbe Marathon Winter Plus 42mm Tube @ 2.0bar]
 assign NominalPower				165		# %NominalPower%				| W - continuous available power of cyclist | number
 assign SystemWeight				100		# %SystemWeight%				| kg - weight of system (bike+cyclist+luggage) | number
-
-# elevation cost parameters
 assign SlopeMax					8.0		# %SlopeMax% 					| % - maximum allowed slope (up & downhill, soft limit) | number
 
-# time optimallity parameter
+# Route centric parameters
 assign TimeOptimalityPercentage	75		# %TimeOptimalityPercentage%	| % - 0% - energy optimized route, 100% - time optimized route | number
-
-# traffic cost
 assign TrafficVehicleCost		70		# %TrafficVehicleCost%			| m - Cost per overtaking vehicle | number
-
-# Settings to modify the roue
 assign StickToCycleRoute		false	# %StickToCycleRoute%			| cycle routes will be preferred | boolean
 assign PreferGreen				true	# %PreferGreen%					| routes will prefer green environments | boolean
 assign PreferWater				true	# %PreferWater%					| routes next to water or waterways are prefered | boolean
@@ -59,7 +42,7 @@ assign considerTurnRestrictions		true	# considerTurnRestrictions			| Set true to
 # General routing parameters 
 #-------------------------------------------------------------------------------
 
-# for debug
+# Debug
 assign	processUnusedTags			false	# Set true to output unused tags in data tab
 
 # way cost constants
@@ -74,14 +57,11 @@ assign slopeCutoff						   0.5	# slope is ignored if smaller than this threshold
 assign elevationpenaltybuffer			   4
 assign elevationmaxbuffer				   8
 
-# Kinematic model parameters for Speed calculation
+# Kinematic model parameters for speed calculation
 assign maxBikerSpeed		70
 assign Cv					 0.1			# viscouse damping coefficient (dimensionless) - http://www.kreuzotter.de/deutsch/speedfaq.htm
 assign rho					 1.16038		# Air density in kg/m³ @ 20°C & 300m above sea level  - http://www.kreuzotter.de/deutsch/speedfaq.htm
 assign n					 0.98			# Efficiency factor of the power transmission of the bike 
-assign g					 9.81			# Gravity coefficient in N/kg
-assign m					SystemWeight	# shorter Name
-assign P					NominalPower	# shorter Name
 
 # Bike specific parameters
 assign CwA									# drag coefficient times the reference area in m^2 - http://www.kreuzotter.de/deutsch/speed.htm
@@ -119,20 +99,19 @@ assign bikeCategory							# Bike Category according to ASTM Classifikation ASTM 
 	switch equal Bike 4		3					# MTB XC
 	switch equal Bike 5		1					# Tour
 							1					# Error / will never be reaced - 1 is the worst case category
-# Category Description
-# 1 - Roadbike     - no drops
-# 2 - Gravel       - drop height <15cm
-# 3 - MTB XC       - drop height <60cm
-# 4 - MTB Enduro   - drop height <120cm
-# 5 - MTB Downhill - drop height >120cm
 
 # brouter search algorithm
 assign pass1coefficient		1.5
 assign pass2coefficient		0
 
 
-# Constants 
+# Constants (not to be changed by the user)
 #-------------------------------------------------------------------------------
+
+# genaral constants
+assign g					 9.81			# Gravity coefficient in N/kg
+assign m					SystemWeight	# shorter Name
+assign P					NominalPower	# shorter Name
 
 # set that this is a bike profile
 assign validForBikes       	1
@@ -143,173 +122,33 @@ assign classifierWalking  	2
 assign classifierFerry    	3
 
 
-# Compute remaining constants
-################################################################################
+# Computed Constants
+#-------------------------------------------------------------------------------
 
-# Kinematic model parameters for Brouter travel time calculation
+# scale
+assign timeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
+
+# BRouter internal kinematic model parameters for travel time calculation
 assign maxSpeed   min maxBikerSpeed 45				# absolute maximum speed in km/h for travel time computation
 assign S_C_x      multiply 0.5 multiply CwA rho		# drag coefficient times the reference area times half the air density for travel time computation
 assign C_r        multiply 1.5 Cr					# rolling resistance coefficient (dimensionless) for travel time computation -- 1.5x asphalt resistance as estimation
 assign bikerPower multiply P n						# power times efficiency of the bike
 assign totalMass  m 
 
-# Time optimality factor 0 to 1
-assign timeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
-
 
 # Speed Parameter Calculation:
 #-------------------------------------------------------------------------------
-# compute biker speed for different slopes
-# Source for equations: http://www.kreuzotter.de/deutsch/speed.htm
-#
-# Surface Angle:
-# 	beta = atan(slope/100)
-# with:
-# 	slope - Slope of surface in % 
-#
-# Can be linearized for |slope| <= 17% as
-# 	beta = slope/100
-# with an linearization error of less than 1% 
-# 
-#
-# Rolling Resistance:
-# 	Fr = g * m * Cr * cos(beta)
-# with:
-# 	g    - Gravity
-# 	m    - mass of bike & rider
-# 	Cr   - rolling resistance coefficiont
-# 	beta - surface angle
-# 
-# Can be linearized for |beta| <= 8° or |slope| <= 14%
-# 	Fr = g * m * Cr 
-# with an linearization error of less than 1%. 
-#
-#
-# Gravity Force:
-# 	Fg = g * m * sin(beta)
-# with:
-# 	g    - Gravity
-# 	m    - mass of bike & rider
-# 	beta - surface angle
-# 
-# Can be linearized for |slope| <= 14%
-# 	Fg = g * m * slope/100
-# with an linearization error of less than 1%. 
-#
-#
-# Air Resistance
-# 	Fa = 0.5 * rho * A * cw * v^2
-# with:
-# 	rho - air density (kg/m^3)
-# 	A   - cross sectional area
-# 	cw  - drag coefficient
-# 	v   - speed
-#
-# Can be simplified as 
-# 	Fa = 0.5 * rho * Ae * v^2
-# with:
-# 	rho - air density (kg/m^3)
-# 	Ae  - effective cross sectional area (A*cw)
-# 	v   - speed
-# 
-#
-# Viscos Damping
-# There might be an additional viscos damping (proportianal to the speed) which
-# is estimated with an coefficient of Cv = 0.1
-# 	Fv = Cv * v
-#
-# All together:
-# 	P * n = v * ( Fr + Fg + Fv(v) + Fa(v^2) ) 
-# with:
-# 	n - efficiency of the mechanical power transmission
-# Computing the speed v can be done by using Newtons method for root finding:
-# 	0 = v * ( Fr + Fg + Fv(v) + Fa(v^2) ) - P * n
-#
-#
-# Typical Diagram for Speed over Slope:
-# Ae = 0,6005m^2
-# P  = 165W
-# Cr = 0,0029
-# m  = 100kg
-#
-#                                         ^                                     
-# *.                                   62 | km/h                                
-#---`*_-----------------------------------|-------------------------------------
-#      `.                              58 | km/h                                
-#        `*.                              |                                     
-#           `*_                        54 | km/h                                
-#              `.                         |                                     
-#                `*.                   50 | km/h                                
-#                   `.                    |                                     
-#                     *.               46 | km/h                                
-#                       `*_               |                                     
-#                          `.          42 | km/h                                
-#----------------------------`_-----------|-------------------------------------
-#                              `.      38 | km/h                                
-#                                `_       |                                     
-#                                  `.  34 | km/h                                
-#                                    `_   |                                     
-#                                      `. | km/h                                
-#                                        .|                                     
-#                                      26 *.                                    
-#                                         | *                                   
-#                                      22 |  `*                                 
-#-----------------------------------------|----`.-------------------------------
-#                                      18 | km/h `*.                            
-#                                         |         `*_                         
-#                                      14 | km/h       `.                       
-#                                         |              `*.                    
-#                                      10 | km/h            ``*..._             
-#                                         |                        ```*..._     
-#                                       6 | km/h                           ```- 
-#                                         |                                     
-#                                       2 | km/h                                
-#-+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+>
-#-10%-9% -8% -7% -6% -5% -4% -3% -2% -1%  0%  1%  2%  3%  4%  5%  6%  7%  8%  9%
-#                                       Slope                                   
-# 
-# 
-# Strategy for changing rolling resistances:
-# Strategy is to see an increased rolling resistance as an increased slope. This
-# is possible since (linearized)
-# 			Fr	=	Fg
-# 	g * m * Cr	=	g * m * slope/100
-# with
-# 	slope = Cr*100
-#
-# For linear slope dependency, the interpolation points will be computed with
-# the linearized downhill function
-
-
-# Computing the biker speed at -8%, 0%, +2% and +8% slope with newtons method
-# 	0 != - P * n
-#	     + v   * g * m * ( Cr + slope/100)
-#	     + v^2 * Cv
-#	     + v^3 * 0.5 * rho * CwA
-#
-# ==> 
-#	value = - P * n
-#	        + v   * g * m * ( Cr + slope/100)
-#	        + v^2 * Cv
-#	        + v^3 * 0.5 * rho * CwA
-#
-#	derivative = 
-#	        +           g * m * ( Cr + slope/100)
-#	        + 2 * v   * Cv
-#	        + 3 * v^2 * 0.5 * rho * CwA
-#
-# Newton Method Step:
-# vn+1 = vn - value/derivative
-
-# Compute speed for interpolation points with at minimum distance 4%
+              
+# Constants          
 assign slopeStepSize	min 4 multiply 0.5 SlopeMax
+assign mPn				multiply -1   multiply P n
+assign hrhoCwA			multiply  0.5 multiply rho CwA
 
+
+assign v			20		# start value in m/s for root finding
+# -2*Slopestepsize
 assign slope		multiply -2 slopeStepSize
-assign v			20		# start value in m/s for root finding 
-# Constants
-assign mPn			multiply -1   multiply P n
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -343,13 +182,10 @@ assign v			sub v divide value derivative
 # Result
 assign speedm2 multiply v 3.6
 
-assign slope		multiply -1 slopeStepSize
+# -Slopestepsize
 # start value for v is the result of the previous computation
-# Constants
-# Constants
-assign mPn			multiply -1   multiply P n
+assign slope		multiply -1 slopeStepSize
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -383,12 +219,10 @@ assign v			sub v divide value derivative
 # Result
 assign speedm1 multiply v 3.6
 
-assign slope		 0			# speed0
+# 0%
 # start value for v is the result of the previous computation
-# Constants
-assign mPn			multiply -1   multiply P n
+assign slope		 0
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -422,12 +256,10 @@ assign v			sub v divide value derivative
 # Result
 assign speed0 multiply v 3.6
 
-assign slope		slopeStepSize
+# Slopestepsize
 # start value for v is the result of the previous computation
-# Constants
-assign mPn			multiply -1   multiply P n
+assign slope		slopeStepSize
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -461,12 +293,10 @@ assign v			sub v divide value derivative
 # Result
 assign speedp1 multiply v 3.6
 
-assign slope		multiply 2 slopeStepSize
+# 2*Slopestepsize
 # start value for v is the result of the previous computation
-# Constants
-assign mPn			multiply -1   multiply P n
+assign slope		multiply 2 slopeStepSize
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -500,12 +330,10 @@ assign v			sub v divide value derivative
 # Result
 assign speedp2 multiply v 3.6
 
-assign slope		multiply 3 slopeStepSize
+# 3*Slopestepsize
 # start value for v is the result of the previous computation
-# Constants
-assign mPn			multiply -1   multiply P n
+assign slope		multiply 3 slopeStepSize
 assign gmCrSl		multiply  g   multiply m add Cr divide slope 100
-assign hrhoCwA		multiply  0.5 multiply rho CwA
 # Iteration 1
 assign vvhrhoCwA	multiply v multiply v hrhoCwA
 assign vCv			multiply v Cv
@@ -539,20 +367,12 @@ assign v			sub v divide value derivative
 # Result
 assign speedp3 multiply v 3.6
 
+
 # Push and Carry Cost Factors
 #-------------------------------------------------------------------------------
 
-# From https://en.wikipedia.org/wiki/Bicycle_performance#Energy_efficiency
-# "a human at 70kg requires about 60W to walk at 5 km/h on a firm and flat 
-# ground [1]"
-# [1]https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf
-# Energy needed for walking: 60Wh for 5km --> 12Wh/km
-# Energy needed for pushing a bike: Cr * mBike * g * 1000m 
-# = 0.00363 * 20kg * 9.91N/kg * 1000m 
-# = 0.00363 * 54,5Wh/km
-# = 0.2Wh/km ==> 0.5Wh/km is used for all types of tires
-# Energy for one km for the biker: --> bikerPower * 1h / bikerSpeed 
-# Example: bikerPower = 165W, bikerSpeed = 26,3kmH ==> 6.27Wh/km
+# Energy needed for pushing: 12.2Wh/km
+# Energy needed for cycling: P/speed0 ==> 6.27 @ 165W, 26.3km/h
 assign pushCostFactor		# additional cost for 5km/h walking/pushing pace
 	divide 12.5 divide NominalPower speed0
 
@@ -562,22 +382,20 @@ assign carryCostFactor
 	multiply 3 pushCostFactor
 
 
-# Elevation Parameter Calculation
+# Elevation Cost Parameters
 #-------------------------------------------------------------------------------
 
 # compute equivalent length for one meter height. ==> 45.36 m/m for roadbike
-							#	mass * gravity / power * speed 
-							#   <-------------------->
-							#      height meters / s 
 assign height2Length		multiply divide multiply m g P divide speed0 3.6
-
 
 # Elevation value is reduced by this cutoff without penalizing the elevation.
 assign downhillcutoff					slopeCutoff
 assign uphillcutoff						slopeCutoff
+
 # When reaching the "elevationbufferreduce" slope, uphillcostfactor (or 
 # downhillcostfactor) are used by 100%
 assign elevationbufferreduce			sub SlopeMax slopeCutoff
+
 # When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
 #"downhillcost". Most likely = elevationbufferreduce
 assign downhillmaxslope					sub SlopeMax slopeCutoff
@@ -610,13 +428,6 @@ assign uphillmaxslopecost		add uphillMaxSlopeAdditionalCost   uphillcost
 #-------------------------------------------------------------------------------
 
 # Costs to decelerate to lower speed and accelerate back again to cruising speed
-#
-# For energy optimized routes, the costs are the way which can be traveled with 
-# the kinetic energy of the biker and the bike at cruising speed on flat
-# terrain. For time optimized routes, the cost is the way difference for 
-# deceleration and accelerating afterwards compared to continuous cruising 
-# speed. At least @ 26.3km/h, 165W, 100kg and 0% slope, this is roughly half of 
-# the cost of the energy optimized cost. 
 assign v					divide speed0	3.6		# Speed on flat terrain in m/s
 assign v5					divide 5		3.6		#  5km/h in m/s
 assign v10					divide 10		3.6		# 10km/h in m/s
@@ -634,10 +445,6 @@ assign speed15CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy
 assign speed20CostEnergy	multiply v divide max 0 sub kineticEnergy kineticEnergy20 P
 
 # Linear interpolation between energy optimal cost and time optimal cost.
-#     cost = timeOptimalityFactor*      SpeedCostTime + (1-timeOptimalityFactor)*SpeedCostEnergy
-# <=> cost = timeOptimalityFactor*0.5*SpeedCostEnergy + (1-timeOptimalityFactor)*SpeedCostEnergy
-# <=> cost = (1-0.5*timeOptimalityFactor)*SpeedCostEnergy
-#  => cost = factor*SpeedCostEnergy
 assign factor      sub 1 multiply 0.5 timeOptimalityFactor
 assign speed0Cost  multiply factor speed0CostEnergy
 assign speed5Cost  multiply factor speed5CostEnergy
@@ -645,29 +452,7 @@ assign speed10Cost multiply factor speed10CostEnergy
 assign speed15Cost multiply factor speed15CostEnergy
 assign speed20Cost multiply factor speed20CostEnergy
 
-# cost to dismount from bike
-# For energy efficient cost, sum of:
-# - cost for standing still and accelerating (speed0CostEnergy) 
-# - cost for potential energy change due to lower cog of the biker (~15cm)
-# For time efficient cost, sum of:
-# - cost for stnanding still and accelerating (way difference to continuous 
-#   travelling, 0.5 * Speed0Energy)
-# - cost for time needed to dismounting (2s for dismount + 2s for mount)
-# 
-# Formula:
-# initialPushCost =
-#   (1-TOF) * (    speed0CostEnergy + height2Length*dismountCOGHeightDifference)
-# +    TOF  * (0.5*speed0CostEnergy + v*dismountMountTime)
-# <==>
-# initialPushCost =
-#   (1-0.5*TOF) * speed0CostEnergy
-# +     (1-TOF) * height2Length*dismountCOGHeightDifference
-# +        TOF  * v*dismountMountTime
-# <==>
-# initialPushCost =
-#   speed0Cost
-# + (1-TOF) * height2Length*dismountCOGHeightDifference
-# +    TOF  * v*dismountMountTime
+# initialPushCost 
 assign dismountCOGHeightDifference	0.15	# m - Difference of COG of biker between dismounted and mounted position
 assign dismountMountTime			4		# s - Time needed to dismount and mount back again
 assign initialPushCost
@@ -679,28 +464,7 @@ assign initialPushCost
 		multiply v
 				 dismountMountTime
 
-# cost to enter a ferry
-# For energy efficient cost, sum of:
-# - cost for standing still and accelerating
-# - cost for potential energy change due to lower cog of the biker (~15cm)
-# For time efficient cost, sum of:
-# - cost for standing still and accelerating (way difference to continuous
-#   travelling)
-# - cost for time needed to dismounting (2s for dismount + 2s for mount)
-# - cost for waiting time (30min in average. One ferry every hour is assumed)
-#
-# Formula:
-# initialFerryCost = 
-#  (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference)
-# +   TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime + v*ferryWaitingTime )
-# <==>
-# initialFerryCost = 
-#  (1-TOF) * (     speed0CostEnergy + height2Length*dismountCOGHeightDifference) 
-# +   TOF  * ( 0.5*speed0CostEnergy + v*dismountMountTime  )
-# +   TOF  * ( v*ferryWaitingTime )
-# <==>
-# initialFerryCost =   initialPushCost + TOF * ( v*ferryWaitingTime )
-
+# InitialFerryCost
 assign ferryWaitingTime	multiply 30 60	# s - Waiting time for ferry (assumed 
 # one ferry every hour --> avg waiting time of 30min)
 assign initialFerryCost
@@ -709,27 +473,21 @@ assign initialFerryCost
 		multiply v
 		         ferryWaitingTime
 
-# In open street maps normally to traffic signal nodes are passed for each 
-# intersection. The cost are estimated by:
-# - Traffic light cycle:						90s
-# - Chance to hit green light:					50%
-# - Average waiting time during red light:		45s/2 = 22.5s
-# - Cost for accelerating back to travel speed:	speed0Cost
-# Cost = timeOptimalityFactor * 0.5*22.5s*v          + speed0Cost 
-#      = timeOptimalityFactor *     5.625*v          + speed0Cost 
-#      = timeOptimalityFactor *     3.125*v(in km/h) + speed0Cost
+
+# trafficSignalCost
+# cost for waiting at a traffic signal (90s traffic signal cycle time)
 # for v = 26.3kmh --> Cost  = 147.2m
 assign	trafficSignalCost
 	add speed0Cost multiply timeOptimalityFactor multiply 3.125 speed0 
 
 
-################################################################################
----context:way #################################################################
-################################################################################
+
+---context:way 
+#===============================================================================
 
 
 # Logic Values
-################################################################################
+#-------------------------------------------------------------------------------
 
 # Cycleroute / Cycleway
 #-------------------------------------------------------------------------------
@@ -825,102 +583,34 @@ assign nodeaccessgranted
 
 
 # Surfaces - Rolling Resistance
-################################################################################
+#-------------------------------------------------------------------------------
 
-# Different Rolling resistances for car tires
+### Assign normalized rolling resistance coefficient
+
+# Rolling resistance is the resistance coefficient for a car normalized to the 
+# coefficient of perfect flat asphalt. (Thus asphalt has the value of 1 ;-) ) 
 #
-# DE-Wikipedia: https://de.wikipedia.org/wiki/Rollwiderstand
-# Rhetos: https://www.rhetos.de/html/lex/rollwiderstandskoeffizienten.htm
-# KfT:  "Kraftfahrtechnisches Taschenbuch", page 418
-#
-# Surface      | norm | used  | DE-Wikipedia  | Rhetos       | comment
-# -------------+------+-------+---------------+--------------+------------------
-# asphalt      |  1.0 | 0.01  | 0.011 - 0.015 | 0.011 - 0.03 | good asphalt
-# concrete     |  1.1 | 0.011 | 0.01  - 0.02  | 0.01  - 0.02 | quite good concrete
-# metal        |  1.1 | 0.011 |               | 0.008 - .009 | it is slippery :-(
-# paving_stones|  1.5 | 0.015 | 0.013 (KfT)   |              | 
-# compacted    |  1.8 | 0.018 |               |              | between paving_stone and cobblestone
-# wood         |  1.8 | 0.018 |               |              | between paving_stone and cobblestone (most on bridges with small gaps)
-# sett         |  2.0 | 0.02  |               |              | between paving_stone and cobblestone
-# pebblestone  |  2.4 | 0.024 |               |              | between gravel and compacted
-# copplestone  |  2.5 | 0.025 | 0.015 - 0.03  | 0.015 - 0.03 | bike tires are small
-# grass_paver  |  2.7 | 0.027 |               |              | even worse than cobblestone but better than gravel
-# gravel       |  3.0 | 0.03  | 0.02          | 0.02         | bike tires are small
-# ground       |  3.4 | 0.034 |               |              | between compacted and dirt
-# fine_gravel  |  4.0 |       |               |              | 
-# dirt         |  5.0 | 0.05  | 0.050         | 0.050        |
-# sand         | 10.0 | 0.1   | 0.04  - 0.08  | 0.1   - 0.35 | compacted sand, bike tires are thin
-# mud          | 15.0 |       |               |              | really don't want to be there
-# potholes     |      |       | 0.03  - 0.06  |              | ashpalt with potholes
-# clay         | compacted
-# earth        | dirt
-# grass        | dirt
-# paved        | concrete
-# unpaved      | dirt
-
-# To make rolling resistance changes with respect to surfaces somewhat 
-# comparable to bike tires, they are normalized to the normal force per contact
-# patch area - at least as good as possible. The idea is, that for a MTB the
-# increase in rolling resistance on gavel is far less than for a roadbike due 
-# to the much bigger contact patch area with almost the same normal force.
-#
-# pc = m / Ac
-#    = m / (w * lc)
-#    = m / (w * ct / pt)
-# <==> 
-# snf != pc/ct = m * pt/w
-#
-# with:
-#  snf - kg*bar/mm - surface normalization factor
-#  pc  - bar - Pressure on surface at contact patch area
-#  m   - kg - mass on one wheel
-#  Ac  - mm² - contact patch area size
-#  w   - mm - width of contact patch area (estimated by tire width)
-#  lc  - mm - length of contact patch area. Estimated by the quotient of some
-#        unknown constant ct and the tire pressure pt. (Educated guees! No 
-#        evidence for this relation!)
-#  ct  - mm/bar - Unknown constant for the relation between contact path length
-#        and tire pressure
-#  pt  - bar - tire pressure
-
-# surface normalization factor of a car:
-# Golf V:
-# m = 1600kg --> 400kg per wheel
-# w = 205mm
-# pt = 2.2bar
-assign snfCar	4.292682927								# kg*bar/mm
-
-# surface normalization factor  of the bike:
-assign snfBike	multiply 0.5 multiply m divide tirePressure tireWidth	# kg*bar/mm
-# for a normal touring bike, this about 25% higher than the one of a car
-# m = 100kg --> 50kg per wheel
-# w = 37mm
-# pt = 3.5bar
-# => snfBike = 5.41 kg*bar/mm
-# ==> snfBike/snfCar = 1.102
-
-
-# Assign costs 					PavedRoadsOnly Cost		Normal Cost
+#								pavedRoadsOnly Cost		Normal Cost
 assign asphaltRes		switch PavedRoadsOnly	 1.0	 1.0
 assign concreteRes		switch PavedRoadsOnly	 1.1	 1.1
 assign metalRes			switch PavedRoadsOnly	 1.1	 1.1
 assign pavingStonesRes	switch PavedRoadsOnly	 1.5	 1.5
-assign compactedRes		switch PavedRoadsOnly	10  	 1.8
+assign compactedRes		switch PavedRoadsOnly	11.8  	 1.8
 assign woodRes			switch PavedRoadsOnly	 1.8	 1.8
 assign settRes			switch PavedRoadsOnly	 2.0	 2.0
-assign pebblestoneRes	switch PavedRoadsOnly	10  	 2.4
+assign pebblestoneRes	switch PavedRoadsOnly	12.4  	 2.4
 assign cobblestoneRes	switch PavedRoadsOnly	 2.5	 2.5
-assign grassPaverRes	switch PavedRoadsOnly	10  	 2.7
-assign gravelRes		switch PavedRoadsOnly	10  	 3.0
-assign groundRes		switch PavedRoadsOnly	10  	 3.4
-assign fineGravelRes	switch PavedRoadsOnly	10  	 4.0
-assign dirtRes			switch PavedRoadsOnly	10  	 5.0
-assign sandRes			switch PavedRoadsOnly	10  	10.0
-assign mudRes			switch PavedRoadsOnly	15  	15.0
-assign pavingUnsureRes	switch PavedRoadsOnly	10  	groundRes
+assign grassPaverRes	switch PavedRoadsOnly	12.7  	 2.7
+assign gravelRes		switch PavedRoadsOnly	13.0  	 3.0
+assign groundRes		switch PavedRoadsOnly	13.4	 3.4
+assign fineGravelRes	switch PavedRoadsOnly	14.0	 4.0
+assign dirtRes			switch PavedRoadsOnly	15.0	 5.0
+assign sandRes			switch PavedRoadsOnly	20.0	10.0
+assign mudRes			switch PavedRoadsOnly	25.0	15.0
+assign pavingUnsureRes	groundRes
 
 
-# cost factors
+# Assign factor according to open street map tags
 assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/keys/surface#values
 	# 
 	# Use cycleway surface with highest priority, since we use cycleways if 
@@ -1024,6 +714,27 @@ assign surfaceFactor	# 23Mio tags (11-2018) - https://taginfo.openstreetmap.org/
 	# Default if really unknown
 											pavingUnsureRes
 
+
+### Scale rolling resistance factor to bike tire
+
+# surface normalization factor  of the bike:
+#
+# for a normal touring bike, this about 25% higher than the one of a car
+# m = 100kg --> 50kg per wheel
+# w = 37mm
+# pt = 3.5bar
+# => snfBike = 5.41 kg*bar/mm
+# ==> snfBike/snfCar = 1.102
+assign snfBike	multiply 0.5 multiply m divide tirePressure tireWidth
+
+# surface normalization factor of a car:
+# 
+# Golf V:
+# m = 1600kg --> 400kg per wheel
+# w = 205mm
+# pt = 2.2bar
+assign snfCar	4.292682927		# kg*bar/mm
+
 # scale rolling resistance of the car to a rolling resistance for the current 
 # bike
 assign rollingResistanceFactor
@@ -1037,12 +748,12 @@ assign rollingResistanceFactor
 				1
 
 
-# Walking / Carrying detection
-################################################################################
+# Walking & Carrying detection
+#-------------------------------------------------------------------------------
 
 # store needed bike category to ride on this way segment.
-#	( bike category - way category ) < 0 --> Walking
-#	( bike category - way category ) < 1 --> Carrying
+#	way category > bike category     --> Walking
+#	way category > bike category + 1 --> Carrying
 # 
 # Category Description
 # 1  - Roadbike     - no drops
@@ -1057,7 +768,7 @@ assign wayCategory
 	# very clear tags superseeding all others in descending priority:
 	switch wheelchair=yes					1
 		
-	# Take the maximum category due to of the following keys
+	# Take the maximum value calculated by any of the following keys
 	max
 		#
 		# Smoothness
@@ -1186,7 +897,7 @@ assign wayCategory
 
 # Category for Uphill ways
 assign wayCategoryUphill
-	# Only things which are different to flat situation
+	# Only stuff which is different to the flat situation
 	switch highway=steps						9
 	switch mtb:scale=4							9	# large boulders, roots
 	switch mtb:scale=5							9	# big boulder fields, debris, landslides
@@ -1208,7 +919,7 @@ assign isCarryingDownhill	greater wayCategoryDownhill add bikeCategory 1
 
 
 # Rolling Resistance Cost
-################################################################################
+#-------------------------------------------------------------------------------
 # Rolling resistance cost are scaled by the timeOptimalityFactor. Additionally
 # scale with carryCostFactor or walkingcostfactor if carrying or walking since
 # this is the efficiency factor for walking or carrying
@@ -1234,8 +945,8 @@ assign rollingResistanceCostDownhill
 		multiply rollingResistanceFactor sub 1 timeOptimalityFactor
 
 
-# Speed
-################################################################################
+# Speed Cost
+#-------------------------------------------------------------------------------
 
 # The maximum allowed speed is used for traffic cost calculation and for routing 
 # in case of lower allowed speed than reachable speed on the bike
@@ -1429,24 +1140,8 @@ assign speedCostUphill		multiply timeOptimalityFactor divide speed0 limitedBikeS
 assign speedCostDownhill	multiply timeOptimalityFactor divide speed0 limitedBikeSpeedDownhill
 
 
-# Traffic
-################################################################################
-
-# Remark: current DTV 2020 in Baden-Württemberg (Germany)
-# 2020 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2020_Excel.zip
-# 2010 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2011_Excel.zip
-#
-# Vehicles per Day 2020 DTV (sum of both direction)
-#
-# Street with			2Lanes	3Lanes	4Lanes	6Lanes
+# Traffic Cost
 #-------------------------------------------------------------------------------
-# Autobahn:		58540					24535	82296
-# Bundestraße:	13821	11153	13314	28440	34845
-# Landstraße:	 5904	 5676			19949
-# Kreisstraße:	 2611	 2562	 3049	 8527
-#
-# At least 10 measurement points with streets with each number of lanes had to
-# be existing to be in this list.
 
 # Get number of lanes for current highway
 assign nLanes
@@ -1469,7 +1164,8 @@ assign nLanes
 		switch lanes=7	3.5
 						1
 
-# Traffic per highway type per hour (!)
+# Traffic per highway type per hour according to DTV statistics 2020 Baden-Württemberg, Germany.
+# 2020 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2020_Excel.zip
 assign trafficPerHighway
 	switch highway=trunk|trunk_link			# Schnellstraßen (wie BAB) und Auffahrten
 		switch lesser nLanes 3		multiply 255.6 nLanes	# 24535/24/4 =~ 255.6
@@ -1501,32 +1197,19 @@ assign trafficPerHighway
 
 
 # Different traffic classes
-# Source -- https://forum.openstreetmap.org/viewtopic.php?id=31044
-# Quote:
-# Die Verkehrssumme drückt grob gesagt aus, wieviel Meter Wohnstrasse (oder 
-# <= Tempo50 Strasse) eine Strasse versorgt, wobei diese Versorgungsbeziehung 
-# noch entfernungsabhängig untersrückt wird mit 20km Längenskala. Für den
-# Pseudotag wird dieser Wert logarithmiert bzw. folgendermassen gemappt:
-# 
-# summe >   5000   estimated_traffic_class=1
-# summe >  10000   estimated_traffic_class=2
-# summe >  20000   estimated_traffic_class=3
-# summe >  40000   estimated_traffic_class=4
-# summe >  80000   estimated_traffic_class=5
-# summe > 160000   estimated_traffic_class=6
-# summe > 320000   estimated_traffic_class=7
-#
+# Source for documentation of this pseudotag: https://forum.openstreetmap.org/viewtopic.php?id=31044
 # Traffic per hour dependency with traffic class is only a feeling without any
 # data proving this values
+assign class2traffic	0.01	# vehicles per day / meter living street
 assign trafficPerClass
-	switch estimated_traffic_class=7	3168
-	switch estimated_traffic_class=6	1584
-	switch estimated_traffic_class=5	 792
-	switch estimated_traffic_class=4	 396
-	switch estimated_traffic_class=3	 198
-	switch estimated_traffic_class=2	  99
-	switch estimated_traffic_class=1	  50
-										   0
+	switch estimated_traffic_class=7	multiply 320000 class2traffic
+	switch estimated_traffic_class=6	multiply 160000 class2traffic
+	switch estimated_traffic_class=5	multiply  80000 class2traffic
+	switch estimated_traffic_class=4	multiply  40000 class2traffic
+	switch estimated_traffic_class=3	multiply  20000 class2traffic
+	switch estimated_traffic_class=2	multiply  10000 class2traffic
+	switch estimated_traffic_class=1	multiply   5000 class2traffic
+										0
 
 assign traffic divide add trafficPerClass multiply 2 trafficPerHighway 3
 
@@ -1570,43 +1253,8 @@ assign trafficCostUphill 	multiply overtakingsPerMeterUphill   trafficVehicleCos
 assign trafficCostDownhill 	multiply overtakingsPerMeterDownhill trafficVehicleCostScaled
 
 
-# Noise
-################################################################################
-# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
-# Quote:
-# For proximity of noisy roads (secondary and higher). The noise factor 
-# represents the proportion of a road's buffer area that lies within the 
-# 64-meter buffer of noisy roads. This proportion is reduced:
-# - for motorways and trunk roads with max speed < 105 by 1.5
-# - for primary roads 2 times
-# - 3 times if maxspeed is 75 - 105 for primary and secondary
-# - other secondary roads 5 times
-#
-# `noise_class` is roughly proportional to the noise factor:
-# | `noise_factor` | `noise_class` |
-# | -------------- | ------------- |
-# | < 0.1          | 1             |
-# | < 0.25         | 2             |
-# | < 0.4          | 3             |
-# | < 0.55         | 4             |
-# | < 0.8          | 5             |
-# | ELSE           | 6             |
-#
-# To be classified as noise class 6, a way must be less than 13 m on average
-# from the middle of the carriageway of a motorway with a maximum speed 
-# exceeding 105. For a class 5, the distance must be up to 35 meters.
-# (1 - noise_factor) \* 64 m for a given class determines the distance
-# | highway        | maxspeed | max `noise_class` |
-# | -------------- | -------- | ----------------- |
-# | motorway,trunk | > 105    | 6                 |
-# | motorway,trunk | 105      | 5                 |
-# | motorway,trunk | 75       | 5                 |
-# | primary        | > 105    | 4                 |
-# | primary        | 105      | 4                 |
-# | primary        | 75       | 3                 |
-# | secondary      | > 105    | 3                 |
-# | secondary      | 105      | 3                 |
-# | secondary      | 75       | 2                 |
+# Noise Cost
+#-------------------------------------------------------------------------------
 assign noiseFactor
 	switch estimated_noise_class=6	0.90
 	switch estimated_noise_class=5	0.675
@@ -1624,31 +1272,8 @@ assign weightedNoiseCost
 		0
 
 
-# Green
-################################################################################
-# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
-# Quote:
-# OSM data recognized as forest:
-# - landuse: forest, allotments, flowerbed, orchard, vineyard,
-#   recreation_ground, village_green
-# - leisure: garden, park, nature_reserve
-# 
-# No forest buffers are used.
-# 
-# Imagine you trace the way with a pencil drawing lines 62 meters wide. Then
-# estimated_forest_class=6 corresponds to the case that at least 98% of the line
-# is in the woodland. This number is called a green factor.
-#
-# | `green_factor` | `forest_class` |
-# | -------------- | -------------- |
-# | < 0.1          | NULL           |
-# | < 0.2          | 1              |
-# | < 0.4          | 2              |
-# | < 0.6          | 3              |
-# | < 0.8          | 4              |
-# | < 0.98         | 5              |
-# | ELSE           | 6              |
-
+# Green Cost
+#-------------------------------------------------------------------------------
 assign greenFactor
 	switch estimated_forest_class=6	0.99
 	switch estimated_forest_class=5	0.89
@@ -1666,25 +1291,8 @@ assign weightedGreenCost
 		0
 
 
-# Water
-################################################################################
-# Source -- Brouter Sources, /environmental_considerations_and_pseudo_tags.md
-# Quote:
-# OSM data recognized as river:
-# - waterway: river, canal
-# - natural: water (except wastewater)
-# 
-# Waterways have 32 m wide buffers. Water areas have 77 m wide buffers.
-# 
-# | `river_see` | `river_class` |
-# | ----------- | ------------- |
-# | < 0.1       | 1             |
-# | < 0.3       | 2             |
-# | < 0.5       | 3             |
-# | < 0.8       | 4             |
-# | < 0.9       | 5             |
-# | ELSE        | 6             |
-
+# Water Cost
+#-------------------------------------------------------------------------------
 assign waterFactor
 	switch estimated_river_class=6	0.95
 	switch estimated_river_class=5	0.85
@@ -1702,8 +1310,8 @@ assign weightedWaterCost
 		0
 
 
-# Highway Type
-################################################################################
+# Highway Type Cost
+#-------------------------------------------------------------------------------
 
 # here only costs not handled by the other parts are applied
 # 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
@@ -1765,7 +1373,7 @@ assign highwayCostDownhill
 
 
 # Access Costs
-################################################################################
+#-------------------------------------------------------------------------------
 
 # Check for access. With penalty 100000, the segment is ignored and not used
 assign accessPenalty
@@ -1775,7 +1383,7 @@ assign accessPenalty
 
 
 # Miscellaneous costs
-################################################################################
+#-------------------------------------------------------------------------------
 
 #
 # handle one-ways. On primary roads, wrong-oneways should be close to forbidden.
@@ -1883,15 +1491,12 @@ assign initialcost
 
 # this is the cost (in Meter) for a 90-degree turn
 # The actual cost is calculated as turncost*cos(angle)
-# Turncost is scaled by the cost for speed of the bike, surface and speed limit.
-# The faster you go, the less you want to turn because that means deceleration
-#
 assign turncost = if junction=roundabout then 0
                   else speed0Cost
 
 
 # Voice hint generation stuff
-################################################################################
+#-------------------------------------------------------------------------------
 
 # way priorities used for voice hint generation
 assign priorityclassifier
@@ -1931,18 +1536,14 @@ assign isgoodforcars	if greater priorityclassifier 6 then true
 
 
 # Save some information for node context
-################################################################################
+#-------------------------------------------------------------------------------
 assign iswayreverse	reversedirection=yes
 
 
-################################################################################
----context:node ################################################################
-################################################################################
+---context:node
+#===============================================================================
 
-# Logic Values
-################################################################################
-
-# Access
+# Logic Values / Access
 #-------------------------------------------------------------------------------
 assign defaultAccess
        switch access=
@@ -1972,10 +1573,7 @@ assign footAccess
                         1
 
 
-# Cost
-################################################################################
-
-# Access
+# Access Cost
 #-------------------------------------------------------------------------------
 assign initialcost
   switch bikeAccess
@@ -1983,8 +1581,9 @@ assign initialcost
     switch footAccess
       0				# legal, mount and dismount cost is done in way context
       1000000		# illegal to use
+      
 
-# Traffic Lights
+# Traffic Light Cost
 #-------------------------------------------------------------------------------
 assign trafficLightCost
 	switch highway=traffic_signals
@@ -1996,7 +1595,8 @@ assign trafficLightCost
 		divide trafficSignalCost 2
 	0
 
-# Traffic Calming
+
+# Traffic Calming Cost
 #-------------------------------------------------------------------------------
 assign trafficCalmingCost
 	switch traffic_calming=bump				speed10Cost
@@ -2006,15 +1606,9 @@ assign trafficCalmingCost
 	switch traffic_calming=rumble_strip		speed20Cost
 											0
 
-# Barrier
+# Barrier Cost
 #-------------------------------------------------------------------------------
 # Only apply initial pushcost for node if the biker is not already walking
-#
-# Currently it is not possible to detect if the following way segment is a 
-# pushing segment. Thus, in this situation, the initialPushCost is applied
-# twice unfortunately :-/ 
-# It is not possible to detect if "isWalking", "isWalkingUphill" or 
-# "isWalkingDownhill" has to be used. Thus use "isWalking" as best guess.
 assign pushCost	switch way:isWalking	0	initialPushCost
 
 assign barrierCost
@@ -2050,18 +1644,17 @@ assign barrierCost
 	switch barrier=bump_gate		pushCost
 									0
 
-# Final Cost
+# Final Cost Calculation
 #-------------------------------------------------------------------------------
 assign initialcost 
 	add initialcost
 	add	trafficLightCost
 	add trafficCalmingCost
 		barrierCost
+-
 
-
-################################################################################
-# Coding Guidelines ############################################################
-################################################################################
+# Coding Guidelines
+#===============================================================================
 
 # Naming:
 ################################################################################
@@ -2069,20 +1662,3 @@ assign initialcost
 # genaralVariable	general variable			CamelCases starting with small letter
 # localvaribale		local variable				all small letters
 # broutervariable	Brouter varibales			all small letters 
-#
-# Annotation:
-################################################################################
-
-# Headlines:
-#-------------------------------------------------------------------------------
-
-################################################################################
-# H1 ###########################################################################
-################################################################################
-
-# H2                                                                         
-################################################################################
-
-# H3
-#-------------------------------------------------------------------------------
-
