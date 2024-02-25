@@ -145,8 +145,8 @@ assign ghrhoCwA			multiply  0.5 multiply gRho gCwA
 
 assign gv			20		# start value in m/s for root finding
 # -2*Slopestepsize
-assign gSlope		multiply -2 gSlopeStepSize
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlopem2		multiply -2 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlopem2 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -182,8 +182,8 @@ assign gSpeedm2 multiply gv 3.6
 
 # -Slopestepsize
 # start gValue for gv is the result of the previous computation
-assign gSlope		multiply -1 gSlopeStepSize
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlopem1		multiply -1 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlopem1 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -219,8 +219,8 @@ assign gSpeedm1 multiply gv 3.6
 
 # 0%
 # start gValue for gv is the result of the previous computation
-assign gSlope		 0
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlope0		 0
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope0 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -256,8 +256,8 @@ assign gSpeed0 multiply gv 3.6
 
 # Slopestepsize
 # start gValue for gv is the result of the previous computation
-assign gSlope		gSlopeStepSize
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlopep1		gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlopep1 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -293,8 +293,8 @@ assign gSpeedp1 multiply gv 3.6
 
 # 2*Slopestepsize
 # start gValue for gv is the result of the previous computation
-assign gSlope		multiply 2 gSlopeStepSize
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlopep2		multiply 2 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlopep2 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -330,8 +330,8 @@ assign gSpeedp2 multiply gv 3.6
 
 # 3*Slopestepsize
 # start gValue for gv is the result of the previous computation
-assign gSlope		multiply 3 gSlopeStepSize
-assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlope 100
+assign gSlopep3		multiply 3 gSlopeStepSize
+assign ggmCrSl		multiply gGravity multiply SystemWeight add gCr divide gSlopep3 100
 # Iteration 1
 assign gvvhrhoCwA	multiply gv multiply gv ghrhoCwA
 assign gvCv			multiply gv gCv
@@ -371,10 +371,10 @@ assign gSpeedp3 multiply gv 3.6
 
 # Energy needed for pushing: 12.2Wh/km
 # Energy needed for cycling: NominalPower/gSpeed0 ==> 6.27 @ 165W, 26.3km/h
-assign gPushCostFactor		# additional cost for 5km/h walking/pushing pace
+assign gPushCostFactor
 	divide 12.5 divide NominalPower gSpeed0
 
-# For carrying it is assumed, that the needed energy is doubled compared to
+# For carrying it is assumed, that the needed energy is trippled compared to
 # pushing
 assign gCarryCostFactor
 	multiply 3 gPushCostFactor
@@ -401,9 +401,6 @@ assign uphillcutoff						gSlopeCutoff
 # downhillcostfactor) are used by 100%
 assign elevationbufferreduce			sub SlopeMax gSlopeCutoff
 
-# When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
-#"downhillcost". Most likely = elevationbufferreduce
-assign downhillmaxslope					sub SlopeMax gSlopeCutoff
 # When exceeding "uphillmaxslope", "uphillmaxslopecost" is used instead of 
 # "uphillcost". Most likely = elevationbufferreduce
 assign uphillmaxslope					sub SlopeMax gSlopeCutoff
@@ -421,11 +418,7 @@ assign downhillcost				# cost per vertical meter
 # additional cost per vertical meter for slope larger than "slopemax"
 # Cost due to the increased energy usage due to pushing the bike in steep hills
 assign gUphillMaxSlopeAdditionalCost	multiply gHeight2Length sub gPushCostFactor 1
-# Downhill cost to reduce the need of braking in very steep hills.
-assign gDownhillMaxSlopeAdditionalCost	multiply 0.5 gUphillMaxSlopeAdditionalCost
-# Uphill and downhill cost for elevation exceeding the "(up|down)hillmaxslope" 
-# threshold
-assign downhillmaxslopecost		add gDownhillMaxSlopeAdditionalCost downhillcost
+# Uphill cost for elevation exceeding the "uphillmaxslope" threshold
 assign uphillmaxslopecost		add gUphillMaxSlopeAdditionalCost   uphillcost
 
 
@@ -926,8 +919,10 @@ assign isCarryingDownhill	greater wayCategoryDownhill add gBikeCategory 1
 #-------------------------------------------------------------------------------
 # Rolling resistance cost are scaled by the gTimeOptimalityFactor. Additionally
 # scale with gCarryCostFactor or walkingcostfactor if carrying or walking since
-# this is the efficiency factor for walking or carrying
+# this is the efficiency factor for walking or carrying. If carrying is not 
+# allowed but is needed, the cost are chosen to be very high.
 assign rollingResistanceCost
+	switch and not AllowCarrying isCarrying			9999
 	multiply
 		switch isCarrying	gCarryCostFactor	# Use carrrycostfactor if carrying
 		switch isWalking	gPushCostFactor		# if otherwise walking, it has to be pushing
@@ -935,6 +930,7 @@ assign rollingResistanceCost
 		multiply rollingResistanceFactor sub 1 gTimeOptimalityFactor
 
 assign rollingResistanceCostUphill
+	switch and not AllowCarrying isCarryingUphill	9999
 	multiply
 		switch isCarryingUphill	gCarryCostFactor	# Use carrrycostfactor if carrying
 		switch isWalkingUphill	gPushCostFactor		# if otherwise walking, it has to be pushing
@@ -942,6 +938,7 @@ assign rollingResistanceCostUphill
 		multiply rollingResistanceFactor sub 1 gTimeOptimalityFactor
 
 assign rollingResistanceCostDownhill
+	switch and not AllowCarrying isCarryingDownhill	9999
 	multiply
 		switch isCarryingDownhill	gCarryCostFactor	# Use carrrycostfactor if carrying
 		switch isWalkingDownhill	gPushCostFactor		# if otherwise walking, it has to be pushing
@@ -1081,12 +1078,11 @@ assign bikeSpeedLimit
 # Additionally make sure that bike speed is at least somewhat positive to avoid
 # div by zero errors.
 assign equivSlopeCr	multiply 100 multiply gCr sub rollingResistanceFactor 1	# Equivalent (virtual) slope due to rolling resistance difference to asphalt
-
-assign speeddvdsm2	divide sub gSpeedm1 gSpeedm2 gSlopeStepSize		# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
-assign speeddvdsm1	divide sub gSpeed0  gSpeedm1 gSlopeStepSize		# Slope of speed over slope curve between -1*slopeStepSize and    0
-assign speeddvdsp1	divide sub gSpeedp1 gSpeed0  gSlopeStepSize		# Slope of speed over slope curve between    0             and    slopeStepSize
-assign speeddvdsp2	divide sub gSpeedp2 gSpeedp1 gSlopeStepSize		# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
-assign speeddvdsp3	divide sub gSpeedp3 gSpeedp2 gSlopeStepSize		# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
+assign speeddvdsm2	divide sub gSpeedm1 gSpeedm2 sub gSlopem1 gSlopem2	# Slope of speed over slope curve between -2*slopeStepSize and -1*slopeStepSize
+assign speeddvdsm1	divide sub gSpeed0  gSpeedm1 sub gSlope0  gSlopem1	# Slope of speed over slope curve between -1*slopeStepSize and    0
+assign speeddvdsp1	divide sub gSpeedp1 gSpeed0  sub gSlopep1 gSlope0	# Slope of speed over slope curve between    0             and    slopeStepSize
+assign speeddvdsp2	divide sub gSpeedp2 gSpeedp1 sub gSlopep2 gSlopep1	# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
+assign speeddvdsp3	divide sub gSpeedp3 gSpeedp2 sub gSlopep3 gSlopep2	# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
 
 # new bike speed for -SlopeMax% slope
 assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
@@ -1094,15 +1090,15 @@ assign bikeSpeedDownhill
 	max 0.001
 	min switch isCarryingDownhill	2.5	999		# Speed while carrying the bike
 	min switch isWalkingDownhill	5	999		# Speed while pushing the bike
-	switch lesser tmpSlope multiply -1 gSlopeStepSize	# choose interpolation point
-		add gSpeedm2 multiply speeddvdsm2 sub tmpSlope multiply -2 gSlopeStepSize
-	switch lesser tmpSlope 0
-		add gSpeedm1 multiply speeddvdsm1 sub tmpSlope multiply -1 gSlopeStepSize
-	switch lesser tmpSlope gSlopeStepSize
-		add gSpeed0 multiply speeddvdsp1 tmpSlope
-	switch lesser tmpSlope multiply 2 gSlopeStepSize
-		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
-		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
+	switch lesser tmpSlope gSlopem1	# choose interpolation point
+		add gSpeedm2 multiply speeddvdsm2 sub tmpSlope gSlopem2
+	switch lesser tmpSlope gSlope0
+		add gSpeedm1 multiply speeddvdsm1 sub tmpSlope gSlopem1
+	switch lesser tmpSlope gSpeedp1
+		add gSpeed0  multiply speeddvdsp1 sub tmpSlope gSlope0
+	switch lesser tmpSlope gSlopep2
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopep1
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope gSlopep2
 
 # New bike speed for 0% slope
 assign tmpSlope	equivSlopeCr
@@ -1110,11 +1106,11 @@ assign bikeSpeed
 	max 0.001
 	min switch isCarrying			2.5	999		# Speed while carrying the bike
 	min switch isWalking			5	999		# Speed while pushing the bike
-	switch lesser tmpSlope gSlopeStepSize				# choose interpolation point
-		add gSpeed0 multiply speeddvdsp1 tmpSlope
-	switch lesser tmpSlope multiply 2 gSlopeStepSize
-		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
-		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
+	switch lesser tmpSlope gSlopep1		# choose interpolation point
+		add gSpeed0  multiply speeddvdsp1 sub tmpSlope gSlope0
+	switch lesser tmpSlope gSlopep2
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopep1
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope gSlopep2
 
 # new bike speed for +SlopeMax% slope
 assign tmpSlope	add equivSlopeCr SlopeMax
@@ -1122,27 +1118,64 @@ assign bikeSpeedUphill
 	max 0.001
 	min switch isCarryingUphill		2.5	999		# Speed while carrying the bike
 	min switch isWalkingUphill		5	999		# Speed while pushing the bike
-	switch greater tmpSlope multiply 2 gSlopeStepSize	# choose interpolation point
-		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope multiply 2 gSlopeStepSize
-	switch greater tmpSlope gSlopeStepSize
-		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopeStepSize
-		add gSpeed0  multiply speeddvdsp1 tmpSlope
+	switch greater tmpSlope gSlopep2	# choose interpolation point
+		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope gSlopep2
+	switch greater tmpSlope gSlopep1
+		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopep1
+		add gSpeed0  multiply speeddvdsp1 sub tmpSlope gSlope0
+
 
 # Limit bike speed
 #
-# Since the speed limitation is nonlinear with respect to the slope, but the
-# Brouter computation is linear (interpolation), this step is not quite
-# accurate, but there is no other known better solution.
+# Compute slope at which the bikeSpeedLimit is reached. 
+assign bikeSpeedLimitEquivalentSlope
+	sub 
+		switch greater bikeSpeedLimit gSpeedm1
+			add gSlopem1 divide sub bikeSpeedLimit gSpeedm1 speeddvdsm2
+		switch greater bikeSpeedLimit gSpeed0
+			add gSlope0  divide sub bikeSpeedLimit gSpeed0  speeddvdsm1
+		switch greater bikeSpeedLimit gSpeedp1
+			add gSlopep1 divide sub bikeSpeedLimit gSpeedp1 speeddvdsp1
+		switch greater bikeSpeedLimit gSpeedp2	
+			add gSlopep2 divide sub bikeSpeedLimit gSpeedp2 speeddvdsp2
+			add gSlopep3 divide sub bikeSpeedLimit gSpeedp3 speeddvdsp3
+		equivSlopeCr	# substract equivalent slope for rollnig resistance	
+
+# If the speed limit is hit at negative slope, the limitation can be represented
+# perfectly by utilising the "downhillmaxslopecost" parameter. For uphills, the
+# equivalent parameter "uphillmaxslopecost" is already used for max slope
+# limitation. Thus, if the speed limitation is reached during uphill segments,
+# the limitation cannot be represented as good as in downhill segments. 
 assign limitedBikeSpeed			min bikeSpeedLimit bikeSpeed
 assign limitedBikeSpeedUphill	min bikeSpeedLimit bikeSpeedUphill
 assign limitedBikeSpeedDownhill	min bikeSpeedLimit bikeSpeedDownhill
 
-# routing should be at least partially done time optimal
-#
 assign speedCost			multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeed
 assign speedCostUphill		multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeedUphill
-assign speedCostDownhill	multiply gTimeOptimalityFactor divide gSpeed0 limitedBikeSpeedDownhill
+assign speedCostDownhill	multiply gTimeOptimalityFactor divide gSpeed0 
+	switch lesser bikeSpeedLimitEquivalentSlope 0
+		bikeSpeedDownhill
+		limitedBikeSpeedDownhill
 
+# Speed limitation for negative slopes
+# When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
+#"downhillcost". Most likely = elevationbufferreduce
+assign downhillmaxslope
+	switch and
+		lesser bikeSpeedLimitEquivalentSlope 0
+		greater bikeSpeedLimitEquivalentSlope multiply -1 elevationbufferreduce
+	sub multiply -1 bikeSpeedLimitEquivalentSlope gSlopeCutoff		# True
+	elevationbufferreduce											# False
+	
+assign dscdhm divide sub speedCost speedCostDownhill multiply 0.01 sub gSlope0 gSlopem2
+assign DownhillMaxSlopeAdditionalCost
+	switch and
+		lesser bikeSpeedLimitEquivalentSlope 0
+		greater bikeSpeedLimitEquivalentSlope multiply -1 elevationbufferreduce
+	dscdhm
+	0	
+assign downhillmaxslopecost		add DownhillMaxSlopeAdditionalCost downhillcost
+		
 
 # Traffic Cost
 #-------------------------------------------------------------------------------
@@ -1319,7 +1352,7 @@ assign weightedWaterCost
 
 # here only costs not handled by the other parts are applied
 # 128 Mio tags,  (11-2018) - https://taginfo.openstreetmap.org/keys/smoothness#values
-assign highwayCostCommon
+assign highwayCost
 	# disallow non existing highways, motorways and motorroads
 	switch and highway= not route=ferry  				10000	# exclude rivers, rails etc.
 	switch    highway=proposed|abandoned|construction   10000	# construction sites 
@@ -1359,21 +1392,6 @@ assign highwayCostCommon
 	switch     highway=steps                        0.0		# Treppen
 	switch     route=ferry                      	0.0 	# Fähren
 													0.0		# Default
-
-assign highwayCost
-	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
-	switch and not AllowCarrying isCarrying			9999
-													highwayCostCommon
-
-assign highwayCostUphill
-	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
-	switch and not AllowCarrying isCarryingUphill	9999
-													highwayCostCommon
-
-assign highwayCostDownhill
-	# in voice-hint-processing (if cost are >=10000, the decoder will delete them)
-	switch and not AllowCarrying isCarryingDownhill	9999
-													highwayCostCommon
 
 
 # Access Costs
