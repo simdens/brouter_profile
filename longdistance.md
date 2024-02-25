@@ -8,7 +8,6 @@ surfaces, hills and high traffic.
 ToDo
 --------------------------------------------------------------------------------
 - rework speed limit to include new possibilities
-- rethink energy optimized cost
 
 --------------------------------------------------------------------------------
 
