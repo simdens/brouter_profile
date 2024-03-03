@@ -71,8 +71,10 @@ Sets the continuous power capability of the biker and is used for computing the 
 Parameter used for bike speed calculation and elevation penalty computation.
 
 ### `SlopeMax`
-Is the maximum allowed slope in uphill and downhill direction. Normally one has to dismount at this slope in uphill direction. If the slope is larger than this value, there will be an additional penalty.
-This Slope is used for the computation of the `costfactor` interpolation points `downhillcostfactor`and `uphillcostfactor`.
+Is the maximum allowed slope in uphill and downhill direction.
+Normally one has to dismount at this slope in uphill direction.
+If the slope is larger than this value, there will be an additional penalty.
+
 
 ### `TimeOptimalityPercentage`
 Selects the focus of the routing. If this is 0%, routing will be done in a energy optimized manner. Using more energy will be penalized irrespective of the needed time. If this value is 100%, the most time efficient route is in favor irrespective of the needed energy.
@@ -94,6 +96,11 @@ Constants not intended to be changed by the user.
 Computed Constants
 --------------------------------------------------------------------------------
 Constants which are computed depending on the given parameters.
+
+### `gUpDownSlope`
+This Slope is used for the computation of the `costfactor` interpolation points `downhillcostfactor`and `uphillcostfactor`.
+The minimum Slope between the interpolation points is 8%. 
+This is to improve the interpolation accuracy (at least it is believed to improve the accuracy :-D )
 
 ### Speed Parameter Calculation:
 This section computes the bike speed for different slopes.

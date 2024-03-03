@@ -126,6 +126,10 @@ assign gClassifierFerry    	3
 # scale
 assign gTimeOptimalityFactor min 1 max 0 divide TimeOptimalityPercentage 100
 
+# interpolation point position
+# Slope for uphillcostfactor and downhillcostfactor
+assign gUpDownSlope		min 8 SlopeMax
+
 # BRouter internal kinematic model parameters for travel time calculation
 assign maxSpeed   min gMaxBikerSpeed 45				# absolute maximum speed in km/h for travel time computation
 assign S_C_x      multiply 0.5 multiply gCwA gRho	# drag coefficient times the reference area times half the air density for travel time computation
@@ -138,7 +142,7 @@ assign totalMass  SystemWeight
 #-------------------------------------------------------------------------------
               
 # Constants          
-assign gSlopeStepSize	min 4 multiply 0.5 SlopeMax
+assign gSlopeStepSize   multiply 0.5 gUpDownSlope	# step size for speed interpolation
 assign gmPn				multiply -1   multiply NominalPower gEta
 assign ghrhoCwA			multiply  0.5 multiply gRho gCwA
 
@@ -401,7 +405,7 @@ assign uphillcutoff						gSlopeCutoff
 # downhillcostfactor) are used by 100%. "elevationbufferreduce" is set to a 
 # very high value to make the speed limitation algorithm work. Nevertheless, 
 # "uphillcostfactor" and "downhillcostfactor" are initially computed for 
-# "SlopeMax" slope and as the very last step interpolated to the 
+# "gUpDownSlope" and as the very last step interpolated to the 
 # "elevationbufferreduce" slope.
 assign elevationbufferreduce			sub 20 gSlopeCutoff
 
@@ -419,7 +423,7 @@ assign downhillcost				# cost per vertical meter
 		multiply sub 1 gTimeOptimalityFactor 0
 		0
 
-# additional cost per vertical meter for slope larger than "slopemax"
+# additional cost per vertical meter for slope larger than "SlopeMax"
 # Cost due to the increased energy usage due to pushing the bike in steep hills
 assign gUphillMaxSlopeAdditionalCost	multiply gHeight2Length sub gPushCostFactor 1
 # Uphill cost for elevation exceeding the "uphillmaxslope" threshold
@@ -1075,7 +1079,7 @@ assign bikeSpeedLimit
 			multiply 1.1 maxAllowedSpeed
 			add      5.0 maxAllowedSpeed
 
-# speed for uphills and downhills  with "SlopeMax"
+# speed for uphills and downhills  with "gUpDownSlope"
 # Here the additional current rolling resistance is included into the speed
 # calculation
 #
@@ -1088,8 +1092,8 @@ assign speeddvdsp1	divide sub gSpeedp1 gSpeed0  sub gSlopep1 gSlope0	# Slope of 
 assign speeddvdsp2	divide sub gSpeedp2 gSpeedp1 sub gSlopep2 gSlopep1	# Slope of speed over slope curve between    slopeStepSize and  2*slopeStepSize
 assign speeddvdsp3	divide sub gSpeedp3 gSpeedp2 sub gSlopep3 gSlopep2	# Slope of speed over slope curve between  2*slopeStepSize and  3*slopeStepSize
 
-# new bike speed for -SlopeMax% slope
-assign tmpSlope	add equivSlopeCr multiply -1 SlopeMax
+# new bike speed for -gUpDownSlope% slope
+assign tmpSlope	add equivSlopeCr multiply -1 gUpDownSlope
 assign bikeSpeedDownhill
 	max 0.001
 	min switch isCarryingDownhill	2.5	999		# Speed while carrying the bike
@@ -1116,8 +1120,8 @@ assign bikeSpeed
 		add gSpeedp1 multiply speeddvdsp2 sub tmpSlope gSlopep1
 		add gSpeedp2 multiply speeddvdsp3 sub tmpSlope gSlopep2
 
-# new bike speed for +SlopeMax% slope
-assign tmpSlope	add equivSlopeCr SlopeMax
+# new bike speed for +gUpDownSlope% slope
+assign tmpSlope	add equivSlopeCr gUpDownSlope
 assign bikeSpeedUphill
 	max 0.001
 	min switch isCarryingUphill		2.5	999		# Speed while carrying the bike
@@ -1163,10 +1167,10 @@ assign speedCostDownhill	multiply gTimeOptimalityFactor divide gSpeed0
 		
 assign speedCostDownhill	multiply gTimeOptimalityFactor
 	switch lesser bikeSpeedLimitEquivalentSlope 0
-		switch greater bikeSpeedLimitEquivalentSlope multiply -1 SlopeMax
+		switch greater bikeSpeedLimitEquivalentSlope multiply -1 gUpDownSlope
 			sub 1 
 				multiply 
-					divide multiply -1 SlopeMax bikeSpeedLimitEquivalentSlope 
+					divide multiply -1 gUpDownSlope bikeSpeedLimitEquivalentSlope 
 					sub 1 divide gSpeed0 bikeSpeedLimit
 			divide gSpeed0 bikeSpeedDownhill
 		divide gSpeed0 limitedBikeSpeedDownhill
@@ -1489,9 +1493,9 @@ assign uphillcostfactor
 	add rollingResistanceCostUphill					# Cost for surface / rolling resistance
 	add speedCostUphill								# speed cost
 		trafficCostUphill							# traffic cost
-# Scale from "SlopeMax" to "elevationbufferreduce" slope
+# Scale from "gUpDownSlope" to "elevationbufferreduce" slope
 assign uphillcostfactor
-	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub uphillcostfactor costfactor SlopeMax
+	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub uphillcostfactor costfactor gUpDownSlope
 		
 # for downhill terrain		
 assign downhillcostfactor
@@ -1501,9 +1505,9 @@ assign downhillcostfactor
 	add rollingResistanceCostDownhill				# Cost for surface / rolling resistance
 	add speedCostDownhill							# speed cost
 		trafficCostDownhill							# traffic cost
-# Scale from "SlopeMax" to "elevationbufferreduce" slope
+# Scale from "gUpDownSlope" to "elevationbufferreduce" slope
 assign downhillcostfactor
-	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub downhillcostfactor costfactor SlopeMax
+	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub downhillcostfactor costfactor gUpDownSlope
 
 
 # Initial Costs 
