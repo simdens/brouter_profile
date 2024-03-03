@@ -1266,7 +1266,12 @@ assign trafficPerClass
 	switch estimated_traffic_class=1	multiply   5000 class2traffic
 										0
 
-assign traffic divide add trafficPerClass multiply 2 trafficPerHighway 3
+# For primary, secondary and tertiary, the pseudo tag "estimated_traffic_class"
+# is available and can be taken into considerations.
+assign traffic 
+	switch highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+		multiply 0.5 add trafficPerClass trafficPerHighway
+		trafficPerHighway
 
 # actual speed of vehicles will be estimated by the minimum of the taged max 
 # allowed speed and some estimations (for Germany)
