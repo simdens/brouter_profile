@@ -5,10 +5,6 @@ Brouter V1.7.4 or newer is needed
 A Brouter profile suited for bicycle long distance travels. It avoids bad 
 surfaces, hills and high traffic.
 
-ToDo
---------------------------------------------------------------------------------
-- rework speed limit to include new possibilities
-
 --------------------------------------------------------------------------------
 
 This documentation tries to explain the profile in a bit more detail while 
@@ -76,6 +72,7 @@ Parameter used for bike speed calculation and elevation penalty computation.
 
 ### `SlopeMax`
 Is the maximum allowed slope in uphill and downhill direction. Normally one has to dismount at this slope in uphill direction. If the slope is larger than this value, there will be an additional penalty.
+This Slope is used for the computation of the `costfactor` interpolation points `downhillcostfactor`and `uphillcostfactor`.
 
 ### `TimeOptimalityPercentage`
 Selects the focus of the routing. If this is 0%, routing will be done in a energy optimized manner. Using more energy will be penalized irrespective of the needed time. If this value is 100%, the most time efficient route is in favor irrespective of the needed energy.
@@ -201,7 +198,7 @@ Practical tests showed that starting newtons method with a speed $v_0 = 20m/s$ w
 Thus 5 iteration steps are used in the profile.
 
 #### $v$ Interpolation Points
-For performance reasons, Newthon's method for computing $v$ must only be used once in the global section.
+For performance reasons, Newthon's method for computing $v$ should only be used once in the global section.
 In the way section, $v$ is estimated by linear interpolation between characteristic points. 
 To find good characteristic points, the speed over slope diagram for an example setting is shown:
 
@@ -492,9 +489,54 @@ For time optimized routes, the rolling resistance is included in the speed cost.
 
 Speed Cost
 --------------------------------------------------------------------------------
-The biker speed depending on the slope and current rolling resistance coefficient is computed.
-The speed is computed by linear interpolation between the interpolation points computed in the global context.
-The speed cost is included for time optimized routes.
+Speed cost are the quotient between the bike speed for the current way segment, depending on slope and surface, and the bike speed of a perfect way segment, flat and perfect asphalt. 
+The speed cost is only included for time optimized routes, i.e. `TimeOptimalityPercentage > 0`.
+
+The speed cost respects speed limits.
+Limits depend on
+
+- **maximum allowed speed** of current way segment or, if not given explicitly, an estimation depending on the highway type. It is assumed that the cyclist exceeds the official speed limit by 10% or 5km/h, whichever is greater.
+- **maximum desired speed** of the biker depending on the highway type
+
+A limitation is a nonlinear function which is realized by using the `downhillmaxslope` and the `downhillmaxslopecost`[^downlim].
+An example is given in the following chart:
+
+[^downlim]: While the uphill pendants of these parameters are used for uphill slope limitation, in downwards direction this parameters are still free to use. 
+
+```mermaid
+xychart-beta
+    title "Speedcost over Slope"
+    x-axis "Slope in %" -12 --> 12
+    y-axis "Speedcost" 0 --> 4
+    bar  [  -1,   -1,   -1,   -1, 0.37,   -1,   -1,   -1,   -1,   -1,   -1,   -1, 1.00,   -1,   -1,   -1,   -1,   -1,   -1,   -1, 3.76,   -1,   -1,   -1,   -1]
+    line [0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.57, 0.62, 0.68, 0.76, 0.86, 1.00, 1.19, 1.45, 1.75, 2.10, 2.50, 2.89, 3.33, 3.76, 4.17, 4.61, 5.04, 5.47]
+    line [0.06, 0.14, 0.22, 0.30, 0.37, 0.45, 0.53, 0.61, 0.69, 0.77, 0.84, 0.92, 1.00, 1.34, 1.69, 2.03, 2.38, 2.72, 3.07, 3.41, 3.76, 4.10, 4.45, 4.79, 5.14]
+    line [0.47, 0.39, 0.31, 0.24, 0.16, 0.08, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00]
+    line [0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.53, 0.61, 0.69, 0.77, 0.84, 0.92, 1.00, 1.34, 1.69, 2.03, 2.38, 2.72, 3.07, 3.41, 3.76, 4.10, 4.45, 4.79, 5.14]
+```
+
+
+The used parameters are $A_e = 0,6005m^2$, $P = 165W$, $C_r = 0,00363$, $m = 100kg$ and a speed limit of $49,4km/h$.
+The darker rounded line shows the accurate speed cost.
+The green line is the resulting linearized speed cost which is the sum of the linearized speed cost in orange and the `downhillmaxslopecost` in light grey.
+The used interpolation points for the linearized speed costs are shown as bars and placed on `MaxSlope`.
+
+The algorithm to compute the interpolation points an the `downhillmaxslopecost` and `downhillmaxslope` parameters is as follows:
+
+- computing bike speed for `-MaxSlope`, 0% and `+MaxSlope` by linear interpolation between the 6 interpolation points from global context. The rolling resistance coefficient is taken into consideration by computing an equivalent slope for the current rolling resistance.
+- computing the bike speed limit
+- computing the slope at which the bike speed limit is reached
+  - `bikeSpeedLimitEquivalentSlope >= 0`
+     - Since `uphillmaxslopecost`and `uphillmaxslope` are already used for slope limitation and thus cannot be used for the speed limitation, the second best thing to do is just limiting the interpolation points.
+  - `bikeSpeedLimitEquivalentSlope < 0`
+     - `bikeSpeedLimitEquivalentSlope > -MaxSlope`
+         - compute speed cost at `bikeSpeedLimitEquivalentSlope`and extrapolate to `-MaxSlope`. This is the new speed cost interpolation point.
+     - `bikeSpeedLimitEquivalentSlope <= -MaxSlope`
+         - compute speed cost at `-MaxSlope`with speed at `-MaxSlope`
+     - set `downhillmaxslope = bikeSpeedLimitEquivalentSlope`
+     - set `uphillmaxslopecost` such that it compensates the speed cost change for slopes `< downhillmaxslope`
+
+⇒ If current way segment slope is `> elevationbufferreduce`, this algorithm is not correct anymore. Thus `elevationbufferreduce`needs to be set to a large enough value.
 
 
 Traffic Cost

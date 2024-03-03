@@ -398,8 +398,12 @@ assign downhillcutoff					gSlopeCutoff
 assign uphillcutoff						gSlopeCutoff
 
 # When reaching the "elevationbufferreduce" slope, uphillcostfactor (or 
-# downhillcostfactor) are used by 100%
-assign elevationbufferreduce			sub SlopeMax gSlopeCutoff
+# downhillcostfactor) are used by 100%. "elevationbufferreduce" is set to a 
+# very high value to make the speed limitation algorithm work. Nevertheless, 
+# "uphillcostfactor" and "downhillcostfactor" are initially computed for 
+# "SlopeMax" slope and as the very last step interpolated to the 
+# "elevationbufferreduce" slope.
+assign elevationbufferreduce			sub 20 gSlopeCutoff
 
 # When exceeding "uphillmaxslope", "uphillmaxslopecost" is used instead of 
 # "uphillcost". Most likely = elevationbufferreduce
@@ -1156,6 +1160,16 @@ assign speedCostDownhill	multiply gTimeOptimalityFactor divide gSpeed0
 	switch lesser bikeSpeedLimitEquivalentSlope 0
 		bikeSpeedDownhill
 		limitedBikeSpeedDownhill
+		
+assign speedCostDownhill	multiply gTimeOptimalityFactor
+	switch lesser bikeSpeedLimitEquivalentSlope 0
+		switch greater bikeSpeedLimitEquivalentSlope multiply -1 SlopeMax
+			sub 1 
+				multiply 
+					divide multiply -1 SlopeMax bikeSpeedLimitEquivalentSlope 
+					sub 1 divide gSpeed0 bikeSpeedLimit
+			divide gSpeed0 bikeSpeedDownhill
+		divide gSpeed0 limitedBikeSpeedDownhill
 
 # Speed limitation for negative slopes
 # When exceeding "downhillmaxslope", "downhillmaxslopecost" is used instead of 
@@ -1475,6 +1489,9 @@ assign uphillcostfactor
 	add rollingResistanceCostUphill					# Cost for surface / rolling resistance
 	add speedCostUphill								# speed cost
 		trafficCostUphill							# traffic cost
+# Scale from "SlopeMax" to "elevationbufferreduce" slope
+assign uphillcostfactor
+	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub uphillcostfactor costfactor SlopeMax
 		
 # for downhill terrain		
 assign downhillcostfactor
@@ -1484,6 +1501,9 @@ assign downhillcostfactor
 	add rollingResistanceCostDownhill				# Cost for surface / rolling resistance
 	add speedCostDownhill							# speed cost
 		trafficCostDownhill							# traffic cost
+# Scale from "SlopeMax" to "elevationbufferreduce" slope
+assign downhillcostfactor
+	add costfactor multiply add elevationbufferreduce gSlopeCutoff divide sub downhillcostfactor costfactor SlopeMax
 
 
 # Initial Costs 
