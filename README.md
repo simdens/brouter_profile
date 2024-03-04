@@ -1,6 +1,6 @@
 # Longdistance Bike profile for [BRouter Android application](http://brouter.de/brouter/) 
 
-( see Brouter-Web [Brouter-web](http://brouter.de/brouter-web/) as web front end)
+(see Brouter-Web [Brouter-web](http://brouter.de/brouter-web/) as web front end)
  
 This contains profiles for long distance routing initially developed for road bikes.
 
@@ -25,8 +25,9 @@ Related projects\:
 ## Profiles
 ### longdistance.brf
    * Currently maintained
-   * Brouter Version >=1.7.4 needed which includes _DIVIDE_ command.
+   * Brouter Version >=1.7.4 needed which includes `divide` command.
+   * [Profile Documentation](longdistance.md)
 
 ### fastbike_longdistance_legacy.brf
    * Profile for <=1.7.3 versions of Brouter
-   * currently not maintained
+   * not maintained anymore
