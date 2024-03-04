@@ -27,7 +27,7 @@ Profile preferences:
 ### longdistance.brf
    * Currently maintained
    * Brouter Version >=1.7.4 needed which includes `divide` command.
-   * [Profile Documentation](longdistance.md)
+   * [Profile Documentation](longdistance.md) available
 
 ### fastbike_longdistance_legacy.brf
    * Profile for <=1.7.3 versions of Brouter
