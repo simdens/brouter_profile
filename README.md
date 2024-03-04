@@ -1,6 +1,6 @@
-# Longdistance Bike profile for [BRouter Android application](http://brouter.de/brouter/) 
+# Long Distance Bike profile for [BRouter](http://brouter.de/brouter/) 
 
-(see Brouter-Web [Brouter-web](http://brouter.de/brouter-web/) as web front end)
+(see [Brouter-Web](http://brouter.de/brouter-web/) as web front end)
  
 This contains profiles for long distance routing initially developed for road bikes.
 
