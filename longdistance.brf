@@ -1220,7 +1220,7 @@ assign nLanes
 						1
 
 # Traffic per highway type per hour according to DTV statistics 2020 Baden-Württemberg, Germany.
-# 2020 - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2020_Excel.zip
+# 2020 - Germany, Baden-Württemberg - https://mobidata-bw.de/vm/Endergebnisse_Strassenverkehrszaehlung_BW/Ergebnisse_2020_Excel.zip
 assign trafficPerHighway
 	switch highway=trunk|trunk_link			# Schnellstraßen (wie BAB) und Auffahrten
 		switch lesser nLanes 3		multiply 255.6 nLanes	# 24535/24/4 =~ 255.6
@@ -1237,18 +1237,19 @@ assign trafficPerHighway
 		switch lesser nLanes 1.5	multiply  53.4 nLanes	# 2562/24/2 =~ 53.4
 		switch lesser nLanes 2		multiply  42.3 nLanes	# 3049/24/3 =~ 42.3
 									multiply  88.8 nLanes	# 8527/24/4 =~ 88.8
-	switch highway=unclassified		0		# Dorfstraßen	  
-	switch highway=residential		0		# Wohnstraße
-	switch highway=service			0		# Zugangsstraßen
-	switch highway=living_street	0		# Spielstraße
-	switch highway=pedestrian		0		# Fußgängerzone
-	switch highway=bridleway		0		# Reit- und Fußweg
-	switch highway=cycleway			0		# Radweg
-	switch highway=footway			0		# Gehweg
-	switch highway=path				0		# Pfad 
-	switch highway=track 			0		# Feldweg
-	switch highway=road				0		# unbekannter Typ
-									0		# Default
+# Below values without any evidence
+	switch highway=unclassified		25		# Dorfstraßen	  
+	switch highway=residential		12		# Wohnstraße
+	switch highway=service			 6		# Zugangsstraßen
+	switch highway=living_street	 6		# Spielstraße
+	switch highway=pedestrian		 0		# Fußgängerzone
+	switch highway=bridleway		 0		# Reit- und Fußweg
+	switch highway=cycleway			 0		# Radweg
+	switch highway=footway			 0		# Gehweg
+	switch highway=path				 0		# Pfad 
+	switch highway=track 			 0		# Feldweg
+	switch highway=road				 0		# unbekannter Typ
+									 0		# Default
 
 
 # Different traffic classes
