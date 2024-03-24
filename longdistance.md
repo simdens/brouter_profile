@@ -107,7 +107,7 @@ This section computes the bike speed for different slopes.
 The formulas are based on the [kreuzotter calculator](http://www.kreuzotter.de/deutsch/speed.htm).
 
 The balance of forces for a bike ride is
-	$$P \eta = m a + v \left( F_r + F_g + F_v(v) + F_a(v^2) \right) $$
+$$P \eta = m a + v \left( F_r + F_g + F_v(v) + F_a(v^2) \right)$$
 with 
 biker power $P$,
 efficiency of the mechanical power transmission $\eta$,
@@ -168,33 +168,39 @@ To compute $v$, the simplified terms for the forces are used.
 Since BRouter does not support the calculation of (square)roots, $v$ is computed by newthon's method for root finding.
 
 The overall term is:
-$$O
-\overset{!}{=}
-\underbrace{
-	- P \eta 
-	+ v g m \left( C_r + \frac{s}{100} \right)
-	+ v^2 C_v
-	+ v^3 \frac{1}{2} \rho A_e
-}_{=f(v)}$$
+```math
+	O
+	\overset{!}{=}
+	\underbrace{
+		- P \eta 
+		+ v g m \left( C_r + \frac{s}{100} \right)
+		+ v^2 C_v
+		+ v^3 \frac{1}{2} \rho A_e
+	}_{=f(v)}
+```
 For Newthon's method, the derivative
-$$\frac{df(v)}{dv}
-=
-        g m \left( C_r + \frac{s}{100} \right)
-+ 2 v   C_v
-+ 3 v^2 \frac{1}{2} \rho A_e$$
+```math
+	\frac{df(v)}{dv}
+	=
+	        g m \left( C_r + \frac{s}{100} \right)
+	+ 2 v   C_v
+	+ 3 v^2 \frac{1}{2} \rho A_e
+```
 is additionally needed. 
  
 Now it is possible to find a $v$ with $f(v) = 0$ by iteration steps of
-$$v_{n+1}
-=
-v_n
--
-\frac
-	{f(v_n)}
-	{\left.
-		\frac{df(v)}{dv}
-	\right|_{v=v_n}}
-.$$
+```math
+	v_{n+1}
+	=
+	v_n
+	-
+	\frac
+		{f(v_n)}
+		{\left.
+			\frac{df(v)}{dv}
+		\right|_{v=v_n}} 
+.
+```
 Practical tests showed that starting newtons method with a speed $v_0 = 20m/s$ will always reach a result with high accuracy after 5 iteration steps. 
 Thus 5 iteration steps are used in the profile.
 
@@ -223,13 +229,17 @@ In general, interpolation points are chosen to have a distance of half `SlopeMax
 For energy optimized routing, the cost for push and carry segments is scaled to somewhat represent tho worse energy efficiency of pushing or carrying compared to cycling. 
 According to this [publication](https://dynamic-med.biomedcentral.com/counter/pdf/10.1186/1476-5918-8-4.pdf), "a human at 70kg requires about 60W to walk at 5 km/h on a firm and flat ground." 
 The energy $E_p$ for pushing a bike for one km can be calculated by
-$$E_p 
-= \frac{60\text{W}}{5\text{km/h}} + F_r \text{km}
-= (12 + C_r 54.5) \text{Wh/km}
-\approx 12.2 \text{Wh/km}$$
+```math
+	E_p 
+	= \frac{60\text{W}}{5\text{km/h}} + F_r \text{km}
+	= (12 + C_r 54.5) \text{Wh/km}
+	\approx 12.2 \text{Wh/km}
+```
 for $C_r = 0.00363$.
 The energy $E_c$ needed for 1km cycling a bike on a flat surface with the same rolling resistance can be computed by
-$$E_c = \frac{P}{v_0}$$
+```math
+	E_c = \frac{P}{v_0}
+```
 with the speed $v_0$ at a slope of 0%. 
 The energy efficiency factor `gPushCostFactor` between pushing and cycling is the ration $E_p/E_c$.
 
@@ -244,7 +254,10 @@ Then, this cost is scaled depending on `timeOptimalityFactor`, which represents 
 
 The variable `height2Length`stores the factor to get the equivalent distance for one meter of height. 
 It can be computed by
-$$\text{height2Length} = \frac{m g}{\frac{P}{v}} =  \frac{m g v}{P}.$$
+```math
+	\text{height2Length} = \frac{m g}{\frac{P}{v}} =  \frac{m g v}{P}
+	.
+```
 
 
 ### Constants depending on speed or elevation constants
@@ -256,7 +269,10 @@ For energy optimized routes, the costs are the way which can be traveled with th
 For time optimized routes, the cost is the way difference for deceleration and accelerating afterwards compared to continuous cruising speed.
 
 The equivalent way / the cost for the energy optimized routes can be calculated by
-$$\text{speedXCostEnergy} = \frac{v_0}{P} \left(\frac{1}{2} m v_0^2 -  \frac{1}{2} m v_x^2 \right).$$
+```math
+	\text{speedXCostEnergy} = \frac{v_0}{P} \left(\frac{1}{2} m v_0^2 -  \frac{1}{2} m v_x^2 \right)
+	.
+```
 $\frac{v_0}{P}$ is the way travelled with 1J of energy at nominal speed $v_0$.
 This is scaled with the braked energy.
 
@@ -264,15 +280,21 @@ For the speed optimized route, the cost shall represent the way difference betwe
 This calculation involves some more complex computation and thus is done offline.
 For $v_0 = 26.3km/h$, $P=165W$, $m=100kg$ and $s = 0\%$, the result was, that the cost are roughly half of the cost for the energy optimized routing.
 Even for some variance in the stated parameters, this estimation is still valid.
-	$$\text{speedXCostTime} = \frac{1}{2} \text{speedXCostEnergy}$$
+```math
+	\text{speedXCostTime} = \frac{1}{2} \text{speedXCostEnergy}
+```
 
 Taking `timeOptimalityFactor` into account, this results in an overall cost for decelerating to o speed of `x` of
-$$\text{speedXCost}
-= 
-(1 - c_{tof}) \text{speedXCostEnergy}
-+
-c_{tof} \text{speedXCostTime}$$
-$$= (1 - \frac{1}{2} c_{tof}) \text{speedXCostEnergy}$$
+```math
+	\text{speedXCost}
+	= 
+	(1 - c_{tof}) \text{speedXCostEnergy}
+	+
+	c_{tof} \text{speedXCostTime}
+```
+```math
+	= (1 - \frac{1}{2} c_{tof}) \text{speedXCostEnergy}
+```
 with $c_{tof} = \text{timeOptimalityFactor}$.
 
 
@@ -290,13 +312,15 @@ For time efficient cost, sum of:
 - cost for time needed to dismounting (2s for dismount + 2s for mount)
 
 All together, this results in the formula:
-$$\text{initialPushCost} 
-= 
-\text{speed0Cost}
-+
-(1 - c_{tof}) 0.15m \cdot \text{height2length}
-+
-4s \cdot c_{tof} v_0$$
+```math
+	\text{initialPushCost} 
+	= 
+	\text{speed0Cost}
+	+
+	(1 - c_{tof}) 0.15m \cdot \text{height2length}
+	+
+	4s \cdot c_{tof} v_0
+```
 
 
 #### `initialFerryCost`
@@ -314,15 +338,19 @@ For time efficient cost, sum of:
 - cost for time needed to dismounting (2s for dismount + 2s for mount)
 - cost for waiting time (30min in average. One ferry every hour is assumed)
 
-$$\text{initialFerryCost}
-=
-(1 - c_{tof}) \left(\text{speed0CostEnergy} + 0.15m \cdot \text{height2length} \right)
-+
-c_{tof} \left(\text{speed0CostEnergy} + 4s \cdot v_0 + 30min \cdot v_0 \right)$$
-$$= 
-\text{initialPushCost} 
-+
-c_{tof} \cdot 30min \cdot v_0$$
+```math
+	\text{initialFerryCost}
+	=
+	(1 - c_{tof}) \left(\text{speed0CostEnergy} + 0.15m \cdot \text{height2length} \right)
+	+
+	c_{tof} \left(\text{speed0CostEnergy} + 4s \cdot v_0 + 30min \cdot v_0 \right)
+```
+```math
+	= 
+	\text{initialPushCost} 
+	+
+	c_{tof} \cdot 30min \cdot v_0
+```
 
 
 ### `trafficSignalCost`
@@ -337,11 +365,13 @@ For Traffic lights, it is assumed that
 Thus, the red light time is 45s and the mean waiting time is $50\% \cdot 22.5s = 11.25s$, assuming a uniform distribution of arrivals at the traffic light. 
 With a chance of 50%, the bike has to come to a full stop and accelerate to cruising speed afterwards. 
 The cost for traffic signals can be computed by
-$$\text{traffacSignalCost}
-=
-0.5 \cdot \text{speed0Cost}
-+
-c_{tof} \cdot 11.25s \cdot v_0$$
+```math
+	\text{traffacSignalCost}
+	=
+	0.5 \cdot \text{speed0Cost}
+	+
+	c_{tof} \cdot 11.25s \cdot v_0
+```
 
 
 Way Context
@@ -410,10 +440,14 @@ To make the change in rolling resistance for car tires, see above, somewhat comp
 If the normal force / mass stays the same, an increase in contact patch area will reduce increase in rolling resistance due to different surfaces - this is the MTB vs. Roadbike example. 
 
 Mathematically, the normal force per contact patch area, or pressure $p_c$, can be calculated by
-$$p_c = \frac{m g}{A_c}$$
+```math
+	p_c = \frac{m g}{A_c}
+```
 with the contact patch area $A_c$.
 Since we do not know the contact patch area, it has to be estimated by
-$$A_c \approx w \cdot l_c \approx w \cdot \frac{c_t}{p_t}$$
+```math
+	A_c \approx w \cdot l_c \approx w \cdot \frac{c_t}{p_t}
+```
 with the tire width $w$ and the contact patch length $l_c$. 
 The effective tire width is assumed to be known and assumed to be somewhat constant with respect to the tire air pressure $p_t$. 
 The contact patch length $l_c$ is unknown.
@@ -421,11 +455,19 @@ This length is assumed to be anti-proportional to the tire air pressure $p_t$, i
 The proportionality coefficient is named $c_t$ and unknown. 
 
 Since $g$ is constant and $c_t$ is assumed to be constant for all vehicle types, we can define a surface normalization factor, $snf$, by
-$$snf = \frac{p_c}{g c_t} = \frac{m p_t}{w}.$$
+```math
+	snf = \frac{p_c}{g c_t} = \frac{m p_t}{w}
+	.
+```
 For a car, i.e. Golf V with $m_{car}=1600kg$, $400kg$ per wheel, tire width $w_{car} = 225mm$ and tire air pressure $p_{t,car} = 2.2bar$, the $snf$ is
-$$snf_{car} \approx 4.293 \frac{\text{kg} \cdot \text{bar}}{\text{mm}}$$
+```math
+	snf_{car} \approx 4.293 \frac{\text{kg} \cdot \text{bar}}{\text{mm}}
+```
 This can be used to calculate the increase of the surface factor compared to perfect asphalt for the used bike tire by
-$$\text{surfaceFactor}_{bike} = 1 + \frac{snf_{Bike}}{snf_{car}} \left( \text{surfaceFactor}_{car} - 1 \right).$$
+```math
+	\text{surfaceFactor}_{bike} = 1 + \frac{snf_{Bike}}{snf_{car}} \left( \text{surfaceFactor}_{car} - 1 \right)
+	.
+```
 
 
 #### Touring Bike Example
@@ -436,8 +478,12 @@ Walking & Carrying Detection
 --------------------------------------------------------------------------------
 To detect if the bike needs to be pushed (⇒ *Walking*) or carried (⇒ *Walking* & *Carrying*), the bike category is compared to the estimation which bike category is needed.
 Id est:
-$$\text{isWalking} = \text{wayCategory} > \text{gBikeCategory}$$
-$$\text{isCarrying} = \text{wayCategory} > (\text{gBikeCategory} + 1)$$
+```math
+	\text{isWalking} = \text{wayCategory} > \text{gBikeCategory}
+```
+```math
+	\text{isCarrying} = \text{wayCategory} > (\text{gBikeCategory} + 1)
+```
 The $\text{isWalking}$ and $\text{isCarrying}$ flags are used later on.
 
 
