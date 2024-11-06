@@ -126,7 +126,7 @@ $$\beta = \text{atan}\left( \frac{s}{100} \right)$$
 with the slope $s$ in percent.
 This can be linearized to
 $$\beta \approx \frac{s}{100}.$$
-For $|s| < 17\%$, the linearization error is less than $1\%$.
+For $|s| < 17\\%$, the linearization error is less than $1\\\%$.
 
 #### Rolling Resistance $F_r$
 The rolling resistance $F_r$ is defined by
@@ -136,7 +136,7 @@ the gravity of the earth $g$,
 system mass $m$,
 rolling resistance coefficient $C_r$
 and the current inclination angle $\beta$ of the road.
-For $|\beta| < 8\degree$ or $|s|<14\%$, this can be linearized to
+For $|\beta| < 8\degree$ or $|s|<14\\%$, this can be linearized to
 $$F_r \approx g m C_r$$
 with an error of less than 1%.
  
@@ -144,7 +144,7 @@ with an error of less than 1%.
 $$F_g = g m \sin(\beta)$$
 This can be linearized to
 $$F_g = g m \frac{s}{100}$$
-for $|s| < 14\%$ with an linearization error of less than 1%. 
+for $|s| < 14\\%$ with an linearization error of less than 1%. 
  
 ### Air Resistance Force $F_a$
 $$F_a = \frac{1}{2} \rho A C_w v^2$$
@@ -541,7 +541,7 @@ The algorithm to compute the interpolation points an the `downhillmaxslopecost` 
      - `bikeSpeedLimitEquivalentSlope <= -MaxSlope`
          - compute speed cost at `-MaxSlope`with speed at `-MaxSlope`
      - set `downhillmaxslope = bikeSpeedLimitEquivalentSlope`
-     - set `uphillmaxslopecost` such that it compensates the speed cost change for slopes `< downhillmaxslope`
+     - set `downhillmaxslopecost` such that it compensates the speed cost change for slopes `< downhillmaxslope`
 
 ⇒ If current way segment slope is `> elevationbufferreduce`, this algorithm is not correct anymore. Thus `elevationbufferreduce`needs to be set to a large enough value.
 
